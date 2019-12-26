@@ -15,7 +15,7 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
+#libc/
 lib64/
 parts/
 sdist/
@@ -56,3 +56,13 @@ docs/_build/
 
 # PyBuilder
 target/
+
+\.idea/
+
+libtcy/msvc/
+
+test/debug
+
+test/log
+
+libtcy/cmake-build-debug/
