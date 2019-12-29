@@ -41,14 +41,14 @@ class MoverStep(StepABC):
 
     def __call__(self, op, start_time):
         op.mark_loc(self.mover, start_time, self.src_loc)
-        # if op.op_type == op.request.equipment.OpBuilder.OpType.ADJUST:
-        #     print(start_time, self.src_loc, self.mover.axis)
-        #     print(self.src_loc, self.dst_loc)
         rt, self.motions = self.mover.create_motions(
             start_time, self.dst_loc - self.src_loc, self.allow_interruption, self.mode)
-        op.mark_loc(self.mover, start_time + rt, self.dst_loc)
-        # if op.op_type == op.request.equipment.OpBuilder.OpType.ADJUST:
-        #     print(start_time + rt, self.dst_loc)
+
+        loc = self.src_loc
+        for motion in self.motions:
+            loc += motion.displacement
+            op.mark_loc(self.mover, motion.finish_time, loc)
+
         return start_time + rt
 
     def commit(self, yard):
@@ -76,7 +76,6 @@ class CallBackStep(StepABC):
         self.callback = callback
 
     def __call__(self, op, start_time):
-        # print("Callback assign time", start_time, self.callback.func)
         self.callback.time = start_time
         return start_time
 
@@ -106,7 +105,6 @@ class SStep(StepABC):
         self.steps = steps
 
     def __call__(self, op, start_time):
-        # print(op.op_type.name, op.step)
         st = start_time
         for step in self.steps:
             st = step(op, st)

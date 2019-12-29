@@ -1,15 +1,15 @@
 import os
 import sys
-from enum import auto
 
-from tcysim.framework.request import ReqStatus
 
 sys.path.extend([
     "../",
     "../../pesim",
     ])
 os.environ['PATH'] = "../libtcy/msvc/Release" + os.pathsep + os.environ['PATH']
+os.environ['PATH'] = "../libtcy/cmake-build-debug" + os.pathsep + os.environ['PATH']
 
+from tcysim.framework.request import ReqStatus, Request
 from tcysim.framework.management import TaskScheduler
 from tcysim.framework.generator import BoxGenerator
 from tcysim.framework.motion.mover import Spec
@@ -45,7 +45,7 @@ class RMG(Crane):
 
 class SimpleBoxGenerator(BoxGenerator):
     def next_time(self, time):
-        return time + random.uniform(200, 500)
+        return time + random.uniform(200, 600)
 
     def store_time(self, alloc_time):
         return alloc_time + random.uniform(5, 10)
@@ -68,20 +68,19 @@ class MultiCraneTaskScheduler(TaskScheduler):
             if equipment.idx == idx:
                 return equipment
 
+    def rank_task(self, task:Request):
+        if task.req_type == task.equipment.req_handler.ReqType.ADJUST:
+            return 0, task.ready_time
+        elif task.status == ReqStatus.RESUME_READY:
+            return 1, -task.ready_time
+        else:
+            return 2, task.ready_time
+
     def choose_task(self, time, equipment, tasks):
-        tmp = None
-        tasks = list(tasks)
-        print("\n>>>[{}]SCHEDULE".format(self.yard.env.current_time), equipment.idx, [task.req_type for task in tasks], "\n")
-        tasks.sort(key=lambda x:x.arrival_time)
-        for task in tasks:
-            if task.req_type == task.block.ReqHandler.ReqType.ADJUST:
-                return task
-            elif task.status == ReqStatus.SENTBACK:
-                return task
-            else:
-                if not tmp:
-                    tmp = task
-        return tmp
+        # tasks = list(tasks)
+        # if any(task.status == ReqStatus.REJECTED for task in tasks):
+        #     return None
+        return min(filter(Request.is_ready, tasks), key=self.rank_task, default=None)
 
 
 class SimpleYard(Yard):
@@ -101,21 +100,28 @@ if __name__ == '__main__':
     block = StackingBlock(yard, V3(25, 0, 0), V3(16, 8, 6), rotate=0, lanes=lanes)
     rmg1 = RMG(yard, block, 0, idx=0)
     rmg2 = RMG(yard, block, -1, idx=1)
-    yard.deploy(block, [rmg1])
+    yard.deploy(block, [rmg1, rmg2])
 
-    yard.install_observer(PositionTracer, start =3600 * 24, end =3600 * 28, interval=1)
+    yard.install_observer(PositionTracer, start =3600 * 20, end =3600 * 24, interval=1)
     yard.install_generator(SimpleBoxGenerator, first_time=0)
 
     yard.start()
-    yard.run_until(3600 * 32)
+    yard.run_until2(3600 * 24)
 
-    yard.observer.dump("log")
-    for record in yard.observer:
-        print(*record)
+    if yard.observer:
+        yard.observer.dump("log")
+    # for record in yard.observer:
+    #     print(*record)
 
-    for req in yard.tmgr.requests:
-        if req.status < ReqStatus.FINISHED:
-            print(req, req.arrival_time, req.block.is_locked(req.box.location), req.box.location,
-                  req.block.req_handler.validate(3600*32, req))
+    print("{:<12}: {}".format("TOTAL", len(yard.tmgr.requests)))
+    print("{:<12}: {}".format("TOTAL (AC)", len([req for req in yard.tmgr.requests if req.finish_time > req.start_time])))
+    print("{:<12}: {}".format("TOTAL (NA)", len([req for req in yard.tmgr.requests if req.req_type != req.TYPE.ADJUST])))
+    print("{:<12}: {}".format("TOTAL (A)", len([req for req in yard.tmgr.requests if req.req_type == req.TYPE.ADJUST and req.finish_time > req.start_time])))
+    for req_status in ReqStatus:
+        print("{:<12}: {}".format(req_status.name, len([req for req in yard.tmgr.requests if req.status == req_status])))
+
+    # for req in yard.tmgr.requests:
+    #     if req.status < ReqStatus.FINISHED:
+    #         print(req, req.arrival_time)
 
     print("Finish.")

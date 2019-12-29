@@ -35,6 +35,11 @@ cdef class CBlock:
         cdef Box* box = block_top_box(&self.c, pos, along)
         return <object> box._self
 
+    def stack_hash(self, loc):
+        cdef CellIdx pos[3]
+        pos[:] = loc
+        return blk_stack_hash(&self.c, pos)
+
     def lock(self, loc):
         cdef CellIdx pos[3]
         pos[:] = loc

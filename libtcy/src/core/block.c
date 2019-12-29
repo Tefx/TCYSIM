@@ -89,6 +89,7 @@ Box *_blk_neighbor_box(Block *blk, Box *box, int along, bool inc) {
     CellIdx loc2[3];
     for (int i = 0; i < 3; i++) loc2[i] = box->loc[i];
 
+//    printf("along %d %d %d %d %d\n", along, blk->box_orientation, box->size, loc2[along], blk->spec[along]);
     if (inc && along == blk->box_orientation && box->size == BOX_SIZE_FORTY)
         loc2[along] += 2;
     else if (inc)
@@ -98,8 +99,10 @@ Box *_blk_neighbor_box(Block *blk, Box *box, int along, bool inc) {
 //    printf(">> (%d, %d, %d)\n", loc2[0], loc2[1], loc2[2]);
     if (loc2[along] >= blk->spec[along] || loc2[along] < 0)
         return NULL;
-    else
+    else {
+//        printf("%d (%d, %d, %d)\n",_blk_cell_idx(blk, loc2), loc2[0], loc2[1], loc2[2]);
         return blk->cells[_blk_cell_idx(blk, loc2)];
+    }
 }
 
 int block_usage(Block *blk, const CellIdx *loc, bool include_occupied) {
@@ -160,7 +163,13 @@ Box *block_top_box(Block *blk, const CellIdx *idx, int along) {
     return block_box_at(blk, tmp_idx);
 }
 
-static inline CellIdx lock_map_idx(Block *blk, const CellIdx *idx) {
+void _blk_top_of_stack(Block *blk, CellIdx *idx) {
+    int along = blk->stacking_axis;
+    if (along >= 0)
+        idx[along] = blk->column_usage[along][_blk_clmn_idx(blk, idx, along)];
+}
+
+CellIdx blk_stack_hash(Block *blk, const CellIdx *idx) {
     CellIdx map_idx = 0;
     CellIdx k = 1;
     for (int i = 2; i >= 0; --i)
@@ -172,16 +181,16 @@ static inline CellIdx lock_map_idx(Block *blk, const CellIdx *idx) {
 }
 
 void block_lock(Block *blk, const CellIdx* idx) {
-    CellIdx map_idx = lock_map_idx(blk, idx);
+    CellIdx map_idx = blk_stack_hash(blk, idx);
     blk->lock_map[map_idx] = TRUE;
 }
 
 void block_unlock(Block *blk, const CellIdx* idx) {
-    CellIdx map_idx = lock_map_idx(blk, idx);
+    CellIdx map_idx = blk_stack_hash(blk, idx);
     blk->lock_map[map_idx] = FALSE;
 }
 
 bool block_is_locked(Block *blk, const CellIdx* idx){
-    CellIdx map_idx = lock_map_idx(blk, idx);
+    CellIdx map_idx = blk_stack_hash(blk, idx);
     return blk->lock_map[map_idx];
 }

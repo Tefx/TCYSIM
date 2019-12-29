@@ -15,7 +15,7 @@ class SimpleStackingBlockAllocator(SpaceAllocator):
             if block.count(i, -1, -1) < shape.z * shape.y - shape.z:
                 for j in range(shape.y):
                     k = block.count(i, j)
-                    if k < shape.z and box.location_is_valid(block, i, j, k):
+                    if k < shape.z and box.position_is_valid(block, i, j, k):
                         yield V3(i, j, k)
 
     def alloc_space(self, box, blocks):
@@ -34,8 +34,5 @@ class SimpleStackingBlockAllocator(SpaceAllocator):
         for j1 in range(0, shape.y):
             if j1 != j:
                 k = block.count(i, j1)
-                # if k < 0:
-                #     print(i, j1)
-                # assert k >= 0
                 if k < shape.z:
                     return V3(i, j1, k)

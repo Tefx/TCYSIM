@@ -7,15 +7,24 @@ from tcysim.utils import Paths, V3
 
 
 class Operation:
-    def __init__(self, type, request, **attrs):
+    def __init__(self, type, request, locking_pos=(), **attrs):
         self.op_type = type
         self.start_time = -1
         self.finish_time = -1
         self.request = request
+        self.equipment = request.equipment
         self.step = None
         self.paths = {}
         self.__interruption_flag = False
         self.attrs = copy(attrs)
+        self.locking_positions = list(locking_pos)
+
+    def add_lock(self, pos):
+        self.locking_positions.append(pos)
+
+    @property
+    def TYPE(self):
+        return self.equipment.op_builder.OpType
 
     def __getattr__(self, item):
         return self.attrs[item]
@@ -28,13 +37,12 @@ class Operation:
         self.step.commit(yard)
 
     def dry_run(self, start_time):
-        equipment = self.request.equipment
+        equipment = self.equipment
         for component in equipment.components:
             if component.may_interfere:
                 paths = Paths(64)
                 paths.append(start_time, equipment.local_coord()[component.axis])
                 self.paths[component] = paths
-                # print("COMITF", component.axis, component)
         self.start_time = start_time
         with equipment.save_state():
             self.finish_time = self.step(self, start_time)
@@ -53,7 +61,7 @@ class Operation:
         return CallBackStep(self.request.signals[name])
 
     def wait(self, time):
-        return EmptyStep(self.request.equipment.components[0], time)
+        return EmptyStep(self.equipment.components[0], time)
 
     def move(self, component, src_loc, dst_loc, mode="default"):
         if isinstance(src_loc, V3):
@@ -70,3 +78,6 @@ class Operation:
         self.add(CallBackStep(CallBack(equipment.on_idle)))
         yield
         self.__interruption_flag = False
+
+    def __repr__(self):
+        return "<OP/{}>{}".format(self.op_type.name, str(hash(self))[:4])

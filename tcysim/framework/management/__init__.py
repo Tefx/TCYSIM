@@ -1,2 +1,2 @@
 from .space import SpaceAllocator
-from .task import TaskScheduler
+from .scheduler import TaskScheduler

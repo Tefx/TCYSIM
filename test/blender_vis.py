@@ -3,9 +3,9 @@ import bpy, pickle, os, random
 log_path = "D:\\Dropbox\\Projects\\TCYSIM\\test\\log"
 #log_path = "/home/tefx/Dropbox/Projects/TCYSIM/test/.log"
 
-fps = 24
-speedup = 60
-start_time = 3600 * 24
+fps = 60
+speedup = 25
+start_time = 3600 * 20
 
 sample_box = {1:None, 2:None}
 sample_yc = None

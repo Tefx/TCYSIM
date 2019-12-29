@@ -137,12 +137,11 @@ bool pathtrace_intersect_test_with_clearance(PathTrace *pt0, PathTrace *pt1, flo
         y3 += shift;
         y4 += shift;
 
-//        printf("(%f,%f), (%f, %f), (%f,%f), (%f,%f)\n", (float)x3, y3, (float)x4, y4, (float)x1, y1, (float)x2, y2);
+//            printf("(%f,%f), (%f, %f), (%f,%f), (%f,%f)\n", (float)x3, y3, (float)x4, y4, (float)x1, y1, (float)x2, y2);
         if (x2 < x3) i++;
         else if (x4 < x1) j++;
         else if (cross_test_with_clearance((float) x1, y1, (float) x2, y2, (float) x3, y3, (float) x4, y4,
                                            clearance)) {
-//            printf("Failed!\n");
             return TRUE;
         }
         else if (x2 < x4) i++;

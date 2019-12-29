@@ -48,5 +48,5 @@ class ReqPool:
             if queue:
                 req = queue[0]
                 if req.predecessor is None or \
-                        req.predecessor.status >= ReqStatus.STARTED:
+                        req.predecessor.status == ReqStatus.FINISHED:
                     yield req

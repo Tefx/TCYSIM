@@ -1,116 +1,84 @@
 from enum import Enum, auto
 
-from tcysim.utils.dispatcher import Dispatcher
-from .request import Request, ReqStatus
-from tcysim.utils import TEU
+from ...utils.dispatcher import Dispatcher
+from .request import ReqStatus
+from .req_type import ReqType
 
 
 class ReqHandler(Dispatcher):
-    class ReqType(Enum):
-        STORE = auto()
-        RETRIEVE = auto()
-        ADJUST = auto()
+    ReqType = ReqType
 
-    def __init__(self, block):
-        self.block = block
+    def __init__(self, equipment):
         super(ReqHandler, self).__init__()
+        self.equipment = equipment
+        self.yard = equipment.yard
 
     def handle(self, time, request):
-        yield from self.dispatch(request.req_type, time, request)
+        yield from self.dispatch("handle", request.req_type, time, request)
 
-    @Dispatcher.on(ReqType.STORE)
+    @Dispatcher.on("handle", ReqType.STORE)
     def on_request_store(self, time, request):
-        box = request.box
-        if request.status != ReqStatus.RESUME:
-            box.store(time)
-            box.block.lock(box.location)
-            op = request.equipment.OpBuilder.StoreOp(request)
-            op.access_loc = self.block.access_coord(request.lane, request.box, request.equipment).add1("z", TEU.HEIGHT)
-            op.container_loc = self.block.box_coord(request.box, request.equipment).add1("z", TEU.HEIGHT / 2)
+        if request.acquire_stack(time, request.box.location):
+            yield self.equipment.OpBuilder.StoreOp(request)
         else:
-            op = request.last_op
-        # print("STORE", time, box, request.status)
-        yield op
+            yield None
 
-    @Dispatcher.on(ReqType.RETRIEVE)
+    @Dispatcher.on("handle", ReqType.RETRIEVE)
     def on_request_retrieve(self, time, request):
-        # request.box.state = request.box.STATE_RETRIEVING
-        # print(request, request.status, request.last_op)
-        box = request.box
-        if request.status == ReqStatus.RESUME:
-            if request.last_op.op_type == request.equipment.op_builder.OpType.RESHUFFLE:
-                yield request.last_op
-                yield from self.gen_reshuffle_operations(time, request)
-                box.retrieve(time)
-                box.block.lock(box.location)
-                op = request.equipment.OpBuilder.RetrieveOp(request)
-                op.access_loc = self.block.access_coord(request.lane, request.box, request.equipment).add1("z", TEU.HEIGHT)
-                op.container_loc = self.block.box_coord(request.box, request.equipment).add1("z", TEU.HEIGHT / 2)
-                yield op
-            elif request.last_op.op_type == request.equipment.OpBuilder.OpType.RETRIEVE:
-                yield request.last_op
-            else:
-                raise NotImplementedError
+        yield from self.reshuffle_operations(time, request)
+        if request.acquire_stack(time, request.box.location):
+            yield self.equipment.op_builder.RetrieveOp(request)
         else:
-            yield from self.gen_reshuffle_operations(time, request)
-            box.retrieve(time)
-            box.block.lock(box.location)
-            op = request.equipment.OpBuilder.RetrieveOp(request)
-            op.access_loc = self.block.access_coord(request.lane, request.box, request.equipment).add1("z", TEU.HEIGHT)
-            op.container_loc = self.block.box_coord(request.box, request.equipment).add1("z", TEU.HEIGHT / 2)
-            # print(op.op_type.name)
-            yield op
+            yield None
 
-    @Dispatcher.on(ReqType.ADJUST)
-    def on_request_adjust(self, time, request):
-        op = request.equipment.OpBuilder.AdjustOp(request)
-        op.dst_loc = request.new_loc
-        yield op
-
-    def validate(self, time, req):
-        if req.status == ReqStatus.SENTBACK:
-            return req.cb_time != time
-        elif req.box:
-            if req.req_type == self.ReqType.RETRIEVE and \
-                    req.box.state < req.box.STATE_STORED:
-                return False
-            else:
-                return not req.block.is_locked(req.box.location)
-        return True
-
-    @classmethod
-    def StoreRequest(cls, time, box, lane):
-        return Request(cls.ReqType.STORE, time, box, lane=lane)
-
-    @classmethod
-    def RetrieveRequest(cls, time, box, lane):
-        return Request(cls.ReqType.RETRIEVE, time, box, lane=lane)
-
-    @classmethod
-    def AdjustRequest(cls, time, equipment, new_loc):
-        return Request(cls.ReqType.ADJUST, time, equipment=equipment, new_loc=new_loc)
-
-    def gen_reshuffle_operations(self, time, request):
-        # Caution: may need to generate a compound operation
+    def reshuffle_operations(self, time, request):
         box = request.box
         request.rsf_count = 0
-        equipment = request.equipment
-        yard = request.block.yard
-        for above_box in box.box_above(self.block.stacking_axis):
-            request.rsf_count += 1
-            op = request.equipment.OpBuilder.ReshuffleOp(request, reset=False)
-            op.src_loc = self.block.box_coord(above_box, equipment).add1("z", TEU.HEIGHT / 2)
-            dst_loc = self.block.yard.smgr.slot_for_reshuffle(above_box)
+        for above_box in box.box_above():
+            new_loc = self.equipment.yard.smgr.slot_for_reshuffle(above_box)
+            if request.acquire_stack(time, above_box.location, new_loc):
+                yield self.gen_reshuffle_op(above_box, new_loc, request)
+            else:
+                yield None
 
-            request.link_signal("reshuffle_pickup", yard.reshuffle_pickup, box=above_box, equipment=equipment,
-                                dst_loc=dst_loc)
-            request.link_signal("reshuffle_putdown", yard.reshuffle_putdown, box=above_box)
+    def gen_reshuffle_op(self, box, new_loc, original_request):
+        original_request.rsf_count += 1
+        original_request.link_signal("rsf_start_or_resume", self.on_reshuffle_start, box=box, dst_loc=new_loc)
+        original_request.link_signal("rsf_pick_up", self.on_reshuffle_pickup, box=box, dst_loc=new_loc)
+        original_request.link_signal("rsf_put_down", self.on_reshuffle_putdown, box=box, dst_loc=new_loc)
+        original_request.link_signal("rsf_finish_or_fail", self.on_reshuffle_finish_or_fail, box=box, dst_loc=new_loc)
+        return self.equipment.op_builder.ReshuffleOp(original_request, box, new_loc, reset=False)
 
-            # above_box.state = above_box.STATE_RESHUFFLING
-            # above_box.previous_loc = above_box.location
-            # print("Reshuffle", above_box, above_box.state, above_box.location, box.location, above_box.block.is_locked(above_box.location), box.block.is_locked(box.location))
-            above_box.reshuffle(dst_loc)
-            above_box.block.lock(above_box.previous_loc)
-            above_box.block.lock(above_box.location)
-            op.dst_loc = self.block.box_coord(above_box, equipment).add1("z", TEU.HEIGHT / 2)
-            yield op
+    @Dispatcher.on("handle", ReqType.ADJUST)
+    def on_request_adjust(self, time, request):
+        yield self.equipment.OpBuilder.AdjustOp(request)
+
+    def on_reject(self, time, request, last_op):
+        request.on_reject(time)
+        self.yard.tmgr.submit_request(time, request, ready=False)
+        if last_op is None:
+            pass
+        if last_op.itf_other is not None:
+            req_builder = last_op.itf_other.blocks[0].req_builder
+            req2 = req_builder(req_builder.ReqType.ADJUST,
+                               time, last_op.itf_other, last_op.itf_loc, blocking_request=request)
+            self.yard.submit_request(time, req2)
+        else:
+            raise NotImplementedError
+
+    def on_reshuffle_start(self, time, box, dst_loc):
+        box.state = box.STATE_RESHUFFLING
+        box.reshuffle_retrieve(time, dst_loc)
+        pass
+
+    def on_reshuffle_finish_or_fail(self, time, box, dst_loc):
+        pass
+
+    def on_reshuffle_pickup(self, time, box, dst_loc):
+        box.equipment = self.equipment
+        box.block.release_stack(time, box.location)
+
+    def on_reshuffle_putdown(self, time, box, dst_loc):
+        box.reshuffle_store(time)
+        box.equipment = None
+        box.block.release_stack(time, box.location)

@@ -93,7 +93,6 @@ class Mover:
         w1 = spec._cache_w1
         st = start_time
 
-        # print(v0, a, displacement, v0 * v0 / 2 / d)
         motions = []
         if v0 > 0 and displacement < v0 * v0 / 2 / d:
             t0 = v0 / d
@@ -114,18 +113,10 @@ class Mover:
         distance = abs(displacement)
         dflg = 1 if displacement >= 0 else -1
 
-        # print(v0, distance, dflg, w0 - v0 * v0 / 2 / a, motions)
-
         if distance >= w0 - v0 * v0 / 2 / a:
             t0 = (vm - v0) / a
             t1 = distance / vm - vm / w1 + v0 * v0 / 2 / a / vm
             t2 = vm / d
-            # if self.curr_v < 0:
-            #     v0 = -v0
-            #     vm = -vm
-            #     a = -a
-            #     d = -d
-            # print("#", t0, t1, v0, a, dflg, v0 * dflg, a * dflg)
             if t0 > 0:
                 motions.append(Motion(st, t0, v0 * dflg, a * dflg, allow_interruption=allow_interruption))
                 st += t0
@@ -150,9 +141,6 @@ class Mover:
             if t1 > 0:
                 motions.append(Motion(st, t1, vx * dflg, -d * dflg, allow_interruption=allow_interruption))
                 st += t1
-
-        # if self.axis == 2:
-        #     print(start_time, displacement, self.curr_v, self.curr_a, motions, dflg)
 
         if motions:
             self.curr_v = motions[-1].finish_velocity

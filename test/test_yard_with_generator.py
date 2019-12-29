@@ -68,7 +68,7 @@ if __name__ == '__main__':
     rmg = RMG(yard, block, 0)
     yard.deploy(block, [rmg])
 
-    # yard.install_observer(PositionTracer, start =3600 * 24, end =3600 * 32, interval=1)
+    # yard.install_observer(PositionTracer, start_or_resume =3600 * 24, end =3600 * 32, interval=1)
     yard.install_generator(SimpleBoxGenerator, first_time=0)
 
     yard.start()

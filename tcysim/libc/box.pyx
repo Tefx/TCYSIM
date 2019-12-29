@@ -32,28 +32,28 @@ cdef class CBox:
     def __destroy__(self):
         box_destroy(&self.c)
 
-    def alloc(self, int time):
-        # print("Alloc", self.location)
-        box_alloc(&self.c, time)
-        # print("Alloc Done")
+    def alloc(self, int time, block, loc):
+        if loc:
+            self.set_location(block, *loc)
+            box_alloc(&self.c, time)
+            return True
+        else:
+            return False
 
     def store(self, int time):
-        # print("Store")
         box_store(&self.c, time)
-        # print("Store Done", self.id, self.location)
 
     def retrieve(self, int time):
-        # print("Retrieve", time, self.id, self.location)
         box_retrieve(&self.c, time)
-        # print("Retrieve Done")
 
-    def reshuffle(self, dst_loc):
-        # print("RSF", self.id, self.location, dst_loc)
+    def reshuffle_retrieve(self, time, dst_loc):
         cdef CellIdx new_loc[3];
         new_loc[:] = dst_loc
         self.previous_loc = self.location
-        box_reshuffle(&self.c, new_loc)
-        # print("RSF Done", self.id, self.location)
+        box_reshuffle_retrieve(&self.c, new_loc)
+
+    def reshuffle_store(self, time):
+        self.store(-1)
 
     @property
     def id(self):
@@ -117,26 +117,47 @@ cdef class CBox:
         self.c.block = &block.c
         self.c.loc[:] = x, y, z
 
-    def box_above(self, int axis):
+    def store_position(self):
+        cdef CellIdx loc[3]
+        box_store_position(&self.c, loc)
+        return V3(loc[0], loc[1], loc[2])
+
+    def reshuffle_position(self, new_loc):
+        cdef CellIdx loc[3]
+        loc[:] = new_loc
+        box_reshuffle_position(&self.c, loc)
+        return V3(loc[0], loc[1], loc[2])
+
+    def box_above(self):
+        axis = self.block.stacking_axis
+        if axis < 0:
+            return
         while True:
             loc = self.location
             axis = V3.axis_idx(axis)
-            # print("ABOVE", self, loc, self.state, self.block)
             box = self.block.top_box(loc, axis)
-            # print("ABOVE DONE", box, box.location, box.state)
-            assert loc[0] == box.location[0] and loc[1] == box.location[1]
             if box is self:
                 break
             yield box
 
-    def location_is_valid(self, CBlock block, CellIdx x, CellIdx y, CellIdx z):
+    def position_is_valid(self, CBlock block, CellIdx x, CellIdx y, CellIdx z):
         cdef CellIdx loc[3]
         loc[:] = x, y, z
-        return box_location_is_valid(&self.c, &block.c, loc)
+        return box_position_is_valid(&self.c, &block.c, loc)
+
+    def current_coord(self, equipment=None):
+        return self.block.box_coord(self, equipment)
+
+    def store_coord(self, equipment=None, loc=None):
+        loc = loc or self.store_position()
+        return self.block.cell_coord(loc, equipment, self.teu)
+
+    def access_coord(self, lane, equipment=None):
+        return self.block.access_coord(lane, self, equipment)
 
     def coord(self):
         if self.equipment:
-            return self.equipment.attached_coord(self.teu)
+            return self.equipment.coord_to_box()
         elif BOX_STATE_STORED <= self.state < BOX_STATE_RETRIEVING:
             if self.state == BOX_STATE_RESHUFFLING:
                 return self.block.cell_coord(self.previous_loc, None, self.teu)

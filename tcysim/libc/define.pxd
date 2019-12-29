@@ -62,8 +62,11 @@ cdef extern from "box.h":
     int box_alloc(Box *box, Time time)
     int box_store(Box *box, Time time)
     int box_retrieve(Box *box, Time time)
-    int box_reshuffle(Box *box, int32_t *new_loc)
-    bool box_location_is_valid(Box* box, Block* blk, CellIdx * loc)
+    # int box_reshuffle(Box *box, CellIdx *new_loc)
+    bool box_position_is_valid(Box* box, Block* blk, CellIdx * loc)
+    void box_store_position(Box *box, CellIdx *idx)
+    void box_reshuffle_position(Box *box, CellIdx *new_loc)
+    int box_reshuffle_retrieve(Box *box, CellIdx *new_loc)
 
 cdef extern from "block.h":
     void block_init(Block *blk, const CellIdx *shape, int box_orientation, int stacking_axis, const int *axis_need_sync)
@@ -72,6 +75,7 @@ cdef extern from "block.h":
     Box* block_box_at(Block* blk, const CellIdx* idx)
     Box* block_top_box(Block* blk, const CellIdx* idx, int along)
 
+    CellIdx blk_stack_hash(Block *blk, const CellIdx *idx)
     void block_lock(Block *blk, const CellIdx* idx)
     void block_unlock(Block *blk, const CellIdx* idx)
     bool block_is_locked(Block *blk, const CellIdx* idx)

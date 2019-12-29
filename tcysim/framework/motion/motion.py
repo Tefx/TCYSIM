@@ -27,4 +27,6 @@ class Motion:
         return self.start_time + self.timespan
 
     def __repr__(self):
-        return "[MTN]({:.2f}/{:.2f}/{:.2f}/{:.2f}[{}])".format(self.start_time, self.timespan, self.start_v, self.a, self.allow_interruption)
+        return "[MTN]({:.2f}/{:.2f}/{:.2f}/{:.2f}[{}])".format(
+            self.start_time, self.timespan,
+            self.start_v, self.a, self.allow_interruption)

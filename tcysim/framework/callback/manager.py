@@ -6,9 +6,10 @@ from ..priority import Priority
 
 
 class CallBackManager(Process):
-    def __init__(self, env):
+    def __init__(self, yard):
+        self.yard = yard
         self.queue = []
-        super(CallBackManager, self).__init__(env)
+        super(CallBackManager, self).__init__(yard.env)
 
     def add(self, callback: CallBack):
         heappush(self.queue, callback)
@@ -22,5 +23,6 @@ class CallBackManager(Process):
             return TIME_FOREVER, Priority.FOREVER
 
     def _process(self):
+        # self.yard.run_until(self.time)
         callback = heappop(self.queue)
         callback(self.time)

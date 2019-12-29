@@ -28,7 +28,7 @@
 #endif
 
 #define BOX_ID_LEN_LIMIT 32
-#define TIME_INF 31536000
+#define TIME_INF 315360000
 
 typedef enum {
     BOX_SIZE_TWENTY,

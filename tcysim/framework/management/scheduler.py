@@ -1,4 +1,8 @@
+from copy import copy
+from random import shuffle
+
 from pesim import Process
+from ..equipment import Equipment
 from ..priority import Priority
 from ..request import ReqPool, ReqStatus
 
@@ -8,11 +12,14 @@ class TaskScheduler(Process):
         self.yard = yard
         self.pool = {}
         self.requests = []
+        self.skd_equipments = []
+        self.skd_reason = None
         super(TaskScheduler, self).__init__(yard.env)
 
     def choose_task(self, time, equipment, tasks):
         for task in tasks:
-            return task
+            if task.is_ready():
+                return task
 
     def choose_equipment(self, time, request, equipments):
         for equipment in equipments:
@@ -22,22 +29,34 @@ class TaskScheduler(Process):
         self.pool[block] = ReqPool()
 
     def _process(self):
-        self.yard.run_until(self.time)
+        # self.yard.run_until(self.time)
         self.on_schedule(self.time)
+        self.reason = False
 
-    def schedule(self, time):
+    def schedule(self, time, equipment=None, reason=None):
+        if equipment:
+            self.skd_equipments.append(equipment)
+        else:
+            self.skd_equipments = copy(self.yard.equipments)
+        self.skd_reason = reason
         self.activate(time, Priority.SCHEDULE)
 
     def on_schedule(self, time):
-        self.adjust_task_pool(time)
-        for equipment in self.yard.equipments:
-            if equipment.ready_for_new_task():
-                req_or_op = self.next_task_for_equipment(time, equipment)
-                if req_or_op is not None:
-                    setattr(req_or_op, "time", time)
-                    equipment.submit_task(req_or_op)
+        self.refresh_task_pool(time)
 
-    def adjust_task_pool(self, time):
+        equipments = list(filter(Equipment.ready_for_new_task, self.skd_equipments))
+        shuffle(equipments)
+
+        for equipment in equipments:
+            avail_tasks = self.available_tasks_for_equipment(time, equipment)
+            request = self.choose_task(time, equipment, avail_tasks)
+            if request is not None:
+                self.pool[request.block].pop(request)
+                setattr(request, "time", time)
+                equipment.submit_task(request)
+        self.skd_equipments = []
+
+    def refresh_task_pool(self, time):
         for pool in self.pool.values():
             for request in pool.available_requests():
                 if request.status >= ReqStatus.READY:
@@ -48,29 +67,12 @@ class TaskScheduler(Process):
     def available_tasks_for_equipment(self, time, equipment):
         for block in equipment.blocks:
             for request in self.pool[block].available_requests(equipment):
-                if request.status >= ReqStatus.READY:
-                    if block.req_handler.validate(time, request):
-                        # if request.status == ReqStatus.SENTBACK:
-                        #     print("2", request, self.time, request.cb_time, block.req_handler.validate(time, request))
-                        yield request
-
-    def available_equipments_for_task(self, time, request):
-        if request.equipment:
-            yield request.equipment
-        else:
-            yield from request.block.equipments
-
-    def next_task_for_equipment(self, time, equipment):
-        avail_tasks = self.available_tasks_for_equipment(time, equipment)
-        request = self.choose_task(time, equipment, avail_tasks)
-        if request is not None:
-            self.pool[request.block].pop(request)
-            return request
+                yield request
 
     def equipment_for_request(self, time, request):
         if not request.equipment:
-            equipments = self.available_equipments_for_task(time, request)
-            request.equipment  = self.choose_equipment(time, request, equipments)
+            equipments = request.block.equipments
+            request.equipment = self.choose_equipment(time, request, equipments)
         return request.equipment
 
     def submit_request(self, time, request, ready=True):
@@ -80,13 +82,11 @@ class TaskScheduler(Process):
         access_point = request.access_point
         equipment = self.equipment_for_request(time, request)
         self.pool[block].push(request, equipment, access_point)
-        self.requests.append(request)
-        self.schedule(time)
-        return len(self.requests) - 1
-
-    def send_back(self, request):
-        block = request.block
-        self.pool[block].push(request, request.equipment)
+        if request.id < 0:
+            request.id = len(self.requests)
+            self.requests.append(request)
+        self.schedule(time, equipment=equipment)
+        return request.id
 
     def get_request(self, handler):
         return self.requests[handler]
