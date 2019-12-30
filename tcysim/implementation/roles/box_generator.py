@@ -56,9 +56,6 @@ class BoxBomb(ChainedEventBomb):
     def new_box(self):
         raise NotImplementedError
 
-    def retry_time(self, ev):
-        raise NotImplementedError
-
     def trigger(self, time):
         box = self.new_box()
         alloc_time = time
