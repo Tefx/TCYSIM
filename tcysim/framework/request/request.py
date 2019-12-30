@@ -59,9 +59,9 @@ class Request:
         return self.status == ReqStatus.READY or self.status == ReqStatus.RESUME_READY
 
     def submit(self, time, ready=True):
-        self.block.scheduler.submit_request(time, self)
         if ready:
             self.ready(time)
+        self.block.req_dispatcher.submit_request(time, self)
 
     def start_or_resume(self, time):
         if self.status == ReqStatus.REJECTED:

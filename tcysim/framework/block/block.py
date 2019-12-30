@@ -7,12 +7,12 @@ from ..layout import BlockLayout
 from .req_builder import ReqBuilder
 
 from ..equipment import Equipment
-from ..scheduler.scheduler import TaskScheduler
+from ..scheduler.scheduler import ReqDispatcher
 
 
 class Block(BlockLayout, CBlock):
     ReqBuilder = ReqBuilder
-    Scheduler = TaskScheduler
+    ReqDispatcher = ReqDispatcher
 
     def __init__(self, yard, offset, shape:V3, rotate, stacking_axis, sync_axes, lanes=()):
         sync_axes = tuple(V3.axis_idx(x) for x in sync_axes)
@@ -22,7 +22,7 @@ class Block(BlockLayout, CBlock):
         BlockLayout.__init__(self, offset, shape, rotate, lanes=lanes)
         CBlock.__init__(self, shape, stacking_axis=stacking_axis, sync_axes=sync_axes)
         self.req_builder = self.ReqBuilder(self)
-        self.scheduler = self.Scheduler(self)
+        self.req_dispatcher = self.ReqDispatcher(self)
         self.lock_waiting_requests = {}
 
     def deploy(self, equipments):

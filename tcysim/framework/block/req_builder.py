@@ -81,8 +81,9 @@ class ReqBuilder(Dispatcher):
         box.equipment = None
 
     def on_adjust_start(self, time, request):
-        request.blocking_request.ready(time)
-        self.block.scheduler.schedule(time, equipment=request.blocking_request.equipment)
+        blocking_req = request.blocking_request
+        blocking_req.ready(time)
+        blocking_req.equipment.job_scheduler.schedule(time)
 
     def on_adjust_finish_or_fail(self, time, request):
         pass
