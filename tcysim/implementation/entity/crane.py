@@ -1,8 +1,7 @@
 from copy import deepcopy, copy
 
 from tcysim.framework.motion.component import Component
-from tcysim.framework.equipment import Equipment
-from tcysim.framework.operation import OpBuilder as OpBuilderBase
+from tcysim.framework.equipment import Equipment, OpBuilder as OpBuilderBase
 from tcysim.utils import V3, TEU
 
 

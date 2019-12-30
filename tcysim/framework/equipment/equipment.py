@@ -128,7 +128,8 @@ class Equipment(EquipmentRangeLayout, Process):
             self.wake(priority=Priority.TASK_ARRIVAL)
 
     def on_idle(self, time):
-        self.yard.tmgr.schedule(time, equipment=self)
+        for block in self.blocks:
+            block.scheduler.schedule(time, equipment=self)
 
     def is_idle(self):
         return not self.next_task

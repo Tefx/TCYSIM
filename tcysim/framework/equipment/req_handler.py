@@ -52,7 +52,6 @@ class ReqHandler(Dispatcher):
 
     def on_reject(self, time, request, last_op):
         request.on_reject(time)
-        self.yard.tmgr.submit_request(time, request, ready=False)
         if last_op is None:
             pass
         if last_op.itf_other is not None:

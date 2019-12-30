@@ -20,11 +20,11 @@ class StackingBlock(Block):
                     self.make_cell(idx, self.unit_bound_size * idx)
 
     @property
-    def rows(self):
+    def bays(self):
         return self.shape[0]
 
     @property
-    def bays(self):
+    def rows(self):
         return self.shape[1]
 
     @property
@@ -45,19 +45,14 @@ class StackingBlock(Block):
         if self.stacking_axis < 0:
             raise NotImplementedError
 
-        h_max = 0
         idx_0 = self.coord2cell(src_loc).idx
         idx_1 = self.coord2cell(dst_loc).idx
 
         for i in range(3):
-            if idx_0[i] > idx_1[i]: idx_0[i], idx_1[i] = idx_1[i], idx_0[i]
+            if idx_0[i] > idx_1[i]:
+                idx_0[i], idx_1[i] = idx_1[i], idx_0[i]
 
         idx_0[self.stacking_axis] = idx_1[self.stacking_axis] = -1
-        rx = range(max(idx_0[0],0), min(idx_1[0], self.shape[0])+1)
-        ry = range(max(idx_0[1],0), min(idx_1[1], self.shape[1])+1)
-        rz = range(max(idx_0[2],0), min(idx_1[2], self.shape[2])+1)
-        for idx_x, idx_y, idx_z in product(rx, ry, rz):
-            h = self.count(idx_x, idx_y, idx_z, include_occupied=False)
-            if h > h_max: h_max = h
-
+        rs = [range(max(idx_0[i],0), min(idx_1[i], self.shape[i])+1) for i in range(3)]
+        h_max = max((self.count(*idx, include_occupied=False) for idx in product(*rs)), default=0)
         return self.stack_height(h_max)
