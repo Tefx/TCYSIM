@@ -1,8 +1,7 @@
 from pesim import Environment
-from .generator import Generator
-from .observer import Observer
-from .callback import CallBackManager
-from .management import SpaceAllocator
+from ..roles.roles import Roles
+from ..callback import CallBackManager
+from tcysim.framework.allocator.allocator import SpaceAllocator
 
 
 class YardEnv(Environment):
@@ -14,18 +13,8 @@ class YardEnv(Environment):
         self.yard.run_equipments(time)
 
 
-class Roles(dict):
-    __getattr__ = dict.__getitem__
-    __setattr__ = dict.__setitem__
-
-    def setup(self):
-        for role in self.values():
-            role.setup()
-
-
 class Yard:
     SpaceAllocator: SpaceAllocator.__class__ = SpaceAllocator
-    Observer: Observer.__class__ = Observer
 
     def __init__(self):
         self.env = YardEnv(self)

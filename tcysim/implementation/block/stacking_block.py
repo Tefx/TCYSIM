@@ -56,3 +56,12 @@ class StackingBlock(Block):
         rs = [range(max(idx_0[i],0), min(idx_1[i], self.shape[i])+1) for i in range(3)]
         h_max = max((self.count(*idx, include_occupied=False) for idx in product(*rs)), default=0)
         return self.stack_height(h_max)
+
+    def available_cells(self, box):
+        shape = self.shape
+        for i in range(shape.x):
+            if self.count(i, -1, -1) < shape.z * shape.y - shape.z:
+                for j in range(shape.y):
+                    k = self.count(i, j)
+                    if k < shape.z and box.position_is_valid(self, i, j, k):
+                        yield V3(i, j, k)

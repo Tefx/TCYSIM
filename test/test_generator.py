@@ -1,9 +1,9 @@
 import random
 
 from tcysim.framework.box import Box
-from tcysim.framework.generator import BoxGenerator
+from tcysim.framework.roles.generator import BoxGenerator
 from tcysim.framework.yard import Yard
-from tcysim.implementation.management.space import SimpleStackingBlockAllocator
+from tcysim.implementation.space_allocator.stacking import SimpleStackingBlockAllocator
 
 
 class SimpleYard(Yard):

@@ -78,7 +78,8 @@ class BlockLayout(_LayoutItem):
             self.size[i] = max(self.size[i], local_offset[i] + teu[i])
 
     def cell(self, cell_idx):
-        return self._cells[cell_idx]
+        i, j, k = cell_idx
+        return self._cells[i, j, k]
 
     def lane(self, name):
         return self.lanes[name]
