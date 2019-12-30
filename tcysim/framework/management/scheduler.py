@@ -81,11 +81,5 @@ class TaskScheduler(Process):
         access_point = request.access_point
         equipment = self.equipment_for_request(time, request)
         self.pool[block].push(request, equipment, access_point)
-        if request.id < 0:
-            request.id = len(self.requests)
-            self.requests.append(request)
         self.schedule(time, equipment=equipment)
-        return request.id
 
-    def get_request(self, handler):
-        return self.requests[handler]

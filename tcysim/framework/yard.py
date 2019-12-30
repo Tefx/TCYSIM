@@ -26,6 +26,7 @@ class Yard:
         self.equipments = set()
 
         self.boxes = set()
+        self.requests = []
 
         self.smgr = self.SpaceAllocator(self)
         self.tmgr = self.TaskScheduler(self)
@@ -66,29 +67,33 @@ class Yard:
 
         self.env.start()
 
+    def add_request(self, request):
+        request.id = len(self.requests)
+        self.requests.append(request)
+        return request.id
+
+    def get_request(self, handler):
+        return self.requests[handler]
+
     def submit_request(self, time, request):
-        # self.run_until2(time)
-        handler = self.tmgr.submit_request(time, request)
-        return handler
+        self.tmgr.submit_request(time, request)
+        return self.add_request(request)
 
     def query_request_status(self, time, handler):
-        request = self.tmgr.get_request(handler)
+        request = self.get_request(handler)
         time = self.env.run_until(time, proc_next=request.equipment)
         return request.status, time
 
     def alloc(self, time, box):
-        # self.run_until2(time)
         block, loc = self.smgr.alloc_space(box, self.smgr.available_blocks(box))
         return box.alloc(time, block, loc)
 
     def store(self, time, box, lane):
-        # self.run_until2(time)
         req_builder = box.block.req_builder
         request = req_builder(req_builder.ReqType.STORE, time, box, lane)
         return self.submit_request(time, request)
 
     def retrieve(self, time, box, lane):
-        # self.run_until2(time)
         req_builder = box.block.req_builder
         request = req_builder(req_builder.ReqType.RETRIEVE, time, box, lane)
         return self.submit_request(time, request)

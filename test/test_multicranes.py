@@ -110,11 +110,11 @@ if __name__ == '__main__':
     #     print(*record)
 
     print("{:<12}: {}".format("TOTAL", len(yard.tmgr.requests)))
-    print("{:<12}: {}".format("TOTAL (AC)", len([req for req in yard.tmgr.requests if req.finish_time > req.start_time])))
-    print("{:<12}: {}".format("TOTAL (NA)", len([req for req in yard.tmgr.requests if req.req_type != req.TYPE.ADJUST])))
-    print("{:<12}: {}".format("TOTAL (A)", len([req for req in yard.tmgr.requests if req.req_type == req.TYPE.ADJUST and req.finish_time > req.start_time])))
+    print("{:<12}: {}".format("TOTAL (AC)", len([req for req in yard.requests if req.finish_time > req.start_time])))
+    print("{:<12}: {}".format("TOTAL (NA)", len([req for req in yard.requests if req.req_type != req.TYPE.ADJUST])))
+    print("{:<12}: {}".format("TOTAL (A)", len([req for req in yard.requests if req.req_type == req.TYPE.ADJUST and req.finish_time > req.start_time])))
     for req_status in ReqStatus:
-        print("{:<12}: {}".format(req_status.name, len([req for req in yard.tmgr.requests if req.status == req_status])))
+        print("{:<12}: {}".format(req_status.name, len([req for req in yard.requests if req.status == req_status])))
 
     # for req in yard.tmgr.requests:
     #     if req.status < ReqStatus.FINISHED:
