@@ -1,11 +1,6 @@
 import os
 import sys
-
-from tcysim.framework.allocator import SpaceAllocator
-from tcysim.framework.layout import Lane
-from tcysim.framework.motion import Component
-from tcysim.implementation.block.stacking_block import StackingBlock
-from tcysim.implementation.equipment.crane import Crane
+import random
 
 sys.path.extend([
     "../",
@@ -14,33 +9,41 @@ sys.path.extend([
 os.environ['PATH'] = "../libtcy/msvc/Release" + os.pathsep + os.environ['PATH']
 os.environ['PATH'] = "../libtcy/cmake-build-debug" + os.pathsep + os.environ['PATH']
 
+from tcysim.framework import Lane, Component, Spec, Yard, Box
+from tcysim.framework.allocator import SpaceAllocator
+from tcysim.framework.scheduler import JobScheduler, ReqDispatcher
 from tcysim.framework.request import ReqStatus, Request
-from tcysim.framework.scheduler import TaskScheduler
+
+from tcysim.implementation.block.stacking_block import StackingBlock
+from tcysim.implementation.equipment.crane import Crane
+from tcysim.implementation.roles.position_tracer import PositionTracer
 from tcysim.implementation.roles.box_generator import BoxBomb, BoxGenerator
-from tcysim.framework.motion.mover import Spec
-from tcysim.framework.yard import Yard
-from tcysim.framework.box import Box
+
 from tcysim.utils import V3, TEU
 
-import random
 
-
-class MultiCraneTaskScheduler(TaskScheduler):
-    def choose_equipment(self, time, request, equipments):
+class MultiCraneReqDispatcher(ReqDispatcher):
+    def choose_equipment(self, time, request):
         idx = request.box.location[0] * len(self.block.equipments) // self.block.bays
-        for equipment in equipments:
+        for equipment in self.block.equipments:
             if equipment.idx == idx:
                 return equipment
 
-    def rank_task(self, task: Request):
-        if task.req_type == task.equipment.req_handler.ReqType.ADJUST:
-            return 0, task.ready_time
-        elif task.status == ReqStatus.RESUME_READY:
-            return 1, -task.ready_time
-        else:
-            return 2, task.ready_time
 
-    def choose_task(self, time, equipment, tasks):
+class Block(StackingBlock):
+    ReqDispatcher = MultiCraneReqDispatcher
+
+
+class CraneJobScheduler(JobScheduler):
+    def rank_task(self, request: Request):
+        if request.req_type == request.TYPE.ADJUST:
+            return 0, request.ready_time
+        elif request.status == ReqStatus.RESUME_READY:
+            return 1, -request.ready_time
+        else:
+            return 2, request.ready_time
+
+    def choose_task(self, time, tasks):
         return min(filter(Request.is_ready, tasks), key=self.rank_task, default=None)
 
 
@@ -63,12 +66,10 @@ class RMG(Crane):
             },
         max_height=30)
 
-
-class Block(StackingBlock):
-    Scheduler = MultiCraneTaskScheduler
+    JobScheduler = CraneJobScheduler
 
 
-class SimpleStackingBlockAllocator(SpaceAllocator):
+class RandomSpaceAllocator(SpaceAllocator):
     def alloc_space(self, box, blocks):
         for block in blocks:
             locs = list(block.available_cells(box))
@@ -88,7 +89,7 @@ class SimpleStackingBlockAllocator(SpaceAllocator):
 
 
 class SimpleYard(Yard):
-    SpaceAllocator = SimpleStackingBlockAllocator
+    SpaceAllocator = RandomSpaceAllocator
 
 
 class SimpleBoxBomb(BoxBomb):
@@ -120,12 +121,12 @@ if __name__ == '__main__':
     rmg2 = RMG(yard, block, -1, idx=1)
     yard.deploy(block, [rmg1, rmg2])
 
-    # yard.roles.tracer = PositionTracer(yard, start=3600*20, end=3600*24, interval=1)
+    yard.roles.tracer = PositionTracer(yard, start=3600*20, end=3600*24, interval=1)
     yard.roles.sim_driver = BoxGenerator(yard)
     yard.roles.sim_driver.install_or_add(SimpleBoxBomb(first_time=0))
 
     yard.start()
-    yard.run_until(3600 * 24 * 7)
+    yard.run_until(3600 * 24)
 
     if "tracer" in yard.roles:
         yard.roles.tracer.dump("log")
@@ -138,8 +139,8 @@ if __name__ == '__main__':
     for req_status in ReqStatus:
         print("{:<12}: {}".format(req_status.name, len([req for req in yard.requests if req.status == req_status])))
 
-    # for req in yard.tmgr.requests:
-    #     if req.status < ReqStatus.FINISHED:
-    #         print(req, req.arrival_time)
+    # for req in yard.requests:
+    #     if req.req_type == req.TYPE.ADJUST:
+    #         print(req, req.arrival_time, req.start_time, req.finish_time)
 
     print("Finish.")

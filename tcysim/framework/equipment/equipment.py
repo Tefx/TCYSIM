@@ -9,6 +9,7 @@ from tcysim.utils import V3
 from ..request import Request
 from .req_handler import ReqHandler
 from .op_builder import OpBuilder
+from ..scheduler.scheduler import JobScheduler
 
 
 class Equipment(EquipmentRangeLayout, Process):
@@ -22,6 +23,7 @@ class Equipment(EquipmentRangeLayout, Process):
 
     ReqHandler = ReqHandler
     OpBuilder = OpBuilder
+    JobScheduler = JobScheduler
 
     def __init__(self, yard, components, offset, move_range, rotate=0, init_offset=V3.zero(), **attrs):
         Process.__init__(self, yard.env)
@@ -36,6 +38,11 @@ class Equipment(EquipmentRangeLayout, Process):
         self.attrs = copy(attrs)
         self.req_handler = ReqHandler(self)
         self.op_builder = self.OpBuilder(self)
+        self.job_scheduler = self.JobScheduler(self)
+
+    def setup(self):
+        super(Equipment, self).setup()
+        self.job_scheduler.setup()
 
     @contextmanager
     def save_state(self):
@@ -128,8 +135,7 @@ class Equipment(EquipmentRangeLayout, Process):
             self.wake(priority=Priority.TASK_ARRIVAL)
 
     def on_idle(self, time):
-        for block in self.blocks:
-            block.scheduler.schedule(time, equipment=self)
+        self.job_scheduler.schedule(time)
 
     def is_idle(self):
         return not self.next_task

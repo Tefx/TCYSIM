@@ -44,9 +44,6 @@ class Yard:
     def start(self):
         self.cmgr.setup()
 
-        for block in self.blocks:
-            block.scheduler.setup()
-
         for equipment in self.equipments:
             equipment.setup()
 
@@ -55,9 +52,10 @@ class Yard:
         self.env.start()
 
     def add_request(self, request):
-        request.id = len(self.requests)
-        self.requests.append(request)
-        return request.id
+        if request.id == -1:
+            request.id = len(self.requests)
+            self.requests.append(request)
+            return request.id
 
     def get_request(self, handler):
         return self.requests[handler]

@@ -58,7 +58,7 @@ class ReqHandler(Dispatcher):
             req_builder = last_op.itf_other.blocks[0].req_builder
             req2 = req_builder(req_builder.ReqType.ADJUST,
                                time, last_op.itf_other, last_op.itf_loc, blocking_request=request)
-            self.yard.submit_request(time, req2)
+            self.yard.submit_request(time, req2, ready=True)
         else:
             raise NotImplementedError
 
