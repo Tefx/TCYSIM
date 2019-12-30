@@ -1,3 +1,5 @@
+from itertools import product
+
 from tcysim.libc import CBlock
 from tcysim.utils import V3
 
@@ -60,3 +62,8 @@ class Block(BlockLayout, CBlock):
                 for request in self.lock_waiting_requests[idx]:
                     request.on_resource_release(time, idx)
                 del self.lock_waiting_requests[idx]
+
+    def available_cells(self, box):
+        for i, j, k in product(*self.shape):
+            if box.position_is_valid(self, i, j, k):
+                yield V3(i, j, k)

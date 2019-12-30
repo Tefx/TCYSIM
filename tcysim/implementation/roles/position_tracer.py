@@ -1,6 +1,6 @@
 from pickle import dump
 
-from tcysim.framework.observer import Observer
+from tcysim.framework.roles.observer import Observer
 
 
 class PositionTracer(Observer):

@@ -7,11 +7,10 @@ sys.path.extend([
     ])
 os.environ['PATH'] = "../libtcy/msvc/Release" + os.pathsep + os.environ['PATH']
 
-from tcysim.framework.generator import BoxGenerator
+from tcysim.framework.roles.generator import BoxGenerator
 from tcysim.framework.motion.mover import Spec
 from tcysim.implementation.entity import Lane, StackingBlock, Crane, Component, TEU
-from tcysim.implementation.management.space import SimpleStackingBlockAllocator
-from tcysim.implementation.observer.position_tracer import PositionTracer
+from tcysim.implementation.space_allocator.stacking import SimpleStackingBlockAllocator
 from tcysim.framework.yard import Yard
 from tcysim.framework.box import Box
 from tcysim.utils import V3

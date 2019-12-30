@@ -1,24 +1,22 @@
 from pesim import Environment
-from .generator import Generator
-from .observer import Observer
-from .callback import CallBackManager
-from .management import SpaceAllocator
+from ..roles.roles import Roles
+from ..callback import CallBackManager
+from tcysim.framework.allocator.allocator import SpaceAllocator
 
 
 class YardEnv(Environment):
     def __init__(self, yard):
         self.yard = yard
         super(YardEnv, self).__init__()
-        
+
     def pre_ev_hook(self, time):
         self.yard.run_equipments(time)
 
+
 class Yard:
     SpaceAllocator: SpaceAllocator.__class__ = SpaceAllocator
-    Observer: Observer.__class__ = Observer
 
     def __init__(self):
-        # self.env = Environment()
         self.env = YardEnv(self)
         self.blocks = set()
         self.equipments = set()
@@ -28,16 +26,11 @@ class Yard:
 
         self.smgr = self.SpaceAllocator(self)
         self.cmgr = CallBackManager(self)
-        self.observer = None
-        self.generator = None
 
-    def install_observer(self, Observer, *args, **kwargs):
-        self.observer = Observer(self, *args, **kwargs)
+        self.roles = Roles()
 
-    def install_generator(self, Bomb, *args, **kwargs):
-        if not self.generator:
-            self.generator = Generator(self)
-        self.generator.install_or_add(Bomb(*args, **kwargs))
+    def add_role(self, name, role):
+        self.roles[name] = role
 
     def deploy(self, block, equipments):
         self.blocks.add(block)
@@ -57,11 +50,7 @@ class Yard:
         for equipment in self.equipments:
             equipment.setup()
 
-        if self.generator:
-            self.generator.setup()
-
-        if self.observer:
-            self.observer.setup()
+        self.roles.setup()
 
         self.env.start()
 

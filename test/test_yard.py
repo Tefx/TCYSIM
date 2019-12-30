@@ -3,7 +3,7 @@ from pickle import dump
 from tcysim.framework.motion.mover import Spec
 from tcysim.framework.observer import Observer
 from tcysim.implementation.entity import Lane, StackingBlock, Crane, Component
-from tcysim.implementation.management.space import SimpleStackingBlockAllocator
+from tcysim.implementation.space_allocator.stacking import SimpleStackingBlockAllocator
 from tcysim.framework.yard import Yard
 from tcysim.framework.box import Box
 from tcysim.utils import V3
