@@ -58,6 +58,11 @@ class Request:
     def is_ready(self):
         return self.status == ReqStatus.READY or self.status == ReqStatus.RESUME_READY
 
+    def submit(self, time, ready=True):
+        self.block.scheduler.submit_request(time, self)
+        if ready:
+            self.ready(time)
+
     def start_or_resume(self, time):
         if self.status == ReqStatus.REJECTED:
             self.status = ReqStatus.RESUMED
@@ -82,6 +87,7 @@ class Request:
         self.start_time = -1
         self.finish_time = -1
         self.reject_times += 1
+        self.submit(time, ready=False)
 
     def sync(self, time):
         self.status = ReqStatus.SYNCED

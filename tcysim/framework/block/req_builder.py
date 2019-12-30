@@ -1,14 +1,14 @@
-from ...utils.dispatcher import Dispatcher
-from .request import Request
-from .type import ReqType
+from tcysim.utils.dispatcher import Dispatcher
+from ..request import Request, ReqType
 
 
 class ReqBuilder(Dispatcher):
     ReqType = ReqType
 
-    def __init__(self, yard):
+    def __init__(self, block):
         super(ReqBuilder, self).__init__()
-        self.yard = yard
+        self.block = block
+        self.yard = block.yard
 
     def __call__(self, req_type, *args, **kwargs):
         return self.dispatch("gen", req_type, *args, **kwargs)
@@ -82,7 +82,7 @@ class ReqBuilder(Dispatcher):
 
     def on_adjust_start(self, time, request):
         request.blocking_request.ready(time)
-        self.yard.tmgr.schedule(time, equipment=request.blocking_request.equipment)
+        self.block.scheduler.schedule(time, equipment=request.blocking_request.equipment)
 
     def on_adjust_finish_or_fail(self, time, request):
         pass

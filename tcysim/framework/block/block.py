@@ -1,16 +1,16 @@
-from copy import deepcopy
-
-from tcysim.framework.equipment import Equipment
 from tcysim.libc import CBlock
 from tcysim.utils import V3
 
-from .box import Box
-from .layout import BlockLayout
-from .request import ReqBuilder
+from ..layout import BlockLayout
+from .req_builder import ReqBuilder
+
+from ..equipment import Equipment
+from ..scheduler.scheduler import TaskScheduler
 
 
 class Block(BlockLayout, CBlock):
     ReqBuilder = ReqBuilder
+    Scheduler = TaskScheduler
 
     def __init__(self, yard, offset, shape:V3, rotate, stacking_axis, sync_axes, lanes=()):
         sync_axes = tuple(V3.axis_idx(x) for x in sync_axes)
@@ -19,7 +19,8 @@ class Block(BlockLayout, CBlock):
         self.yard = yard
         BlockLayout.__init__(self, offset, shape, rotate, lanes=lanes)
         CBlock.__init__(self, shape, stacking_axis=stacking_axis, sync_axes=sync_axes)
-        self.req_builder = self.ReqBuilder(yard)
+        self.req_builder = self.ReqBuilder(self)
+        self.scheduler = self.Scheduler(self)
         self.lock_waiting_requests = {}
 
     def deploy(self, equipments):
@@ -27,10 +28,10 @@ class Block(BlockLayout, CBlock):
             self.equipments.append(equipment)
             equipment.assign_block(self)
 
-    def box_coord(self, box:Box, equipment:Equipment):
+    def box_coord(self, box, equipment:Equipment):
         return self.cell_coord(box.location, equipment, box.teu)
     
-    def access_coord(self, lane, box:Box, equipment:Equipment):
+    def access_coord(self, lane, box, equipment:Equipment):
         return self.cell_coord_map_to_lane(lane, box.location, equipment, box.teu)
 
     def acquire_stack(self, time, acquirer, *positions):

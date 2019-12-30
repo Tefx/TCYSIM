@@ -2,8 +2,7 @@ from pesim import Environment
 from .generator import Generator
 from .observer import Observer
 from .callback import CallBackManager
-from .request import Request
-from .management import SpaceAllocator, TaskScheduler
+from .management import SpaceAllocator
 
 
 class YardEnv(Environment):
@@ -16,7 +15,6 @@ class YardEnv(Environment):
 
 class Yard:
     SpaceAllocator: SpaceAllocator.__class__ = SpaceAllocator
-    TaskScheduler: TaskScheduler.__class__ = TaskScheduler
     Observer: Observer.__class__ = Observer
 
     def __init__(self):
@@ -26,9 +24,9 @@ class Yard:
         self.equipments = set()
 
         self.boxes = set()
+        self.requests = []
 
         self.smgr = self.SpaceAllocator(self)
-        self.tmgr = self.TaskScheduler(self)
         self.cmgr = CallBackManager(self)
         self.observer = None
         self.generator = None
@@ -46,14 +44,15 @@ class Yard:
         block.deploy(equipments)
 
         self.smgr.register_block(block)
-        self.tmgr.register_block(block)
 
         for equipment in equipments:
             self.equipments.add(equipment)
 
     def start(self):
-        self.tmgr.setup()
         self.cmgr.setup()
+
+        for block in self.blocks:
+            block.scheduler.setup()
 
         for equipment in self.equipments:
             equipment.setup()
@@ -66,29 +65,33 @@ class Yard:
 
         self.env.start()
 
-    def submit_request(self, time, request):
-        # self.run_until2(time)
-        handler = self.tmgr.submit_request(time, request)
-        return handler
+    def add_request(self, request):
+        request.id = len(self.requests)
+        self.requests.append(request)
+        return request.id
+
+    def get_request(self, handler):
+        return self.requests[handler]
+
+    def submit_request(self, time, request, ready=True):
+        request.submit(time, ready)
+        return self.add_request(request)
 
     def query_request_status(self, time, handler):
-        request = self.tmgr.get_request(handler)
+        request = self.get_request(handler)
         time = self.env.run_until(time, proc_next=request.equipment)
         return request.status, time
 
     def alloc(self, time, box):
-        # self.run_until2(time)
         block, loc = self.smgr.alloc_space(box, self.smgr.available_blocks(box))
         return box.alloc(time, block, loc)
 
     def store(self, time, box, lane):
-        # self.run_until2(time)
         req_builder = box.block.req_builder
         request = req_builder(req_builder.ReqType.STORE, time, box, lane)
         return self.submit_request(time, request)
 
     def retrieve(self, time, box, lane):
-        # self.run_until2(time)
         req_builder = box.block.req_builder
         request = req_builder(req_builder.ReqType.RETRIEVE, time, box, lane)
         return self.submit_request(time, request)

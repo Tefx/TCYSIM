@@ -3,11 +3,12 @@ from copy import copy
 from enum import Enum, auto
 
 from pesim import TIME_FOREVER, Process
-from .priority import Priority
-from .layout import EquipmentRangeLayout
+from ..priority import Priority
+from ..layout import EquipmentRangeLayout
 from tcysim.utils import V3
-from .request import Request, ReqHandler
-from .operation import OpBuilder
+from ..request import Request
+from .req_handler import ReqHandler
+from .op_builder import OpBuilder
 
 
 class Equipment(EquipmentRangeLayout, Process):
@@ -127,7 +128,8 @@ class Equipment(EquipmentRangeLayout, Process):
             self.wake(priority=Priority.TASK_ARRIVAL)
 
     def on_idle(self, time):
-        self.yard.tmgr.schedule(time, equipment=self)
+        for block in self.blocks:
+            block.scheduler.schedule(time, equipment=self)
 
     def is_idle(self):
         return not self.next_task
