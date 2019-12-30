@@ -12,7 +12,7 @@ os.environ['PATH'] = "../libtcy/cmake-build-debug" + os.pathsep + os.environ['PA
 
 from tcysim.framework.request import ReqStatus, Request
 from tcysim.framework.scheduler import TaskScheduler
-from tcysim.framework.generator import BoxGenerator
+from tcysim.framework.generator import BoxGenerator, Generator
 from tcysim.framework.motion.mover import Spec
 from tcysim.implementation.entity import Lane, StackingBlock, Crane, Component, TEU
 from tcysim.implementation.management.space import SimpleStackingBlockAllocator
@@ -98,16 +98,16 @@ if __name__ == '__main__':
     rmg2 = RMG(yard, block, -1, idx=1)
     yard.deploy(block, [rmg1, rmg2])
 
-    yard.install_observer(PositionTracer, start =3600 * 20, end =3600 * 24, interval=1)
-    yard.install_generator(SimpleBoxGenerator, first_time=0)
+    yard.roles.tracer = PositionTracer(yard, start=3600*20, end=3600*24, interval=1)
+
+    yard.roles.sim_driver = Generator(yard)
+    yard.roles.sim_driver.install_or_add(SimpleBoxGenerator(first_time=0))
 
     yard.start()
     yard.run_until(3600 * 24)
 
-    if yard.observer:
-        yard.observer.dump("log")
-    # for record in yard.observer:
-    #     print(*record)
+    if "tracer" in yard.roles:
+        yard.roles.tracer.dump("log")
 
     print("{:<12}: {}".format("TOTAL", len(yard.requests)))
     print("{:<12}: {}".format("TOTAL (AC)", len([req for req in yard.requests if req.finish_time > req.start_time])))
