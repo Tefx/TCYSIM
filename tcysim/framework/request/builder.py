@@ -1,6 +1,6 @@
 from ...utils.dispatcher import Dispatcher
 from .request import Request
-from .req_type import ReqType
+from .type import ReqType
 
 
 class ReqBuilder(Dispatcher):

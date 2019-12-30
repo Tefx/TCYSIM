@@ -29,9 +29,9 @@ class TaskScheduler(Process):
         self.pool[block] = ReqPool()
 
     def _process(self):
-        # self.yard.run_until(self.time)
         self.on_schedule(self.time)
-        self.reason = False
+        self.skd_equipments = []
+        self.skd_reason = False
 
     def schedule(self, time, equipment=None, reason=None):
         if equipment:
@@ -42,7 +42,7 @@ class TaskScheduler(Process):
         self.activate(time, Priority.SCHEDULE)
 
     def on_schedule(self, time):
-        self.refresh_task_pool(time)
+        self.refresh_pool(time)
 
         equipments = list(filter(Equipment.ready_for_new_task, self.skd_equipments))
         shuffle(equipments)
@@ -54,9 +54,8 @@ class TaskScheduler(Process):
                 self.pool[request.block].pop(request)
                 setattr(request, "time", time)
                 equipment.submit_task(request)
-        self.skd_equipments = []
 
-    def refresh_task_pool(self, time):
+    def refresh_pool(self, time):
         for pool in self.pool.values():
             for request in pool.available_requests():
                 if request.status >= ReqStatus.READY:

@@ -15,7 +15,6 @@ from tcysim.framework.generator import BoxGenerator
 from tcysim.framework.motion.mover import Spec
 from tcysim.implementation.entity import Lane, StackingBlock, Crane, Component, TEU
 from tcysim.implementation.management.space import SimpleStackingBlockAllocator
-from tcysim.implementation.observer.position_tracer import PositionTracer
 from tcysim.framework.yard import Yard
 from tcysim.framework.box import Box
 from tcysim.utils import V3
@@ -77,9 +76,6 @@ class MultiCraneTaskScheduler(TaskScheduler):
             return 2, task.ready_time
 
     def choose_task(self, time, equipment, tasks):
-        # tasks = list(tasks)
-        # if any(task.status == ReqStatus.REJECTED for task in tasks):
-        #     return None
         return min(filter(Request.is_ready, tasks), key=self.rank_task, default=None)
 
 
@@ -102,11 +98,11 @@ if __name__ == '__main__':
     rmg2 = RMG(yard, block, -1, idx=1)
     yard.deploy(block, [rmg1, rmg2])
 
-    yard.install_observer(PositionTracer, start =3600 * 20, end =3600 * 24, interval=1)
+    # yard.install_observer(PositionTracer, start =3600 * 20, end =3600 * 24, interval=1)
     yard.install_generator(SimpleBoxGenerator, first_time=0)
 
     yard.start()
-    yard.run_until2(3600 * 24)
+    yard.run_until(3600 * 24)
 
     if yard.observer:
         yard.observer.dump("log")

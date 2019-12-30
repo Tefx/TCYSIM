@@ -1,6 +1,6 @@
 from ...utils.dispatcher import Dispatcher
 from .operation import Operation
-from .op_type import OpType
+from .type import OpType
 
 
 class OpBuilder(Dispatcher):

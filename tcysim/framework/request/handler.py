@@ -2,7 +2,7 @@ from enum import Enum, auto
 
 from ...utils.dispatcher import Dispatcher
 from .request import ReqStatus
-from .req_type import ReqType
+from .type import ReqType
 
 
 class ReqHandler(Dispatcher):

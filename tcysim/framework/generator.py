@@ -1,10 +1,8 @@
 import heapq
-import inspect
 import random
 from enum import IntEnum, auto
 
 from pesim import Process, TIME_FOREVER
-from tcysim.framework.box import Box
 from tcysim.framework.priority import Priority
 
 
@@ -43,6 +41,9 @@ class BoxGenerator(ChainedEventBomb):
         raise NotImplementedError
 
     def new_box(self):
+        raise NotImplementedError
+
+    def retry_time(self, ev):
         raise NotImplementedError
 
     def trigger(self, time):

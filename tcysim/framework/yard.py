@@ -12,9 +12,7 @@ class YardEnv(Environment):
         super(YardEnv, self).__init__()
         
     def pre_ev_hook(self, time):
-        # self.yard.run_until(time, run_env=False)
         self.yard.run_equipments(time)
-
 
 class Yard:
     SpaceAllocator: SpaceAllocator.__class__ = SpaceAllocator
@@ -26,6 +24,7 @@ class Yard:
         self.env = YardEnv(self)
         self.blocks = set()
         self.equipments = set()
+
         self.boxes = set()
 
         self.smgr = self.SpaceAllocator(self)
@@ -68,7 +67,7 @@ class Yard:
         self.env.start()
 
     def submit_request(self, time, request):
-        self.run_until2(time)
+        # self.run_until2(time)
         handler = self.tmgr.submit_request(time, request)
         return handler
 
@@ -78,29 +77,25 @@ class Yard:
         return request.status, time
 
     def alloc(self, time, box):
-        self.run_until2(time)
+        # self.run_until2(time)
         block, loc = self.smgr.alloc_space(box, self.smgr.available_blocks(box))
         return box.alloc(time, block, loc)
 
     def store(self, time, box, lane):
-        self.run_until2(time)
+        # self.run_until2(time)
         req_builder = box.block.req_builder
         request = req_builder(req_builder.ReqType.STORE, time, box, lane)
         return self.submit_request(time, request)
 
     def retrieve(self, time, box, lane):
-        self.run_until2(time)
+        # self.run_until2(time)
         req_builder = box.block.req_builder
         request = req_builder(req_builder.ReqType.RETRIEVE, time, box, lane)
         return self.submit_request(time, request)
 
-    # def run_until(self, time):
-    #     pass
-        # self.env.run_until(time)
-        # self.run_equipments(time)
-
-    def run_until2(self, time):
+    def run_until(self, time):
         self.env.run_until(time)
+        self.run_equipments(time)
 
     def run_equipments(self, time):
         for equipment in self.equipments:

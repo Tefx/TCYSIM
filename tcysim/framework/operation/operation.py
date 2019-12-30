@@ -2,7 +2,7 @@ from contextlib import contextmanager
 from copy import copy
 
 from ..callback import CallBack
-from .step import CallBackStep, EmptyStep, MoverStep, NullStep
+from .step import CallBackStep, EmptyStep, MoverStep
 from tcysim.utils import Paths, V3
 
 

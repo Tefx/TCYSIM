@@ -14,7 +14,6 @@ class Observer(Process):
         raise NotImplementedError
 
     def _process(self):
-        # self.yard.run_until(self.time)
         if self.start <= self.time < self.end:
             self.on_observe()
 

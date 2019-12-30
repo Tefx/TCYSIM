@@ -143,11 +143,9 @@ class Equipment(EquipmentRangeLayout, Process):
         with self.lock_status(self.STATE.WORKING):
             self.current_op = op
             self.time = yield op.finish_time, Priority.OP_FINISH
-            # self.yard.run_until(self.time)
             self.current_op = None
 
     def _process(self):
-        # self.yard.run_until(self.time)
         request = self.next_task
         print("[{:.2f}]<Request/Equipment {}>".format(self.time, self.idx), request, self.local_coord())
         self.next_task = None

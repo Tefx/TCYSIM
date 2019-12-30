@@ -23,6 +23,5 @@ class CallBackManager(Process):
             return TIME_FOREVER, Priority.FOREVER
 
     def _process(self):
-        # self.yard.run_until(self.time)
         callback = heappop(self.queue)
         callback(self.time)
