@@ -1,13 +1,10 @@
-from copy import deepcopy
-
-from tcysim.framework.equipment import Equipment
 from tcysim.libc import CBlock
 from tcysim.utils import V3
 
-from .box import Box
-from .layout import BlockLayout
-from .request import ReqBuilder
+from ..layout import BlockLayout
+from .req_builder import ReqBuilder
 
+from ..equipment import Equipment
 
 class Block(BlockLayout, CBlock):
     ReqBuilder = ReqBuilder
@@ -27,10 +24,10 @@ class Block(BlockLayout, CBlock):
             self.equipments.append(equipment)
             equipment.assign_block(self)
 
-    def box_coord(self, box:Box, equipment:Equipment):
+    def box_coord(self, box, equipment:Equipment):
         return self.cell_coord(box.location, equipment, box.teu)
     
-    def access_coord(self, lane, box:Box, equipment:Equipment):
+    def access_coord(self, lane, box, equipment:Equipment):
         return self.cell_coord_map_to_lane(lane, box.location, equipment, box.teu)
 
     def acquire_stack(self, time, acquirer, *positions):

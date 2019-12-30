@@ -32,9 +32,6 @@ class Mover:
         else:
             self.specs = {"default": specs}
 
-        # self._cache_w0 = self.spec_v ** 2 * (a + d) / 2 / a / d
-        # self._cache_w1 = 2 * self.spec_a * self.spec_d / (self.spec_a + self.spec_d)
-
     def save_state(self):
         self._state_curr_v = self.curr_v
         self._state_curr_a = self.curr_a
@@ -130,11 +127,6 @@ class Mover:
             vx = sqrt(w1 * (distance + v0 * v0 / 2 / a))
             t0 = (vx - v0) / a
             t1 = vx / d
-            # if self.curr_v < 0:
-            #     v0 = -v0
-            #     vx = -vx
-            #     a = -a
-            #     d = -d
             if t0 > 0:
                 motions.append(Motion(st, t0, v0 * dflg, a * dflg, allow_interruption=allow_interruption))
                 st += t0

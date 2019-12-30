@@ -4,7 +4,8 @@ from random import shuffle
 from pesim import Process
 from ..equipment import Equipment
 from ..priority import Priority
-from ..request import ReqPool, ReqStatus
+from ..request import ReqStatus
+from .pool import ReqPool
 
 
 class TaskScheduler(Process):

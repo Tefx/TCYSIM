@@ -1,5 +1,5 @@
 from collections import deque
-from .request import Request, ReqStatus
+from ..request import ReqStatus
 
 
 class ReqPool:

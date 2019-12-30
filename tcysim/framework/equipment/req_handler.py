@@ -1,8 +1,5 @@
-from enum import Enum, auto
-
-from ...utils.dispatcher import Dispatcher
-from .request import ReqStatus
-from .type import ReqType
+from tcysim.utils.dispatcher import Dispatcher
+from ..request import ReqType
 
 
 class ReqHandler(Dispatcher):

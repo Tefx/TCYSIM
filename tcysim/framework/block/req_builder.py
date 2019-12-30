@@ -1,6 +1,5 @@
-from ...utils.dispatcher import Dispatcher
-from .request import Request
-from .type import ReqType
+from tcysim.utils.dispatcher import Dispatcher
+from ..request import Request, ReqType
 
 
 class ReqBuilder(Dispatcher):

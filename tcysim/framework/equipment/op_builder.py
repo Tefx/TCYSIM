@@ -1,6 +1,5 @@
-from ...utils.dispatcher import Dispatcher
-from .operation import Operation
-from .type import OpType
+from tcysim.utils.dispatcher import Dispatcher
+from ..operation import Operation, OpType
 
 
 class OpBuilder(Dispatcher):

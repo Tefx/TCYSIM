@@ -1,4 +1,4 @@
-from tcysim.framework.motion.mover import Mover
+from .mover import Mover
 from tcysim.utils import V3
 from tcysim.utils import Paths
 
