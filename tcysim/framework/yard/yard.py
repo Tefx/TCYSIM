@@ -64,10 +64,10 @@ class Yard:
         request.submit(time, ready)
         return self.add_request(request)
 
-    def query_request_status(self, time, handler):
+    def query_request_state(self, time, handler):
         request = self.get_request(handler)
         time = self.env.run_until(time, proc_next=request.equipment)
-        return request.status, time
+        return request.state, time
 
     def alloc(self, time, box):
         block, loc = self.smgr.alloc_space(box, self.smgr.available_blocks(box))

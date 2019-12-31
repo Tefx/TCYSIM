@@ -12,18 +12,21 @@ from .op_builder import OpBuilder
 from ..scheduler.scheduler import JobScheduler
 
 
-class Equipment(EquipmentRangeLayout, Process):
-    class STATE(Enum):
-        IDLE = auto()
-        WORKING = auto()
-        BLOCKING = auto()
+class EquipmentState(Enum):
+    IDLE = auto()
+    WORKING = auto()
+    BLOCKING = auto()
 
-    GRASP_TIME = 5
-    RELEASE_TIME = 5
+
+class Equipment(EquipmentRangeLayout, Process):
+    STATE = EquipmentState
 
     ReqHandler = ReqHandler
     OpBuilder = OpBuilder
     JobScheduler = JobScheduler
+
+    GRASP_TIME = 5
+    RELEASE_TIME = 5
 
     def __init__(self, yard, components, offset, move_range, rotate=0, init_offset=V3.zero(), **attrs):
         Process.__init__(self, yard.env)
@@ -107,7 +110,7 @@ class Equipment(EquipmentRangeLayout, Process):
                     yield equipment
 
     @contextmanager
-    def lock_status(self, s1, s2=STATE.IDLE):
+    def lock_state(self, s1, s2=STATE.IDLE):
         self.state = s1
         yield
         self.state = s2
@@ -148,7 +151,7 @@ class Equipment(EquipmentRangeLayout, Process):
 
     def perform_op(self, time, op):
         op.commit(self.yard)
-        with self.lock_status(self.STATE.WORKING):
+        with self.lock_state(self.STATE.WORKING):
             self.current_op = op
             self.time = yield op.finish_time, Priority.OP_FINISH
             self.current_op = None

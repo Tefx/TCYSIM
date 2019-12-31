@@ -10,9 +10,9 @@ class OpBuilder(Dispatcher):
         super(OpBuilder, self).__init__()
 
     def build(self, op: Operation):
-        op.extend(self.dispatch("build", op.op_type, op))
+        op.extend(self.dispatch(op.op_type, "_", op))
 
-    @Dispatcher.on("build", OpType.STORE)
+    @Dispatcher.on(OpType.STORE)
     def build_store(self, op: Operation):
         request = op.request
         box = request.box
@@ -31,7 +31,7 @@ class OpBuilder(Dispatcher):
         with op.allow_interruption(self.equipment):
             yield from self.idle_steps(op, op.container_loc)
 
-    @Dispatcher.on("build", OpType.RETRIEVE)
+    @Dispatcher.on(OpType.RETRIEVE)
     def build_retrieve(self, op: Operation):
         request = op.request
         box = request.box
@@ -50,8 +50,8 @@ class OpBuilder(Dispatcher):
         with op.allow_interruption(self.equipment):
             yield from self.idle_steps(op, op.access_loc)
 
-    @Dispatcher.on("build", OpType.RESHUFFLE)
-    def build_reshuffle(self, op: Operation):
+    @Dispatcher.on(OpType.RELOCATE)
+    def build_relocate(self, op: Operation):
         box = op.box
         dst_loc = op.new_loc
         op.src_loc = self.equipment.coord_from_box(box.current_coord(self.equipment))
@@ -69,7 +69,7 @@ class OpBuilder(Dispatcher):
             with op.allow_interruption(self.equipment):
                 yield from self.idle_steps(op, op.dst_loc)
 
-    @Dispatcher.on("build", OpType.ADJUST)
+    @Dispatcher.on(OpType.MOVE)
     def build_adjust(self, op: Operation):
         other = op.request.blocking_request.equipment
         op.dst_loc = op.request.new_loc
@@ -98,11 +98,11 @@ class OpBuilder(Dispatcher):
 
     @classmethod
     def ReshuffleOp(cls, request, box, new_loc, reset):
-        return Operation(cls.OpType.RESHUFFLE, request, box=box, new_loc=new_loc, require_reset=reset)
+        return Operation(cls.OpType.RELOCATE, request, box=box, new_loc=new_loc, require_reset=reset)
 
     @classmethod
     def AdjustOp(cls, request):
-        return Operation(cls.OpType.ADJUST, request)
+        return Operation(cls.OpType.MOVE, request)
 
     def move_steps(self, op, src_loc, dst_loc, load=False):
         raise NotImplementedError

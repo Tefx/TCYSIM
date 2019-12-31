@@ -1,2 +1,2 @@
-from .request import Request, ReqStatus
+from .request import Request, ReqState
 from .type import ReqType

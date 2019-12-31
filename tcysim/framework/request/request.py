@@ -4,7 +4,7 @@ from enum import IntEnum, auto
 from ..callback import CallBack
 
 
-class ReqStatus(IntEnum):
+class ReqState(IntEnum):
     INIT = auto()
     READY = auto()
     STARTED = auto()
@@ -16,6 +16,8 @@ class ReqStatus(IntEnum):
 
 
 class Request:
+    STATE = ReqState
+
     def __init__(self, req_type, time, box=None, equipment=None, signals=None, block=None, **attrs):
         self.req_type = req_type
         self.id = -1
@@ -24,7 +26,7 @@ class Request:
         self.start_time = -1
         self.finish_time = -1
         self.signals = dict() if signals is None else signals
-        self.status = ReqStatus.INIT
+        self.state = ReqState.INIT
         self.box = box
         self.equipment = equipment
         if block is not None:
@@ -49,14 +51,14 @@ class Request:
         self.signals[name] = CallBack(callback, *args, **kwargs)
 
     def ready(self, time):
-        if self.status == ReqStatus.REJECTED:
-            self.status = ReqStatus.RESUME_READY
+        if self.state == ReqState.REJECTED:
+            self.state = ReqState.RESUME_READY
         else:
-            self.status = ReqStatus.READY
+            self.state = ReqState.READY
         self.ready_time = time
 
     def is_ready(self):
-        return self.status == ReqStatus.READY or self.status == ReqStatus.RESUME_READY
+        return self.state == ReqState.READY or self.state == ReqState.RESUME_READY
 
     def submit(self, time, ready=True):
         if ready:
@@ -64,10 +66,10 @@ class Request:
         self.block.req_dispatcher.submit_request(time, self)
 
     def start_or_resume(self, time):
-        if self.status == ReqStatus.REJECTED:
-            self.status = ReqStatus.RESUMED
+        if self.state == ReqState.REJECTED:
+            self.state = ReqState.RESUMED
         else:
-            self.status = ReqStatus.STARTED
+            self.state = ReqState.STARTED
         self.start_time = time
 
     def acquire_stack(self, time, *locations):
@@ -83,18 +85,18 @@ class Request:
         return self.block.req_builder.ReqType
 
     def on_reject(self, time):
-        self.status = ReqStatus.REJECTED
+        self.state = ReqState.REJECTED
         self.start_time = -1
         self.finish_time = -1
         self.reject_times += 1
         self.submit(time, ready=False)
 
     def sync(self, time):
-        self.status = ReqStatus.SYNCED
+        self.state = ReqState.SYNCED
 
     def finish_or_fail(self, time):
-        if self.status != ReqStatus.REJECTED:
-            self.status = ReqStatus.FINISHED
+        if self.state != ReqState.REJECTED:
+            self.state = ReqState.FINISHED
             self.finish_time = time
         else:
             for pos in self.acquired_positions:
@@ -113,4 +115,4 @@ class Request:
             self.ready(time)
 
     def __repr__(self):
-        return "[{}/{}]({}/AT:{:.2f})".format(self.req_type, self.status.name, self.equipment, self.arrival_time)
+        return "[{}/{}]({}/AT:{:.2f})".format(self.req_type, self.state.name, self.equipment, self.arrival_time)

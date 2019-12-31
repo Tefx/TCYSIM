@@ -11,9 +11,9 @@ class ReqBuilder(Dispatcher):
         self.yard = block.yard
 
     def __call__(self, req_type, *args, **kwargs):
-        return self.dispatch("gen", req_type, *args, **kwargs)
+        return self.dispatch(req_type, "_", *args, **kwargs)
 
-    @Dispatcher.on("gen", ReqType.STORE)
+    @Dispatcher.on(ReqType.STORE)
     def gen_store_request(self, time, box, lane):
         request = Request(self.ReqType.STORE, time, box, lane=lane)
         request.link_signal("start_or_resume", self.on_store_start, request)
@@ -22,7 +22,7 @@ class ReqBuilder(Dispatcher):
         request.link_signal("finish_or_fail", self.on_store_finish_or_fail, request)
         return request
 
-    @Dispatcher.on("gen", ReqType.RETRIEVE)
+    @Dispatcher.on(ReqType.RETRIEVE)
     def gen_retrieve_request(self, time, box, lane):
         request = Request(self.ReqType.RETRIEVE, time, box, lane=lane)
         request.link_signal("start_or_resume", self.on_retrieve_start, request)
@@ -31,7 +31,7 @@ class ReqBuilder(Dispatcher):
         request.link_signal("finish_or_fail", self.on_retrieve_finish_or_fail, request)
         return request
 
-    @Dispatcher.on("gen", ReqType.ADJUST)
+    @Dispatcher.on(ReqType.ADJUST)
     def gen_adjust_request(self, time, equipment, new_loc, blocking_request):
         request = Request(self.ReqType.ADJUST, time,
                           equipment=equipment,

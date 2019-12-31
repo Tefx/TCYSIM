@@ -46,11 +46,11 @@ cdef class CBox:
     def retrieve(self, int time):
         box_retrieve(&self.c, time)
 
-    def reshuffle_retrieve(self, time, dst_loc):
+    def relocate_retrieve(self, time, dst_loc):
         cdef CellIdx new_loc[3];
         new_loc[:] = dst_loc
         self.previous_loc = self.location
-        box_reshuffle_retrieve(&self.c, new_loc)
+        box_relocate_retrieve(&self.c, new_loc)
 
     def reshuffle_store(self, time):
         self.store(-1)
@@ -122,10 +122,10 @@ cdef class CBox:
         box_store_position(&self.c, loc)
         return V3(loc[0], loc[1], loc[2])
 
-    def reshuffle_position(self, new_loc):
+    def relocate_position(self, new_loc):
         cdef CellIdx loc[3]
         loc[:] = new_loc
-        box_reshuffle_position(&self.c, loc)
+        box_relocate_position(&self.c, loc)
         return V3(loc[0], loc[1], loc[2])
 
     def box_above(self):

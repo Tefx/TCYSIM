@@ -12,7 +12,7 @@ os.environ['PATH'] = "../libtcy/cmake-build-debug" + os.pathsep + os.environ['PA
 from tcysim.framework import Lane, Component, Spec, Yard, Box
 from tcysim.framework.allocator import SpaceAllocator
 from tcysim.framework.scheduler import JobScheduler, ReqDispatcher
-from tcysim.framework.request import ReqStatus, Request
+from tcysim.framework.request import ReqState, Request
 
 from tcysim.implementation.block.stacking_block import StackingBlock
 from tcysim.implementation.equipment.crane import Crane
@@ -38,7 +38,7 @@ class CraneJobScheduler(JobScheduler):
     def rank_task(self, request: Request):
         if request.req_type == request.TYPE.ADJUST:
             return 0, request.ready_time
-        elif request.status == ReqStatus.RESUME_READY:
+        elif request.state == ReqState.RESUME_READY:
             return 1, -request.ready_time
         else:
             return 2, request.ready_time
@@ -121,12 +121,12 @@ if __name__ == '__main__':
     rmg2 = RMG(yard, block, -1, idx=1)
     yard.deploy(block, [rmg1, rmg2])
 
-    yard.roles.tracer = PositionTracer(yard, start=3600*20, end=3600*24, interval=1)
+    # yard.roles.tracer = PositionTracer(yard, start=3600*20, end=3600*24, interval=1)
     yard.roles.sim_driver = BoxGenerator(yard)
     yard.roles.sim_driver.install_or_add(SimpleBoxBomb(first_time=0))
 
     yard.start()
-    yard.run_until(3600 * 24)
+    yard.run_until(3600 * 24 * 7)
 
     if "tracer" in yard.roles:
         yard.roles.tracer.dump("log")
@@ -136,7 +136,7 @@ if __name__ == '__main__':
     print("{:<12}: {}".format("TOTAL (NA)", len([req for req in yard.requests if req.req_type != req.TYPE.ADJUST])))
     print("{:<12}: {}".format("TOTAL (A)", len(
         [req for req in yard.requests if req.req_type == req.TYPE.ADJUST and req.finish_time > req.start_time])))
-    for req_status in ReqStatus:
+    for req_status in ReqState:
         print("{:<12}: {}".format(req_status.name, len([req for req in yard.requests if req.status == req_status])))
 
     # for req in yard.requests:

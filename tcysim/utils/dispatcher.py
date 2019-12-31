@@ -9,11 +9,11 @@ class Dispatcher:
                     self._methods[method] = {}
                 self._methods[method][item._dispatch_category] = item
 
-    def dispatch(self, method, category, *args, **kwargs):
+    def dispatch(self, category, method="_", *args, **kwargs):
         return self._methods[method][category](*args, **kwargs)
 
     @staticmethod
-    def on(method, category):
+    def on(category, method="_"):
         def wrapper(func):
             setattr(func, "_dispatch_category", category)
             setattr(func, "_dispatch_method", method)

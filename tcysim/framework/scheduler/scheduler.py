@@ -1,6 +1,6 @@
 from pesim import Process
 from ..priority import Priority
-from ..request import ReqStatus
+from ..request import ReqState
 from .pool import ReqPool
 
 
@@ -21,7 +21,7 @@ class ReqDispatcher:
 
     def refresh_pool(self, time):
         for request in self.pool.available_requests():
-            if request.status >= ReqStatus.READY and request.equipment is None:
+            if request.state >= ReqState.READY and request.equipment is None:
                 if not request.equipment:
                     request.equipment = self.choose_equipment(time, request)
                 if request.equipment:
@@ -42,6 +42,7 @@ class ReqDispatcher:
 class JobScheduler(Process):
     def __init__(self, equipment):
         self.equipment = equipment
+        self.pending = False
         super(JobScheduler, self).__init__(equipment.yard.env)
 
     def choose_task(self, time, tasks):
@@ -63,13 +64,16 @@ class JobScheduler(Process):
         self.on_schedule(self.time)
 
     def schedule(self, time):
+        self.pending = True
         self.activate(time, Priority.SCHEDULE)
 
     def on_schedule(self, time):
-        avail_tasks = self.available_requests(time)
-        request = self.choose_task(time, avail_tasks)
-        if request is not None:
-            request.equipment = self.equipment
-            request.block.req_dispatcher.pop_request(request)
-            setattr(request, "time", time)
-            self.equipment.submit_task(request)
+        if self.pending:
+            avail_tasks = self.available_requests(time)
+            request = self.choose_task(time, avail_tasks)
+            if request is not None:
+                request.equipment = self.equipment
+                request.block.req_dispatcher.pop_request(request)
+                setattr(request, "time", time)
+                self.equipment.submit_task(request)
+            self.pending = False

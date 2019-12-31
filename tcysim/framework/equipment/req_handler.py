@@ -11,16 +11,16 @@ class ReqHandler(Dispatcher):
         self.yard = equipment.yard
 
     def handle(self, time, request):
-        yield from self.dispatch("handle", request.req_type, time, request)
+        yield from self.dispatch(request.req_type, "_", time, request)
 
-    @Dispatcher.on("handle", ReqType.STORE)
+    @Dispatcher.on(ReqType.STORE)
     def on_request_store(self, time, request):
         if request.acquire_stack(time, request.box.location):
             yield self.equipment.OpBuilder.StoreOp(request)
         else:
             yield None
 
-    @Dispatcher.on("handle", ReqType.RETRIEVE)
+    @Dispatcher.on(ReqType.RETRIEVE)
     def on_request_retrieve(self, time, request):
         yield from self.reshuffle_operations(time, request)
         if request.acquire_stack(time, request.box.location):
@@ -46,7 +46,7 @@ class ReqHandler(Dispatcher):
         original_request.link_signal("rsf_finish_or_fail", self.on_reshuffle_finish_or_fail, box=box, dst_loc=new_loc)
         return self.equipment.op_builder.ReshuffleOp(original_request, box, new_loc, reset=False)
 
-    @Dispatcher.on("handle", ReqType.ADJUST)
+    @Dispatcher.on(ReqType.ADJUST)
     def on_request_adjust(self, time, request):
         yield self.equipment.OpBuilder.AdjustOp(request)
 
@@ -64,7 +64,7 @@ class ReqHandler(Dispatcher):
 
     def on_reshuffle_start(self, time, box, dst_loc):
         box.state = box.STATE_RESHUFFLING
-        box.reshuffle_retrieve(time, dst_loc)
+        box.relocate_retrieve(time, dst_loc)
         pass
 
     def on_reshuffle_finish_or_fail(self, time, box, dst_loc):

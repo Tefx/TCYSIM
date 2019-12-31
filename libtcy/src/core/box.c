@@ -51,10 +51,6 @@ static inline void _box_adjust_usage(Block *blk, Box *box, int delta, bool occup
 int _box_swap(Box *box, int along, bool sink) {
     Block *blk = box->block;
     Box *box2 = _blk_neighbor_box(blk, box, along, TRUE);
-    assert(box2);
-//    printf("swap [%s/%d] V(%d.00, %d.00, %d.00) <=> [%s/%d] V(%d.00, %d.00, %d.00)\n",
-//            box->id, box->state, box->loc[0], box->loc[1], box->loc[2],
-//            box2->id, box2->state, box2->loc[0], box2->loc[1], box2->loc[2]);
 
     _box_adjust_usage(blk, box, -1, TRUE);
     _box_adjust_usage(blk, box2, -1, TRUE);
@@ -88,8 +84,6 @@ int _box_swap(Box *box, int along, bool sink) {
     else
         _box_adjust_usage(blk, box, 1, FALSE);
 
-//    printf("/swap\n");
-
     return SUCCEED;
 }
 
@@ -100,9 +94,6 @@ static inline int _box_sink(Box *box) {
     Box *box2;
     while (box->loc[along] > 0) {
         box2 = _blk_neighbor_box(blk, box, along, FALSE);
-//        printf("%s (%d, %d, %d)/%d <=> %s (%d, %d, %d)\n",
-//                box2->id, box2->loc[0], box2->loc[1], box2->loc[2], box2->state,
-//                box->id, box->loc[0], box->loc[1], box->loc[2]);
         if (box2->state < BOX_STATE_STORING || box2->state == BOX_STATE_RESHUFFLING)
             _box_swap(box2, along, TRUE);
         else
@@ -128,7 +119,6 @@ static inline int _box_float(Box *box) {
 
 
 int box_alloc(Box *box, Time time) {
-//    printf("alloc\n");
     struct Block *blk = box->block;
     CellIdx *loc = box->loc;
 
@@ -197,22 +187,16 @@ void box_store_position(Box *box, CellIdx *idx) {
 }
 
 int box_store(Box *box, Time time) {
-//    printf("store %s (%d, %d, %d)\n", box->id, box->loc[0], box->loc[1], box->loc[2]);
     Block *blk = box->block;
 
     if (time >= 0 && box->state != BOX_STATE_RESHUFFLING)
         box->store_time = time;
 
-//    printf("store 1\n");
     _box_adjust_usage(blk, box, 1, FALSE);
 
-//    printf("store 2\n");
     if (blk->stacking_axis >= 0)
         _box_sink(box);
 
-//    printf("store 3\n");
-//    if (time >= 0)
-//        box->state = BOX_STATE_STORING;
     box->state = BOX_STATE_STORED;
     return SUCCEED;
 }
@@ -234,17 +218,15 @@ int box_retrieve(Box *box, Time time) {
 
     if (time >= 0 && box->state != BOX_STATE_RESHUFFLING)
         box->state = BOX_STATE_RETRIEVING;
-//        box->state = BOX_STATE_RETRIEVED;
     return SUCCEED;
 }
 
-void box_reshuffle_position(Box* box, CellIdx* new_loc) {
+void box_relocate_position(Box* box, CellIdx* new_loc) {
     _blk_top_of_stack(box->block, new_loc);
 }
 
-int box_reshuffle(Box *box, CellIdx *new_loc) {
+int box_relocate(Box *box, CellIdx *new_loc) {
     int res;
-//    box->state = BOX_STATE_RESHUFFLING;
     box->state = BOX_STATE_STORED;
     if ((res = box_retrieve(box, -1)) != SUCCEED)
         goto exit;
@@ -260,7 +242,7 @@ int box_reshuffle(Box *box, CellIdx *new_loc) {
     return res;
 }
 
-int box_reshuffle_retrieve(Box* box, CellIdx *new_loc){
+int box_relocate_retrieve(Box* box, CellIdx *new_loc){
     int res;
     if ((res = box_retrieve(box, -1)) != SUCCEED)
         goto exit;

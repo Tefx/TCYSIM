@@ -12,13 +12,13 @@ class BoxEventType(Enum):
 
 
 class BoxEventHandler(EventHandler):
-    @Dispatcher.on("handle", BoxEventType.ALLOC)
+    @Dispatcher.on(BoxEventType.ALLOC)
     def on_alloc(self, yard, time, box):
         if not yard.alloc(time, box):
             return False
         return True
 
-    @Dispatcher.on("handle", BoxEventType.STORE)
+    @Dispatcher.on(BoxEventType.STORE)
     def on_store(self, yard, time, box):
         if box.state < box.STATE_ALLOCATED:
             return False
@@ -26,7 +26,7 @@ class BoxEventHandler(EventHandler):
         yard.store(time, box, lane)
         return True
 
-    @Dispatcher.on("handle", BoxEventType.RETRIEVE)
+    @Dispatcher.on(BoxEventType.RETRIEVE)
     def on_retrieve(self, yard, time, box):
         if box.state < box.STATE_STORING:
             return False
