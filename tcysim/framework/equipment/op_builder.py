@@ -1,9 +1,9 @@
 from tcysim.utils.dispatcher import Dispatcher
-from ..operation import Operation, OpType
+from ..operation import Operation, OpType as _OpType
 
 
 class OpBuilder(Dispatcher):
-    OpType = OpType
+    OpType = _OpType
 
     def __init__(self, equipment):
         self.equipment = equipment

@@ -57,11 +57,17 @@ class StackingBlock(Block):
         h_max = max((self.count(*idx, include_occupied=False) for idx in product(*rs)), default=0)
         return self.stack_height(h_max)
 
+    def bay_is_valid(self, box, i):
+        return self.count(i, -1, -1) < self.shape.z * self.shape.y - self.shape.z
+
+    def stack_is_valid(self, box, i, j):
+        k = self.count(i, j)
+        return k < self.shape.z and box.position_is_valid(self, i, j, k)
+
     def available_cells(self, box):
         shape = self.shape
         for i in range(shape.x):
-            if self.count(i, -1, -1) < shape.z * shape.y - shape.z:
+            if self.bay_is_valid(box, i):
                 for j in range(shape.y):
-                    k = self.count(i, j)
-                    if k < shape.z and box.position_is_valid(self, i, j, k):
-                        yield V3(i, j, k)
+                    if self.stack_is_valid(box, i, j):
+                        yield V3(i, j, self.count(i, j))

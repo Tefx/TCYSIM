@@ -1,9 +1,11 @@
+from enum import Enum, auto
+
 from tcysim.utils.dispatcher import Dispatcher
-from ..request import Request, ReqType
+from ..request import Request, ReqType as _ReqType
 
 
 class ReqBuilder(Dispatcher):
-    ReqType = ReqType
+    ReqType = _ReqType
 
     def __init__(self, block):
         super(ReqBuilder, self).__init__()
@@ -87,3 +89,4 @@ class ReqBuilder(Dispatcher):
 
     def on_adjust_finish_or_fail(self, time, request):
         pass
+
