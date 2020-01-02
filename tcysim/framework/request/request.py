@@ -1,6 +1,7 @@
 from copy import copy
 from enum import IntEnum, auto
 
+from .type import ReqType
 from ..callback import CallBack
 
 
@@ -47,6 +48,9 @@ class Request:
     def __getattr__(self, item):
         return self.attrs[item]
 
+    def has_attr(self, item):
+        return item in self.attrs
+
     def link_signal(self, name, callback, *args, **kwargs):
         self.signals[name] = CallBack(callback, *args, **kwargs)
 
@@ -82,7 +86,7 @@ class Request:
 
     @property
     def TYPE(self):
-        return self.block.req_builder.ReqType
+        return ReqType
 
     def on_reject(self, time):
         self.state = ReqState.REJECTED

@@ -1,4 +1,5 @@
 from pesim import Environment
+from ..request import ReqType, Request
 from ..roles.roles import Roles
 from ..callback import CallBackManager
 from tcysim.framework.allocator.allocator import SpaceAllocator
@@ -74,13 +75,11 @@ class Yard:
         return box.alloc(time, block, loc)
 
     def store(self, time, box, lane):
-        req_builder = box.block.req_builder
-        request = req_builder(req_builder.ReqType.STORE, time, box, lane)
+        request = Request(ReqType.STORE, time, box, lane=lane)
         return self.submit_request(time, request)
 
     def retrieve(self, time, box, lane):
-        req_builder = box.block.req_builder
-        request = req_builder(req_builder.ReqType.RETRIEVE, time, box, lane)
+        request = Request(ReqType.RETRIEVE, time, box, lane=lane)
         return self.submit_request(time, request)
 
     def run_until(self, time):

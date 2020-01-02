@@ -1,5 +1,5 @@
 from tcysim.utils.dispatcher import Dispatcher
-from ..request import ReqType
+from ..request import Request, ReqType
 
 
 class ReqHandler(Dispatcher):
@@ -15,6 +15,10 @@ class ReqHandler(Dispatcher):
 
     @Dispatcher.on(ReqType.STORE)
     def on_request_store(self, time, request):
+        request.link_signal("start_or_resume", self.on_store_start, request)
+        request.link_signal("off_agv", self.on_store_off_agv, request)
+        request.link_signal("in_block", self.on_store_in_block, request)
+        request.link_signal("finish_or_fail", self.on_store_finish_or_fail, request)
         if request.acquire_stack(time, request.box.location):
             yield self.equipment.OpBuilder.StoreOp(request)
         else:
@@ -23,6 +27,10 @@ class ReqHandler(Dispatcher):
     @Dispatcher.on(ReqType.RETRIEVE)
     def on_request_retrieve(self, time, request):
         yield from self.relocate_operations(time, request)
+        request.link_signal("start_or_resume", self.on_retrieve_start, request)
+        request.link_signal("off_block", self.on_retrieve_leaving_block, request)
+        request.link_signal("on_agv", self.on_retrieve_on_agv, request)
+        request.link_signal("finish_or_fail", self.on_retrieve_finish_or_fail, request)
         if request.acquire_stack(time, request.box.location):
             yield self.equipment.op_builder.RetrieveOp(request)
         else:
@@ -46,6 +54,8 @@ class ReqHandler(Dispatcher):
 
     @Dispatcher.on(ReqType.ADJUST)
     def on_request_adjust(self, time, request):
+        request.link_signal("start_or_resume", self.on_adjust_start, request)
+        request.link_signal("finish_or_fail", self.on_adjust_finish_or_fail, request)
         yield self.equipment.OpBuilder.AdjustOp(request)
 
     def on_reject(self, time, request, last_op):
@@ -53,12 +63,60 @@ class ReqHandler(Dispatcher):
         if last_op is None:
             pass
         elif last_op.itf_other is not None:
-            req_builder = last_op.itf_other.blocks[0].req_builder
-            req2 = req_builder(req_builder.ReqType.ADJUST,
-                               time, last_op.itf_other, last_op.itf_loc, blocking_request=request)
+            req2 = Request(self.ReqType.ADJUST, time,
+                              equipment=last_op.itf_other,
+                              src_loc=last_op.itf_other.local_coord(),
+                              new_loc=last_op.itf_loc,
+                              blocking_request=request)
             self.yard.submit_request(time, req2, ready=True)
         else:
             raise NotImplementedError
+
+    def on_store_start(self, time, request):
+        self.yard.boxes.add(request.box)
+        pass
+
+    def on_store_finish_or_fail(self, time, request):
+        pass
+
+    def on_store_off_agv(self, time, request):
+        box = request.box
+        box.state = box.STATE_STORING
+        request.sync(time)
+        box.equipment = request.equipment
+
+    def on_store_in_block(self, time, request):
+        box = request.box
+        box.store(time)
+        box.block.release_stack(time, box.location)
+        box.equipment = None
+
+    def on_retrieve_start(self, time, request):
+        pass
+
+    def on_retrieve_finish_or_fail(self, time, request):
+        self.yard.boxes.remove(request.box)
+
+    def on_retrieve_leaving_block(self, time, request):
+        box = request.box
+        box.state = request.box.STATE_RETRIEVING
+        box.retrieve(time)
+        box.block.release_stack(time, box.location)
+        box.equipment = request.equipment
+
+    def on_retrieve_on_agv(self, time, request):
+        request.sync(time)
+        box = request.box
+        box.state = request.box.STATE_RETRIEVED
+        box.equipment = None
+
+    def on_adjust_start(self, time, request):
+        blocking_req = request.blocking_request
+        blocking_req.ready(time)
+        blocking_req.equipment.job_scheduler.schedule(time)
+
+    def on_adjust_finish_or_fail(self, time, request):
+        pass
 
     def on_relocate_start(self, time, box, dst_loc):
         box.state = box.STATE_RESHUFFLING
