@@ -26,7 +26,7 @@ class ReqHandler(Dispatcher):
 
     @Dispatcher.on(ReqType.RETRIEVE)
     def on_request_retrieve(self, time, request):
-        yield from self.relocate_operations(time, request)
+        yield from self.reshuffle_operations(time, request)
         request.link_signal("start_or_resume", self.on_retrieve_start, request)
         request.link_signal("off_block", self.on_retrieve_leaving_block, request)
         request.link_signal("on_agv", self.on_retrieve_on_agv, request)
@@ -36,21 +36,31 @@ class ReqHandler(Dispatcher):
         else:
             yield None
 
-    def relocate_operations(self, time, request):
+    @Dispatcher.on(ReqType.RELOCATE)
+    def on_request_relocate(self, time, request):
+        box = request.box
+        if request.acquire_stack(time, box.location, request.new_loc):
+            yield self.gen_relocate_op(time, box, request.new_loc, request)
+        else:
+            yield None
+
+    def gen_relocate_op(self, time, box, new_loc, request):
+        request.link_signal("rlct_start_or_resume", self.on_relocate_start, box=box, dst_loc=new_loc)
+        request.link_signal("rlct_pick_up", self.on_relocate_pickup, box=box, dst_loc=new_loc)
+        request.link_signal("rlct_put_down", self.on_relocate_putdown, box=box, dst_loc=new_loc)
+        request.link_signal("rlct_finish_or_fail", self.on_relocate_finish_or_fail, box=box, dst_loc=new_loc)
+        return self.equipment.op_builder.RelocateOp(request, box, new_loc, reset=False)
+
+    def reshuffle_operations(self, time, request):
         box = request.box
         request.rsf_count = 0
         for above_box in box.box_above():
             new_loc = self.equipment.yard.smgr.slot_for_relocation(above_box)
-            yield self.gen_relocate_op(time, above_box, new_loc, request)
-
-    def gen_relocate_op(self, time, box, new_loc, original_request):
-        if original_request.acquire_stack(time, box.location, new_loc):
-            original_request.rsf_count += 1
-            original_request.link_signal("rlct_start_or_resume", self.on_relocate_start, box=box, dst_loc=new_loc)
-            original_request.link_signal("rlct_pick_up", self.on_relocate_pickup, box=box, dst_loc=new_loc)
-            original_request.link_signal("rlct_put_down", self.on_relocate_putdown, box=box, dst_loc=new_loc)
-            original_request.link_signal("rlct_finish_or_fail", self.on_relocate_finish_or_fail, box=box, dst_loc=new_loc)
-            return self.equipment.op_builder.ReshuffleOp(original_request, box, new_loc, reset=False)
+            if request.acquire_stack(time, above_box.location, new_loc):
+                request.rsf_count += 1
+                yield self.gen_relocate_op(time, above_box, new_loc, request)
+            else:
+                yield None
 
     @Dispatcher.on(ReqType.ADJUST)
     def on_request_adjust(self, time, request):
@@ -64,10 +74,10 @@ class ReqHandler(Dispatcher):
             pass
         elif last_op.itf_other is not None:
             req2 = Request(self.ReqType.ADJUST, time,
-                              equipment=last_op.itf_other,
-                              src_loc=last_op.itf_other.local_coord(),
-                              new_loc=last_op.itf_loc,
-                              blocking_request=request)
+                           equipment=last_op.itf_other,
+                           src_loc=last_op.itf_other.local_coord(),
+                           new_loc=last_op.itf_loc,
+                           blocking_request=request)
             self.yard.submit_request(time, req2, ready=True)
         else:
             raise NotImplementedError

@@ -97,7 +97,7 @@ class OpBuilder(Dispatcher):
         return Operation(cls.OpType.RETRIEVE, request)
 
     @classmethod
-    def ReshuffleOp(cls, request, box, new_loc, reset):
+    def RelocateOp(cls, request, box, new_loc, reset):
         return Operation(cls.OpType.RELOCATE, request, box=box, new_loc=new_loc, require_reset=reset)
 
     @classmethod

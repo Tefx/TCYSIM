@@ -5,3 +5,4 @@ class ReqType(Enum):
     STORE = auto()
     RETRIEVE = auto()
     ADJUST = auto()
+    RELOCATE = auto()

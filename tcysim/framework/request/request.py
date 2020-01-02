@@ -43,13 +43,7 @@ class Request:
         self.acquire_fails = set()
         self.acquired_positions = []
         self.ops = []
-        self.attrs = copy(attrs)
-
-    def __getattr__(self, item):
-        return self.attrs[item]
-
-    def has_attr(self, item):
-        return item in self.attrs
+        self.__dict__.update(attrs)
 
     def link_signal(self, name, callback, *args, **kwargs):
         self.signals[name] = CallBack(callback, *args, **kwargs)
