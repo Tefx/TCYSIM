@@ -27,7 +27,12 @@ from tcysim.utils import V3, TEU
 
 class MultiCraneReqDispatcher(ReqDispatcher):
     def choose_equipment(self, time, request):
-        idx = request.box.location[0] * len(self.block.equipments) // self.block.bays
+        if request.req_type == request.TYPE.STORE and request.lane.name < 5:
+            idx = 0
+        elif request.req_type == request.TYPE.RELOCATE:
+            idx = request.new_loc[0] * len(self.block.equipments) // self.block.bays
+        else:
+            idx = request.box.location[0] * len(self.block.equipments) // self.block.bays
         for equipment in self.block.equipments:
             if equipment.idx == idx:
                 return equipment
@@ -63,30 +68,54 @@ class Ph2ReqHandler(ReqHandler):
             dst_loc = self.yard.smgr.slot_for_relocation(box, start_bay=start_bay, finish_bay=0)
             assert dst_loc is not None
             if request.acquire_stack(time, box.location, dst_loc):
-                yield self.gen_relocate_op(time, request.box, dst_loc, request, ph2=True)
+                yield self.gen_relocate_op(time, request.box, dst_loc, request, reset=False, ph2=True)
             else:
                 yield None
         else:
-            request.link_signal("start_or_resume", self.on_retrieve_start, request)
-            request.link_signal("off_block", self.on_retrieve_leaving_block, request)
-            request.link_signal("on_agv", self.on_retrieve_on_agv, request)
-            request.link_signal("finish_or_fail", self.on_retrieve_finish_or_fail, request)
             yield from super(Ph2ReqHandler, self).on_request_retrieve(self, time, request)
 
-    def gen_relocate_op(self, time, box, new_loc, request, ph2=False):
+    @Dispatcher.on(ReqType.STORE)
+    def on_request_store(self, time, request):
+        box = request.box
+        block = request.block
+        if self.equipment.idx == 0 and box.location.x >= block.bays // 2:
+            start_bay = request.block.bays // 2 - 1
+            dst_loc = self.yard.smgr.slot_for_relocation(box, start_bay=start_bay, finish_bay=0)
+            if request.acquire_stack(time, dst_loc):
+                request.ph2 = True
+                box.final_loc = box.location
+                box.realloc(time, dst_loc)
+                request.link_signal("start_or_resume", self.on_store_start, request)
+                request.link_signal("off_agv", self.on_store_off_agv, request)
+                request.link_signal("in_block", self.on_store_in_block, request)
+                request.link_signal("finish_or_fail", self.on_store_finish_or_fail, request)
+                yield self.equipment.OpBuilder.StoreOp(request)
+            else:
+                yield None
+        else:
+            yield from super(Ph2ReqHandler, self).on_request_store(self, time, request)
+
+    def gen_relocate_op(self, time, box, new_loc, request, reset, ph2=False):
         request.link_signal("rlct_start_or_resume", self.on_relocate_start, box=box, dst_loc=new_loc)
         request.link_signal("rlct_pick_up", self.on_relocate_pickup, box=box, dst_loc=new_loc)
         request.link_signal("rlct_put_down", self.on_relocate_putdown, box=box, dst_loc=new_loc,
                             original_request=request if ph2 else None)
         request.link_signal("rlct_finish_or_fail", self.on_relocate_finish_or_fail, box=box, dst_loc=new_loc)
-        return self.equipment.op_builder.RelocateOp(request, box, new_loc, reset=False)
+        return self.equipment.op_builder.RelocateOp(request, box, new_loc, reset=reset)
 
     def on_relocate_putdown(self, time, box, dst_loc, original_request=None):
         if original_request:
-            if original_request.req_type == ReqType.RETRIEVE and hasattr(original_request, "ph2"):
+            if original_request.req_type == ReqType.RETRIEVE and getattr(original_request, "ph2", True):
                 req2 = Request(self.ReqType.RETRIEVE, time, box, lane=original_request.lane)
                 self.yard.submit_request(time, req2)
         super(Ph2ReqHandler, self).on_relocate_putdown(time, box, dst_loc)
+
+    def on_store_in_block(self, time, request):
+        if getattr(request, "ph2", False):
+            box = request.box
+            req2 = Request(self.ReqType.RELOCATE, time, box, new_loc=box.final_loc, ph2=True)
+            self.yard.submit_request(time, req2)
+        super(Ph2ReqHandler, self).on_store_in_block(time, request)
 
 
 class RMG(Crane):
