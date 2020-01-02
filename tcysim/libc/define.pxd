@@ -18,7 +18,7 @@ cdef extern from "define.h":
         BOX_STATE_ALLOCATED = 1
         BOX_STATE_STORING = 2
         BOX_STATE_STORED = 3
-        BOX_STATE_RESHUFFLING = 4
+        BOX_STATE_RELOCATING = 4
         BOX_STATE_RETRIEVING = 5
         BOX_STATE_RETRIEVED = 6
 
@@ -60,6 +60,7 @@ cdef extern from "box.h":
     void box_init(Box *box, char *box_id, BoxSize size)
     void box_destroy(Box *box)
     int box_alloc(Box *box, Time time)
+    int box_realloc(Box *box, Time time, CellIdx *new_loc)
     int box_store(Box *box, Time time)
     int box_retrieve(Box *box, Time time)
     bool box_position_is_valid(Box* box, Block* blk, CellIdx * loc)

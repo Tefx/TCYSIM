@@ -1,5 +1,6 @@
-from tcysim.libc import CBox
+from tcysim.libc import CBox, CBoxState
 
+BoxState = CBoxState
 
 class Box(CBox):
-    pass
+    STATE = BoxState

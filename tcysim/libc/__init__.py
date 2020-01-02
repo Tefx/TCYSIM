@@ -1,2 +1,2 @@
-from .box import CBox
+from .box import CBox, CBoxState
 from .block import CBlock

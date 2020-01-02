@@ -14,6 +14,8 @@ DLLEXPORT void box_destroy(Box *box);
 
 DLLEXPORT int box_alloc(Box *box, Time time);
 
+DLLEXPORT int box_realloc(Box *box, Time time, CellIdx *new_loc);
+
 DLLEXPORT int box_store(Box *box, Time time);
 
 DLLEXPORT int box_retrieve(Box *box, Time time);

@@ -116,7 +116,7 @@ static inline int _box_sink(Box *box) {
     Box *box2;
     while (box->loc[along] > 0) {
         box2 = _blk_neighbor_box(blk, box, along, FALSE);
-        if (box2->state < BOX_STATE_STORING || box2->state == BOX_STATE_RESHUFFLING)
+        if (box2->state < BOX_STATE_STORING || box2->state == BOX_STATE_RELOCATING)
             _box_swap(box2, along, TRUE);
         else
             break;
@@ -131,7 +131,7 @@ static inline int _box_float(Box *box) {
     Box *box2;
     while (box->loc[along] < blk->spec[along]) {
         box2 = _blk_neighbor_box(blk, box, along, TRUE);
-        if (box2 && (box2->state < BOX_STATE_STORING || box2->state == BOX_STATE_RESHUFFLING))
+        if (box2 && (box2->state < BOX_STATE_STORING || box2->state == BOX_STATE_RELOCATING))
             _box_swap(box, along, FALSE);
         else
             break;
@@ -144,7 +144,7 @@ int box_alloc(Box *box, Time time) {
     struct Block *blk = box->block;
     CellIdx *loc = box->loc;
 
-    if (time >= 0 && box->state != BOX_STATE_RESHUFFLING)
+    if (time >= 0 && box->state != BOX_STATE_RELOCATING)
         box->alloc_time = time;
 
     if (blk->stacking_axis >= 0) {
@@ -160,7 +160,7 @@ int box_alloc(Box *box, Time time) {
     _box_adjust_usage(blk, box, 1, TRUE);
     _blk_link_cell(blk, box);
 
-    if (time >= 0 && box->state != BOX_STATE_RESHUFFLING)
+    if (time >= 0 && box->state != BOX_STATE_RELOCATING)
         box->state = BOX_STATE_ALLOCATED;
 
     return SUCCEED;
@@ -218,7 +218,7 @@ void box_store_position(Box *box, CellIdx *idx) {
 int box_store(Box *box, Time time) {
     Block *blk = box->block;
 
-    if (time >= 0 && box->state != BOX_STATE_RESHUFFLING)
+    if (time >= 0 && box->state != BOX_STATE_RELOCATING)
         box->store_time = time;
 
     _box_adjust_usage(blk, box, 1, FALSE);
@@ -245,7 +245,7 @@ int box_retrieve(Box *box, Time time) {
     _box_adjust_usage(blk, box, -1, TRUE);
     _box_adjust_usage(blk, box, -1, FALSE);
 
-    if (time >= 0 && box->state != BOX_STATE_RESHUFFLING)
+    if (time >= 0 && box->state != BOX_STATE_RELOCATING)
         box->state = BOX_STATE_RETRIEVING;
     return SUCCEED;
 }

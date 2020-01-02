@@ -3,18 +3,19 @@ from .block cimport CBlock
 from tcysim.utils import V3
 from cpython cimport PyObject
 
+cdef class CBoxState:
+    INITIAL = BOX_STATE_INITIAL
+    ALLOCATED = BOX_STATE_ALLOCATED
+    STORING = BOX_STATE_STORING
+    STORED = BOX_STATE_STORED
+    RELOCATING = BOX_STATE_RELOCATING
+    RETRIEVING = BOX_STATE_RETRIEVING
+    RETRIEVED = BOX_STATE_RETRIEVED
+
 
 cdef class CBox:
     cdef Box c
     cdef public object equipment
-
-    STATE_INITIAL = BOX_STATE_INITIAL
-    STATE_ALLOCATED = BOX_STATE_ALLOCATED
-    STATE_STORING = BOX_STATE_STORING
-    STATE_STORED = BOX_STATE_STORED
-    STATE_RESHUFFLING = BOX_STATE_RESHUFFLING
-    STATE_RETRIEVING = BOX_STATE_RETRIEVING
-    STATE_RETRIEVED = BOX_STATE_RETRIEVED
 
     def __cinit__(self, bytes box_id, int size=20):
         cdef BoxSize c_size
@@ -38,6 +39,11 @@ cdef class CBox:
             return True
         else:
             return False
+
+    def realloc(self, int time, loc):
+        cdef CellIdx new_loc[3];
+        new_loc[:] = loc
+        box_realloc(&self.c, time, new_loc)
 
     def store(self, int time):
         # print("STORE")
@@ -168,7 +174,7 @@ cdef class CBox:
         if self.equipment:
             return self.equipment.coord_to_box()
         elif BOX_STATE_STORED <= self.state < BOX_STATE_RETRIEVING:
-            if self.state == BOX_STATE_RESHUFFLING:
+            if self.state == BOX_STATE_RELOCATING:
                 return self.block.cell_coord(self.previous_loc, None, self.teu)
             return self.block.box_coord(self, None)
 
