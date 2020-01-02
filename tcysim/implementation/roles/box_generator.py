@@ -20,7 +20,7 @@ class BoxEventHandler(EventHandler):
 
     @Dispatcher.on(BoxEventType.STORE)
     def on_store(self, yard, time, box):
-        if box.state < box.STATE_ALLOCATED:
+        if box.state < box.STATE.ALLOCATED:
             return False
         lane = random.choice(list(box.block.lanes.values()))
         yard.store(time, box, lane)
@@ -28,7 +28,7 @@ class BoxEventHandler(EventHandler):
 
     @Dispatcher.on(BoxEventType.RETRIEVE)
     def on_retrieve(self, yard, time, box):
-        if box.state < box.STATE_STORING:
+        if box.state < box.STATE.STORING:
             return False
         lane = random.choice(list(box.block.lanes.values()))
         yard.retrieve(time, box, lane)

@@ -15,11 +15,11 @@ class ReqHandler(Dispatcher):
 
     @Dispatcher.on(ReqType.STORE)
     def on_request_store(self, time, request):
-        request.link_signal("start_or_resume", self.on_store_start, request)
-        request.link_signal("off_agv", self.on_store_off_agv, request)
-        request.link_signal("in_block", self.on_store_in_block, request)
-        request.link_signal("finish_or_fail", self.on_store_finish_or_fail, request)
         if request.acquire_stack(time, request.box.location):
+            request.link_signal("start_or_resume", self.on_store_start, request)
+            request.link_signal("off_agv", self.on_store_off_agv, request)
+            request.link_signal("in_block", self.on_store_in_block, request)
+            request.link_signal("finish_or_fail", self.on_store_finish_or_fail, request)
             yield self.equipment.OpBuilder.StoreOp(request)
         else:
             yield None
@@ -27,11 +27,11 @@ class ReqHandler(Dispatcher):
     @Dispatcher.on(ReqType.RETRIEVE)
     def on_request_retrieve(self, time, request):
         yield from self.reshuffle_operations(time, request)
-        request.link_signal("start_or_resume", self.on_retrieve_start, request)
-        request.link_signal("off_block", self.on_retrieve_leaving_block, request)
-        request.link_signal("on_agv", self.on_retrieve_on_agv, request)
-        request.link_signal("finish_or_fail", self.on_retrieve_finish_or_fail, request)
         if request.acquire_stack(time, request.box.location):
+            request.link_signal("start_or_resume", self.on_retrieve_start, request)
+            request.link_signal("off_block", self.on_retrieve_leaving_block, request)
+            request.link_signal("on_agv", self.on_retrieve_on_agv, request)
+            request.link_signal("finish_or_fail", self.on_retrieve_finish_or_fail, request)
             yield self.equipment.op_builder.RetrieveOp(request)
         else:
             yield None
@@ -40,16 +40,16 @@ class ReqHandler(Dispatcher):
     def on_request_relocate(self, time, request):
         box = request.box
         if request.acquire_stack(time, box.location, request.new_loc):
-            yield self.gen_relocate_op(time, box, request.new_loc, request)
+            yield self.gen_relocate_op(time, box, request.new_loc, request, reset=True)
         else:
             yield None
 
-    def gen_relocate_op(self, time, box, new_loc, request):
+    def gen_relocate_op(self, time, box, new_loc, request, reset):
         request.link_signal("rlct_start_or_resume", self.on_relocate_start, box=box, dst_loc=new_loc)
         request.link_signal("rlct_pick_up", self.on_relocate_pickup, box=box, dst_loc=new_loc)
         request.link_signal("rlct_put_down", self.on_relocate_putdown, box=box, dst_loc=new_loc)
         request.link_signal("rlct_finish_or_fail", self.on_relocate_finish_or_fail, box=box, dst_loc=new_loc)
-        return self.equipment.op_builder.RelocateOp(request, box, new_loc, reset=False)
+        return self.equipment.op_builder.RelocateOp(request, box, new_loc, reset=reset)
 
     def reshuffle_operations(self, time, request):
         box = request.box
@@ -58,7 +58,7 @@ class ReqHandler(Dispatcher):
             new_loc = self.equipment.yard.smgr.slot_for_relocation(above_box)
             if request.acquire_stack(time, above_box.location, new_loc):
                 request.rsf_count += 1
-                yield self.gen_relocate_op(time, above_box, new_loc, request)
+                yield self.gen_relocate_op(time, above_box, new_loc, request, reset=False)
             else:
                 yield None
 
@@ -91,7 +91,7 @@ class ReqHandler(Dispatcher):
 
     def on_store_off_agv(self, time, request):
         box = request.box
-        box.state = box.STATE_STORING
+        box.state = box.STATE.STORING
         request.sync(time)
         box.equipment = request.equipment
 
@@ -109,7 +109,7 @@ class ReqHandler(Dispatcher):
 
     def on_retrieve_leaving_block(self, time, request):
         box = request.box
-        box.state = request.box.STATE_RETRIEVING
+        box.state = request.box.STATE.RETRIEVING
         box.retrieve(time)
         box.block.release_stack(time, box.location)
         box.equipment = request.equipment
@@ -117,7 +117,7 @@ class ReqHandler(Dispatcher):
     def on_retrieve_on_agv(self, time, request):
         request.sync(time)
         box = request.box
-        box.state = request.box.STATE_RETRIEVED
+        box.state = request.box.STATE.RETRIEVED
         box.equipment = None
 
     def on_adjust_start(self, time, request):
@@ -129,7 +129,7 @@ class ReqHandler(Dispatcher):
         pass
 
     def on_relocate_start(self, time, box, dst_loc):
-        box.state = box.STATE_RESHUFFLING
+        box.state = box.STATE.RELOCATING
         box.relocate_retrieve(time, dst_loc)
         pass
 
