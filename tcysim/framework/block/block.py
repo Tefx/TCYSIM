@@ -7,7 +7,7 @@ from ..layout import BlockLayout
 # from .req_builder import ReqBuilder
 
 from ..equipment import Equipment
-from ..scheduler.scheduler import ReqDispatcher
+from ..scheduler import ReqDispatcher
 
 
 class Block(BlockLayout, CBlock):
