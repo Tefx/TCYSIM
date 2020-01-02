@@ -41,19 +41,27 @@ cdef class CBox:
             return False
 
     def store(self, int time):
+        # print("STORE")
         box_store(&self.c, time)
+        # print("/STORE")
 
     def retrieve(self, int time):
+        # print("RETRIEVE")
         box_retrieve(&self.c, time)
+        # print("/RETRIEVE")
 
     def relocate_retrieve(self, time, dst_loc):
+        # print("RELOCATE_RETRIEVE")
         cdef CellIdx new_loc[3];
         new_loc[:] = dst_loc
         self.previous_loc = self.location
         box_relocate_retrieve(&self.c, new_loc)
+        # print("/RELOCATE_RETRIEVE")
 
-    def reshuffle_store(self, time):
+    def relocate_store(self, time):
+        # print("RELOCATE_STORE")
         self.store(-1)
+        # print("/RELOCATE_STORE")
 
     @property
     def id(self):
@@ -135,7 +143,9 @@ cdef class CBox:
         while True:
             loc = self.location
             axis = V3.axis_idx(axis)
+            # print("ABOVE", self.id, self.location)
             box = self.block.top_box(loc, axis)
+            # print("/ABOVE")
             if box is self:
                 break
             yield box

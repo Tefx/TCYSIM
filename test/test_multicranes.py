@@ -70,14 +70,14 @@ class RMG(Crane):
 
 
 class RandomSpaceAllocator(SpaceAllocator):
-    def alloc_space(self, box, blocks):
+    def alloc_space(self, box, blocks, *args, **kwargs):
         for block in blocks:
             locs = list(block.available_cells(box))
             if locs:
                 return block, random.choice(locs)
         return None, None
 
-    def slot_for_reshuffle(self, box):
+    def slot_for_relocation(self, box, *args, **kwargs):
         i, j, _ = box.location
         block = box.block
         shape = block.shape
@@ -121,12 +121,12 @@ if __name__ == '__main__':
     rmg2 = RMG(yard, block, -1, idx=1)
     yard.deploy(block, [rmg1, rmg2])
 
-    # yard.roles.tracer = PositionTracer(yard, start=3600*20, end=3600*24, interval=1)
+    yard.roles.tracer = PositionTracer(yard, start=3600*20, end=3600*24, interval=1)
     yard.roles.sim_driver = BoxGenerator(yard)
     yard.roles.sim_driver.install_or_add(SimpleBoxBomb(first_time=0))
 
     yard.start()
-    yard.run_until(3600 * 24 * 7)
+    yard.run_until(3600 * 24)
 
     if "tracer" in yard.roles:
         yard.roles.tracer.dump("log")
@@ -136,8 +136,8 @@ if __name__ == '__main__':
     print("{:<12}: {}".format("TOTAL (NA)", len([req for req in yard.requests if req.req_type != req.TYPE.ADJUST])))
     print("{:<12}: {}".format("TOTAL (A)", len(
         [req for req in yard.requests if req.req_type == req.TYPE.ADJUST and req.finish_time > req.start_time])))
-    for req_status in ReqState:
-        print("{:<12}: {}".format(req_status.name, len([req for req in yard.requests if req.status == req_status])))
+    for req_state in ReqState:
+        print("{:<12}: {}".format(req_state.name, len([req for req in yard.requests if req.state == req_state])))
 
     # for req in yard.requests:
     #     if req.req_type == req.TYPE.ADJUST:

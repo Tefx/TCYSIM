@@ -39,7 +39,7 @@ class Equipment(EquipmentRangeLayout, Process):
         self.components = [copy(item) for item in components]
         self.set_coord(init_offset, glob=False)
         self.attrs = copy(attrs)
-        self.req_handler = ReqHandler(self)
+        self.req_handler = self.ReqHandler(self)
         self.op_builder = self.OpBuilder(self)
         self.job_scheduler = self.JobScheduler(self)
 
@@ -159,6 +159,8 @@ class Equipment(EquipmentRangeLayout, Process):
     def _process(self):
         request = self.next_task
         print("[{:.2f}]<Request/Equipment {}>".format(self.time, self.idx), request, self.local_coord())
+        # if request.req_type == request.TYPE.RETRIEVE:
+        #     print("RET", request.box.state, request.box.location)
         self.next_task = None
         request.start_or_resume(self.time)
         for op in request.gen_op(self.time):

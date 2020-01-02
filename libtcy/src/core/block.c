@@ -69,6 +69,7 @@ inline CellIdx _blk_cell_idx(Block *blk, const CellIdx *loc) {
 
 void _blk_link_cell(Block *blk, Box *box) {
     blk->cells[_blk_cell_idx(blk, box->loc)] = box;
+//    printf("link %s (%d, %d, %d)\n",box->id, box->loc[0], box->loc[1], box->loc[2]);
     if (box->size == BOX_SIZE_FORTY) {
         box->loc[blk->box_orientation]++;
         blk->cells[_blk_cell_idx(blk, box->loc)] = box;
@@ -78,6 +79,7 @@ void _blk_link_cell(Block *blk, Box *box) {
 
 void _blk_unlink_cell(Block *blk, Box *box) {
     blk->cells[_blk_cell_idx(blk, box->loc)] = NULL;
+//    printf("unlink %s (%d, %d, %d)\n",box->id, box->loc[0], box->loc[1], box->loc[2]);
     if (box->size == BOX_SIZE_FORTY) {
         box->loc[blk->box_orientation]++;
         blk->cells[_blk_cell_idx(blk, box->loc)] = NULL;

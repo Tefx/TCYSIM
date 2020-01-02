@@ -1,7 +1,7 @@
 class DispatchFunc:
     def __init__(self, func, category, method):
         self.func = func
-        self.category = category.value
+        self.category = category.name
         self.method = method
 
     def __call__(self, *args, **kwargs):
@@ -18,7 +18,7 @@ class Dispatcher:
                 self._methods[item.method][item.category] = item
 
     def dispatch(self, category, method="_", *args, **kwargs):
-        return self._methods[method][category.value](self, *args, **kwargs)
+        return self._methods[method][category.name](self, *args, **kwargs)
 
     @staticmethod
     def on(category, method="_"):

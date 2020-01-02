@@ -57,14 +57,14 @@ class OpBuilder(Dispatcher):
         op.src_loc = self.equipment.coord_from_box(box.current_coord(self.equipment))
         op.dst_loc = self.equipment.coord_from_box(box.store_coord(self.equipment, dst_loc))
 
-        yield op.emit_signal("rsf_start_or_resume")
+        yield op.emit_signal("rlct_start_or_resume")
         yield from self.move_steps(op, self.equipment.local_coord(), op.src_loc)
-        yield op.emit_signal("rsf_pick_up")
+        yield op.emit_signal("rlct_pick_up")
         yield op.wait(self.equipment.GRASP_TIME)
         yield from self.move_steps(op, op.src_loc, op.dst_loc, load=True)
         yield op.wait(self.equipment.RELEASE_TIME)
-        yield op.emit_signal("rsf_put_down")
-        yield op.emit_signal("rsf_finish_or_fail")
+        yield op.emit_signal("rlct_put_down")
+        yield op.emit_signal("rlct_finish_or_fail")
         if op.require_reset:
             with op.allow_interruption(self.equipment):
                 yield from self.idle_steps(op, op.dst_loc)
