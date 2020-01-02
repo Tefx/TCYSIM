@@ -16,8 +16,8 @@ class Operation:
         self.step = None
         self.paths = {}
         self.__interruption_flag = False
-        self.attrs = copy(attrs)
         self.locking_positions = list(locking_pos)
+        self.__dict__.update(attrs)
 
     def add_lock(self, pos):
         self.locking_positions.append(pos)
@@ -25,9 +25,6 @@ class Operation:
     @property
     def TYPE(self):
         return self.equipment.op_builder.OpType
-
-    def __getattr__(self, item):
-        return self.attrs[item]
 
     def mark_loc(self, component, time, loc):
         if component in self.paths:
