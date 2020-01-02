@@ -4,14 +4,12 @@ from tcysim.libc import CBlock
 from tcysim.utils import V3
 
 from ..layout import BlockLayout
-# from .req_builder import ReqBuilder
 
 from ..equipment import Equipment
 from ..scheduler import ReqDispatcher
 
 
 class Block(BlockLayout, CBlock):
-    # ReqBuilder = ReqBuilder
     ReqDispatcher = ReqDispatcher
 
     def __init__(self, yard, offset, shape:V3, rotate, stacking_axis, sync_axes, lanes=()):
@@ -21,7 +19,6 @@ class Block(BlockLayout, CBlock):
         self.yard = yard
         BlockLayout.__init__(self, offset, shape, rotate, lanes=lanes)
         CBlock.__init__(self, shape, stacking_axis=stacking_axis, sync_axes=sync_axes)
-        # self.req_builder = self.ReqBuilder(self)
         self.req_dispatcher = self.ReqDispatcher(self)
         self.lock_waiting_requests = {}
 
