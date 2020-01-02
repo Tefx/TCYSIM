@@ -59,7 +59,7 @@ class Ph2ReqHandler(ReqHandler):
         if self.equipment.idx == 1 and request.lane.name < 5:
             request.ph2 = True
             box = request.box
-            start_bay = request.block.bays // 2
+            start_bay = request.block.bays // 2 - 1
             dst_loc = self.yard.smgr.slot_for_relocation(box, start_bay=start_bay, finish_bay=0)
             assert dst_loc is not None
             if request.acquire_stack(time, box.location, dst_loc):
@@ -168,7 +168,7 @@ if __name__ == '__main__':
     rmg2 = RMG(yard, block, -1, idx=1)
     yard.deploy(block, [rmg1, rmg2])
 
-    # yard.roles.tracer = PositionTracer(yard, start=3600*20, end=3600*24, interval=1)
+    yard.roles.tracer = PositionTracer(yard, start=3600*20, end=3600*24, interval=1)
     yard.roles.sim_driver = BoxGenerator(yard)
     yard.roles.sim_driver.install_or_add(SimpleBoxBomb(first_time=0))
 

@@ -7,7 +7,6 @@ from cpython cimport PyObject
 cdef class CBox:
     cdef Box c
     cdef public object equipment
-    # cdef public object previous_loc
 
     STATE_INITIAL = BOX_STATE_INITIAL
     STATE_ALLOCATED = BOX_STATE_ALLOCATED
