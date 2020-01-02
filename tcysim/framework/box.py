@@ -1,3 +1,5 @@
 from tcysim.libc import CBox
 
-Box = CBox
+
+class Box(CBox):
+    pass

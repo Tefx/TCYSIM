@@ -34,18 +34,40 @@ static inline void _box_adjust_usage(Block *blk, Box *box, int delta, bool occup
         if (occupied) {
             BLK_USAGE_OCCUPIED(blk, box->loc, i) += d;
             if (BLK_USAGE_OCCUPIED(blk, box->loc, i) < 0)
-            printf("warning[OC]: %s i=%d s=%d d=%d (%d, %d, %d) %d\n", box->id, i, box->state, d, box->loc[0],
-                   box->loc[1], box->loc[2], BLK_USAGE_OCCUPIED(blk, box->loc, i));
+                printf("warning[OC]: %s i=%d s=%d d=%d (%d, %d, %d) %d\n", box->id, i, box->state, d, box->loc[0],
+                       box->loc[1], box->loc[2], BLK_USAGE_OCCUPIED(blk, box->loc, i));
             assert(BLK_USAGE_OCCUPIED(blk, box->loc, i) >= 0);
         } else {
             BLK_USAGE(blk, box->loc, i) += d;
             if (BLK_USAGE(blk, box->loc, i) < 0)
-            printf("warning[US]: %s i=%d s=%d d=%d (%d, %d, %d) %d\n", box->id, i, box->state, d, box->loc[0],
-                   box->loc[1], box->loc[2], BLK_USAGE(blk, box->loc, i));
+                printf("warning[US]: %s i=%d s=%d d=%d (%d, %d, %d) %d\n", box->id, i, box->state, d, box->loc[0],
+                       box->loc[1], box->loc[2], BLK_USAGE(blk, box->loc, i));
             assert(BLK_USAGE(blk, box->loc, i) >= 0);
         }
     }
-//    printf("\n");
+
+    for (int i = 0; i < 3; ++i) {
+        if (blk->column_use_type[i]) {
+            if (delta > 0 && BLK_USAGE_OCCUPIED(blk, box->loc, i) == 1) {
+                if (box->size == BOX_SIZE_TWENTY) {
+                    blk->column_use_type[i][_blk_clmn_idx(blk, box->loc, i)] = SLOT_USAGE_TWENTY_ONLY;
+                } else if (box->size == BOX_SIZE_FORTY) {
+                    blk->column_use_type[i][_blk_clmn_idx(blk, box->loc, i)] = SLOT_USAGE_FORTY_ONLY;
+                    box->loc[blk->box_orientation]++;
+                    BLK_USE_TYPE(blk, box->loc, i) = SLOT_USAGE_FORTY_ONLY_END;
+                    box->loc[blk->box_orientation]--;
+                }
+            } else if (delta < 0 && BLK_USAGE_OCCUPIED(blk, box->loc, i) == 0) {
+                blk->column_use_type[i][_blk_clmn_idx(blk, box->loc, i)] = SLOT_USAGE_FREE;
+                if (box->size == BOX_SIZE_FORTY) {
+                    box->loc[blk->box_orientation]++;
+                    blk->column_use_type[i][_blk_clmn_idx(blk, box->loc, i)] = SLOT_USAGE_FREE;
+                    box->loc[blk->box_orientation]--;
+                }
+            }
+        }
+    }
+
 }
 
 int _box_swap(Box *box, int along, bool sink) {
@@ -136,27 +158,34 @@ int box_alloc(Box *box, Time time) {
         return ERROR_INVALID_LOCATION;
 
     _box_adjust_usage(blk, box, 1, TRUE);
-
-    for (int i = 0; i < 3; ++i) {
-        if (blk->column_use_type[i]) {
-            SlotUsage *column_use_type = blk->column_use_type[i] + _blk_clmn_idx(blk, loc, i);
-            if (*column_use_type == SLOT_USAGE_FREE) {
-                if (box->size == BOX_SIZE_TWENTY) {
-                    *column_use_type = SLOT_USAGE_TWENTY_ONLY;
-                } else if (box->size == BOX_SIZE_FORTY) {
-                    *column_use_type = SLOT_USAGE_FORTY_ONLY;
-                    loc[blk->box_orientation]++;
-                    BLK_USE_TYPE(blk, loc, i) = SLOT_USAGE_FORTY_ONLY_END;
-                    loc[blk->box_orientation]--;
-                }
-            }
-        }
-    }
-
     _blk_link_cell(blk, box);
 
     if (time >= 0 && box->state != BOX_STATE_RESHUFFLING)
         box->state = BOX_STATE_ALLOCATED;
+
+    return SUCCEED;
+}
+
+int box_realloc(Box *box, Time time, CellIdx *new_loc) {
+    struct Block *blk = box->block;
+
+    if (blk->stacking_axis >= 0) {
+        new_loc[blk->stacking_axis] = BLK_USAGE_OCCUPIED(blk, new_loc, blk->stacking_axis);
+    }
+
+    if (new_loc[0] < 0 || new_loc[1] < 0 || new_loc[2] < 0)
+        return ERROR_ALLOC_CELL_MISSING_LOCATION_INFO;
+
+    if (!box_position_is_valid(box, blk, new_loc))
+        return ERROR_INVALID_LOCATION;
+
+    _box_adjust_usage(blk, box, -1, TRUE);
+    _blk_unlink_cell(blk, box);
+
+    memcpy(box->loc, new_loc, sizeof(CellIdx) * 3);
+
+    _blk_link_cell(blk, box);
+    _box_adjust_usage(blk, box, 1, TRUE);
 
     return SUCCEED;
 }
@@ -221,7 +250,7 @@ int box_retrieve(Box *box, Time time) {
     return SUCCEED;
 }
 
-void box_relocate_position(Box* box, CellIdx* new_loc) {
+void box_relocate_position(Box *box, CellIdx *new_loc) {
     _blk_top_of_stack(box->block, new_loc);
 }
 
@@ -231,7 +260,7 @@ int box_relocate(Box *box, CellIdx *new_loc) {
     if ((res = box_retrieve(box, -1)) != SUCCEED)
         goto exit;
 
-    memcpy(box->loc, new_loc, sizeof(int32_t) * 3);
+    memcpy(box->loc, new_loc, sizeof(CellIdx) * 3);
     if ((res = box_alloc(box, -1)) != SUCCEED)
         goto exit;
 
@@ -242,12 +271,12 @@ int box_relocate(Box *box, CellIdx *new_loc) {
     return res;
 }
 
-int box_relocate_retrieve(Box* box, CellIdx *new_loc){
+int box_relocate_retrieve(Box *box, CellIdx *new_loc) {
     int res;
     if ((res = box_retrieve(box, -1)) != SUCCEED)
         goto exit;
 
-    memcpy(box->loc, new_loc, sizeof(int32_t) * 3);
+    memcpy(box->loc, new_loc, sizeof(CellIdx) * 3);
     if ((res = box_alloc(box, -1)) != SUCCEED)
         goto exit;
 
