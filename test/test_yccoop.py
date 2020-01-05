@@ -3,6 +3,7 @@ import sys
 import random
 
 from tcysim.framework.equipment.req_handler import ReqHandler
+from tcysim.implementation.equipment.op_builder import OptimizedOpBuilder
 from tcysim.utils.dispatcher import Dispatcher
 
 sys.path.extend([
@@ -19,7 +20,7 @@ from tcysim.framework.request import ReqState, Request, ReqType
 
 from tcysim.implementation.block.stacking_block import StackingBlock
 from tcysim.implementation.equipment.crane import Crane
-from tcysim.implementation.roles.position_tracer import PositionTracer
+from tcysim.implementation.roles.animation_logger import AnimationLogger
 from tcysim.implementation.roles.box_generator import BoxBomb, BoxGenerator
 
 from tcysim.utils import V3, TEU
@@ -60,13 +61,14 @@ class CraneJobScheduler(JobScheduler):
 class Ph2ReqHandler(ReqHandler):
     @Dispatcher.on(ReqType.RETRIEVE)
     def on_request_retrieve(self, time, request):
-        yield from self.reshuffle_operations(time, request)
         if self.equipment.idx == 1 and request.lane.name < 5:
+            yield from self.reshuffle_operations(time, request)
             request.ph2 = True
             box = request.box
             start_bay = request.block.bays // 2 - 1
             dst_loc = self.yard.smgr.slot_for_relocation(box, start_bay=start_bay, finish_bay=0)
-            assert dst_loc is not None
+            if not dst_loc:
+                yield None
             if request.acquire_stack(time, box.location, dst_loc):
                 yield self.gen_relocate_op(time, request.box, dst_loc, request, reset=False, ph2=True)
             else:
@@ -83,6 +85,7 @@ class Ph2ReqHandler(ReqHandler):
             dst_loc = self.yard.smgr.slot_for_relocation(box, start_bay=start_bay, finish_bay=0)
             if request.acquire_stack(time, dst_loc):
                 request.ph2 = True
+                self.yard.smgr.add_mask(box)
                 box.final_loc = box.location
                 box.realloc(time, dst_loc)
                 request.link_signal("start_or_resume", self.on_store_start, request)
@@ -96,17 +99,24 @@ class Ph2ReqHandler(ReqHandler):
             yield from super(Ph2ReqHandler, self).on_request_store(self, time, request)
 
     def gen_relocate_op(self, time, box, new_loc, request, reset, ph2=False):
-        request.link_signal("rlct_start_or_resume", self.on_relocate_start, box=box, dst_loc=new_loc)
+        request.link_signal("rlct_start_or_resume", self.on_relocate_start, box=box, dst_loc=new_loc,
+                            original_request=request if ph2 else None)
         request.link_signal("rlct_pick_up", self.on_relocate_pickup, box=box, dst_loc=new_loc)
         request.link_signal("rlct_put_down", self.on_relocate_putdown, box=box, dst_loc=new_loc,
                             original_request=request if ph2 else None)
         request.link_signal("rlct_finish_or_fail", self.on_relocate_finish_or_fail, box=box, dst_loc=new_loc)
         return self.equipment.op_builder.RelocateOp(request, box, new_loc, reset=reset)
 
+    def on_relocate_start(self, time, box, dst_loc, original_request=None):
+        if original_request:
+            if original_request.req_type == ReqType.STORE and getattr(original_request, "ph2", True):
+                self.yard.smgr.remove_mask(box)
+        super(Ph2ReqHandler, self).on_relocate_start(time, box, dst_loc)
+
     def on_relocate_putdown(self, time, box, dst_loc, original_request=None):
         if original_request:
             if original_request.req_type == ReqType.RETRIEVE and getattr(original_request, "ph2", True):
-                req2 = Request(self.ReqType.RETRIEVE, time, box, lane=original_request.lane)
+                req2 = Request(self.ReqType.RETRIEVE, time, box, lane=original_request.lane, ph2=True)
                 self.yard.submit_request(time, req2)
         super(Ph2ReqHandler, self).on_relocate_putdown(time, box, dst_loc)
 
@@ -139,12 +149,34 @@ class RMG(Crane):
 
     ReqHandler = Ph2ReqHandler
     JobScheduler = CraneJobScheduler
+    OpBuilder = OptimizedOpBuilder
 
 
 class RandomSpaceAllocator(SpaceAllocator):
+    def __init__(self, *args, **kwargs):
+        super(RandomSpaceAllocator, self).__init__(*args, **kwargs)
+        self.masked = set()
+        self.num_masked = {}
+
+    def add_mask(self, box):
+        loc = box.block, box.location[0], box.location[1]
+        self.masked.add(loc)
+        # loc = loc[0], loc[1]
+        # if loc not in self.num_masked:
+        #     self.num_masked[loc] = 0
+        # self.num_masked[loc] += 1
+
+    def remove_mask(self, box):
+        loc = box.block, box.location[0], box.location[1]
+        self.masked.remove(loc)
+        # loc = loc[0], loc[1]
+        # self.num_masked[loc] -= 1
+        # if self.num_masked[loc] == 0:
+        #     del self.num_masked[loc]
+
     def alloc_space(self, box, blocks, *args, **kwargs):
         for block in blocks:
-            locs = list(block.available_cells(box))
+            locs = [loc for loc in block.available_cells(box) if (block, loc[0], loc[1]) not in self.masked]
             if locs:
                 return block, random.choice(locs)
         return None, None
@@ -157,8 +189,11 @@ class RandomSpaceAllocator(SpaceAllocator):
         finish_bay = i+1 if finish_bay is None else finish_bay
         step = 1 if start_bay < finish_bay else -1
         for i1 in range(start_bay, finish_bay, step):
+            # print(self.num_masked)
+            # count = block.count(i1, -1, -1) + self.num_masked.get((block, i1), 0)
+            # if count < block.shape.z * block.shape.y - block.shape.z:
             for j1 in range(0, shape.y):
-                if i1 != i or j1 != j:
+                if (i1, j1) != (i, j) and (block, i1, j1) not in self.masked:
                     k = block.count(i1, j1)
                     if block.stack_is_valid(box, i1, j1):
                         return V3(i1, j1, k)
@@ -189,15 +224,15 @@ if __name__ == '__main__':
         Lane(i, V3(0, i * TEU.WIDTH * 2, 0), length=20, width=TEU.WIDTH * 2, rotate=0)
         for i in range(4)
         ]
-    # lanes.append(Lane(5, V3(25, -TEU.WIDTH * 2, 0), length=TEU.LENGTH * 50, width=TEU.WIDTH * 2, rotate=0))
-    # lanes.append(Lane(6, V3(25, TEU.WIDTH * 8, 0), length=TEU.LENGTH * 50, width=TEU.WIDTH * 2, rotate=0))
-    block = Block(yard, V3(25, 0, 0), V3(16, 8, 6), rotate=0, lanes=lanes)
+    lanes.append(Lane(5, V3(25, -TEU.WIDTH * 2, 0), length=TEU.LENGTH * 50, width=TEU.WIDTH * 2, rotate=0))
+    lanes.append(Lane(6, V3(25, TEU.WIDTH * 10, 0), length=TEU.LENGTH * 50, width=TEU.WIDTH * 2, rotate=0))
+    block = Block(yard, V3(25, 0, 0), V3(26, 10, 6), rotate=0, lanes=lanes)
 
     rmg1 = RMG(yard, block, 0, idx=0)
     rmg2 = RMG(yard, block, -1, idx=1)
     yard.deploy(block, [rmg1, rmg2])
 
-    yard.roles.tracer = PositionTracer(yard, start=3600*20, end=3600*24, interval=1)
+    # yard.roles.tracer = AnimationLogger(yard, start=3600 * 20, end=3600 * 24, fps=24, speedup=10)
     yard.roles.sim_driver = BoxGenerator(yard)
     yard.roles.sim_driver.install_or_add(SimpleBoxBomb(first_time=0))
 
@@ -215,8 +250,8 @@ if __name__ == '__main__':
     for req_state in ReqState:
         print("{:<12}: {}".format(req_state.name, len([req for req in yard.requests if req.state == req_state])))
 
-    for req in yard.requests:
-        if req.state == req.STATE.READY:
-            print(req, req.arrival_time, req.start_time, req.finish_time)
+    # for req in yard.requests:
+    #     if req.state == req.STATE.READY:
+    #         print(req, req.arrival_time, req.start_time, req.finish_time)
 
     print("Finish.")

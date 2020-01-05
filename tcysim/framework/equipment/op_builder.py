@@ -10,6 +10,7 @@ class OpBuilder(Dispatcher):
         super(OpBuilder, self).__init__()
 
     def build(self, op: Operation):
+        # print(op, op.request, op.request.box if op.request.box else None)
         op.extend(self.dispatch(op.op_type, "_", op))
 
     @Dispatcher.on(OpType.STORE)

@@ -84,10 +84,10 @@ class BlockLayout(_LayoutItem):
     def lane(self, name):
         return self.lanes[name]
 
-    def coord2cell(self, coord):
+    def coord2cell_idx(self, coord):
         for cell in self._cells:
             if coord in cell:
-                return cell
+                return cell.idx
 
     def coord2lane(self, coord):
         for lane in self.lanes:
@@ -102,9 +102,9 @@ class BlockLayout(_LayoutItem):
         bl = self.cell_coord(cell_idx, None, box_teu) - p0
         p = min(max(bl.dot_product(vl), TEU.LENGTH * box_teu / 2), lane.length - TEU.LENGTH * box_teu / 2)
         if equipment:
-            return lane.transform(equipment, V3(p, lane.size.y / 2, 0))
+            return lane.transform(equipment, V3(p, lane.size.y / 2, lane.offset.z + TEU.HEIGHT / 2))
         else:
-            return lane.coord_l2g(V3(p, lane.size.y / 2, 0))
+            return lane.coord_l2g(V3(p, lane.size.y / 2, lane.offset.z + TEU.HEIGHT / 2)) + TEU.HEIGHT / 2
 
     def next_cell(self, cell_idx):
         i, j, k =  cell_idx

@@ -1,11 +1,12 @@
 from pickle import dump
 
+from pesim import TIME_FOREVER
 from tcysim.framework.roles.observer import Observer
 
 
-class PositionTracer(Observer):
-    def __init__(self, *args, **kwargs):
-        super(PositionTracer, self).__init__(*args, **kwargs)
+class AnimationLogger(Observer):
+    def __init__(self, yard, start=0, end=TIME_FOREVER, fps=60, speedup=1):
+        super(AnimationLogger, self).__init__(yard=yard, start=start, end=end, interval=speedup / fps)
         self.log = []
         self.last_log = None
         self.box_last_positions = {}

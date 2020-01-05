@@ -1,3 +1,4 @@
+from copy import copy
 from itertools import product
 
 from tcysim.utils import V3, TEU
@@ -34,9 +35,15 @@ class StackingBlock(Block):
     def in_stacking_area(self, coord):
         return coord in self
 
-    def coord2cell(self, coord):
+    def coord2cell_idx(self, coord):
         idx = (self.coord_g2l(coord) // self.unit_bound_size).astype(int)
-        return self.cell(idx)
+        for i in range(3):
+            if idx[i] > self.shape[i]:
+                idx[i] = self.shape[i]
+            elif idx[i] < 0:
+                idx[i] = -1
+        # print("CI", coord, self.coord_g2l(coord), self.unit_bound_size, idx)
+        return idx
 
     def stack_height(self, num):
         return self.unit_bound_size[self.stacking_axis] * num - self.stacking_interval[self.stacking_axis]
@@ -45,16 +52,21 @@ class StackingBlock(Block):
         if self.stacking_axis < 0:
             raise NotImplementedError
 
-        idx_0 = self.coord2cell(src_loc).idx
-        idx_1 = self.coord2cell(dst_loc).idx
+        idx_0 = copy(self.coord2cell_idx(src_loc))
+        idx_1 = copy(self.coord2cell_idx(dst_loc))
+        # print(src_loc, dst_loc, idx_0, idx_1)
 
         for i in range(3):
             if idx_0[i] > idx_1[i]:
                 idx_0[i], idx_1[i] = idx_1[i], idx_0[i]
 
-        idx_0[self.stacking_axis] = idx_1[self.stacking_axis] = -1
-        rs = [range(max(idx_0[i],0), min(idx_1[i], self.shape[i])+1) for i in range(3)]
+        rs = [range(max(idx_0[i], 0), min(idx_1[i] + 1, self.shape[i])) for i in range(3)]
+        rs[self.stacking_axis] = (-1,)
+        # print("RS", rs)
         h_max = max((self.count(*idx, include_occupied=False) for idx in product(*rs)), default=0)
+        # for idx in product(*rs):
+        #     print("$$", idx, self.count(*idx, include_occupied=False))
+        # print(">>", h_max, self.stack_height(h_max))
         return self.stack_height(h_max)
 
     def bay_is_valid(self, box, i):
@@ -71,3 +83,26 @@ class StackingBlock(Block):
                 for j in range(shape.y):
                     if self.stack_is_valid(box, i, j):
                         yield V3(i, j, self.count(i, j))
+
+    def coord_zone(self, loc):
+        """
+          (2,0) *    (2,1)    * (2,2)
+        ********.-------------.********
+          (1,0) |    (1,1)    | (1,2)
+        ********.-------------.********
+          (0,0) *    (0,1)    * (0,2)
+        """
+        loc = self.coord_g2l(loc)
+        if loc.x < 0:
+            h = 0
+        elif loc.x > self.size.x:
+            h = 2
+        else:
+            h = 1
+        if loc.y < 0:
+            v = 0
+        elif loc.y > self.size.y:
+            v = 2
+        else:
+            v = 1
+        return v, h

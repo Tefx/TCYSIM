@@ -162,6 +162,8 @@ Box *block_top_box(Block *blk, const CellIdx *idx, int along) {
 //    printf("%d %d (%d, %d, %d)\n", along, blk->column_usage[along][_blk_clmn_idx(blk, idx, along)], idx[0], idx[1], idx[2]);
     tmp_idx[along] = blk->column_usage[along][_blk_clmn_idx(blk, idx, along)] - 1;
 //    printf("%p (%d, %d, %d)\n", block_box_at(blk, tmp_idx), tmp_idx[0], tmp_idx[1], tmp_idx[2]);
+//    if (block_box_at(blk, tmp_idx))
+//        printf("%s (%d, %d, %d)\n", block_box_at(blk, tmp_idx)->id, block_box_at(blk, tmp_idx)->loc[0], block_box_at(blk, tmp_idx)->loc[1], block_box_at(blk, tmp_idx)->loc[2]);
     return block_box_at(blk, tmp_idx);
 }
 

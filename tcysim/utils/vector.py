@@ -96,6 +96,9 @@ class V3:
     def __ge__(self, other):
         return all(x > y for x, y in zip(self, other))
 
+    def __copy__(self):
+        return V3(*self)
+
     def __repr__(self):
         return "V({})".format(", ".join(map("{:.2f}".format, self)))
 

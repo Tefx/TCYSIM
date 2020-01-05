@@ -151,6 +151,10 @@ class Equipment(EquipmentRangeLayout, Process):
 
     def perform_op(self, time, op):
         op.commit(self.yard)
+        # if op.op_type == op.TYPE.STORE:
+        #     print(self.gantry.pending_motions)
+        #     print(self.trolley.pending_motions)
+        #     print(self.hoist.pending_motions)
         with self.lock_state(self.STATE.WORKING):
             self.current_op = op
             self.time = yield op.finish_time, Priority.OP_FINISH
@@ -159,8 +163,6 @@ class Equipment(EquipmentRangeLayout, Process):
     def _process(self):
         request = self.next_task
         print("[{:.2f}]<Request/Equipment {}>".format(self.time, self.idx), request, self.local_coord())
-        # if request.req_type == request.TYPE.RETRIEVE:
-        #     print("RET", request.box.state, request.box.location)
         self.next_task = None
         request.start_or_resume(self.time)
         for op in request.gen_op(self.time):
@@ -172,7 +174,7 @@ class Equipment(EquipmentRangeLayout, Process):
         request.finish_or_fail(self.time)
         print("[{:.2f}]<Request/Equipment {}>".format(self.time, self.idx), request, self.local_coord())
         if self.is_idle():
-            self.on_idle(self.time)
+            self.job_scheduler.schedule(self.time)
 
     def adjust_is_necessary(self, other, dst_loc):
         return (other.local_coord() - dst_loc).dot_product(self.local_coord() - dst_loc) >= 0

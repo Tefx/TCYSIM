@@ -35,7 +35,9 @@ cdef class CBox:
     def alloc(self, int time, block, loc):
         if loc:
             self.set_location(block, *loc)
+            # print("ALLOC", self.id, self.location)
             box_alloc(&self.c, time)
+            # print("/ALLOC", self.location)
             return True
         else:
             return False
@@ -46,17 +48,17 @@ cdef class CBox:
         box_realloc(&self.c, time, new_loc)
 
     def store(self, int time):
-        # print("STORE")
+        # print("STORE", self.id, self.location)
         box_store(&self.c, time)
-        # print("/STORE")
+        # print("/STORE", self.location)
 
     def retrieve(self, int time):
-        # print("RETRIEVE")
+        # print("RETRIEVE", self.id, self.location)
         box_retrieve(&self.c, time)
         # print("/RETRIEVE")
 
     def relocate_retrieve(self, time, dst_loc):
-        # print("RELOCATE_RETRIEVE")
+        # print("RELOCATE_RETRIEVE", self.id, self.location, dst_loc)
         cdef CellIdx new_loc[3];
         new_loc[:] = dst_loc
         self.previous_loc = self.location
@@ -64,7 +66,7 @@ cdef class CBox:
         # print("/RELOCATE_RETRIEVE")
 
     def relocate_store(self, time):
-        # print("RELOCATE_STORE")
+        # print("RELOCATE_STORE", self.id)
         self.store(-1)
         # print("/RELOCATE_STORE")
 

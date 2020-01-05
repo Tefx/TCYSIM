@@ -24,28 +24,7 @@ static inline bool _box_match_usage(Box *box, SlotUsage usage, SlotUsage usage2)
         return FALSE;
 }
 
-static inline void _box_adjust_usage(Block *blk, Box *box, int delta, bool occupied) {
-    int d;
-    for (int i = 0; i < 3; ++i) {
-        if (box->size == BOX_SIZE_FORTY && i == blk->box_orientation)
-            d = delta * 2;
-        else
-            d = delta;
-        if (occupied) {
-            BLK_USAGE_OCCUPIED(blk, box->loc, i) += d;
-            if (BLK_USAGE_OCCUPIED(blk, box->loc, i) < 0)
-                printf("warning[OC]: %s i=%d s=%d d=%d (%d, %d, %d) %d\n", box->id, i, box->state, d, box->loc[0],
-                       box->loc[1], box->loc[2], BLK_USAGE_OCCUPIED(blk, box->loc, i));
-            assert(BLK_USAGE_OCCUPIED(blk, box->loc, i) >= 0);
-        } else {
-            BLK_USAGE(blk, box->loc, i) += d;
-            if (BLK_USAGE(blk, box->loc, i) < 0)
-                printf("warning[US]: %s i=%d s=%d d=%d (%d, %d, %d) %d\n", box->id, i, box->state, d, box->loc[0],
-                       box->loc[1], box->loc[2], BLK_USAGE(blk, box->loc, i));
-            assert(BLK_USAGE(blk, box->loc, i) >= 0);
-        }
-    }
-
+static inline void __mark_usage(Block *blk, Box *box, int delta) {
     for (int i = 0; i < 3; ++i) {
         if (blk->column_use_type[i]) {
             if (delta > 0 && BLK_USAGE_OCCUPIED(blk, box->loc, i) == 1) {
@@ -67,8 +46,46 @@ static inline void _box_adjust_usage(Block *blk, Box *box, int delta, bool occup
             }
         }
     }
-
 }
+
+static inline void __adjust_usage(Block *blk, Box *box, int delta, bool occupied) {
+//    printf("ADJ <%s|%d>(%d, %d, %d) %d %d\n", box->id, box->size, box->loc[0], box->loc[1], box->loc[2], delta, occupied);
+    if (occupied) {
+        for (int i = 0; i < 3; ++i) {
+//            printf(">>%d %d\n", i, BLK_USAGE_OCCUPIED(blk, box->loc, i));
+            BLK_USAGE_OCCUPIED(blk, box->loc, i) += delta;
+
+            if (BLK_USAGE_OCCUPIED(blk, box->loc, i) < 0 || BLK_USAGE_OCCUPIED(blk, box->loc, i) > blk->spec[i])
+                printf("warning[OC]: %s i=%d s=%d d=%d (%d, %d, %d) %d\n", box->id, i, box->state, delta, box->loc[0],
+                       box->loc[1], box->loc[2], BLK_USAGE_OCCUPIED(blk, box->loc, i));
+            assert(BLK_USAGE_OCCUPIED(blk, box->loc, i) >= 0 && BLK_USAGE_OCCUPIED(blk, box->loc, i) <= blk->spec[i]);
+//            printf(">!%d %d\n", i, BLK_USAGE_OCCUPIED(blk, box->loc, i));
+        }
+    } else {
+        for (int i = 0; i < 3; ++i) {
+//            printf(">>%d %d\n", i, BLK_USAGE(blk, box->loc, i));
+            BLK_USAGE(blk, box->loc, i) += delta;
+
+            if (BLK_USAGE(blk, box->loc, i) < 0 || BLK_USAGE(blk, box->loc, i) > blk->spec[i])
+                printf("warning[OC]: %s i=%d s=%d d=%d (%d, %d, %d) %d\n", box->id, i, box->state, delta, box->loc[0],
+                       box->loc[1], box->loc[2], BLK_USAGE(blk, box->loc, i));
+            assert(BLK_USAGE(blk, box->loc, i) >= 0 && BLK_USAGE(blk, box->loc, i) <= blk->spec[i]);
+//            printf(">!%d %d\n", i, BLK_USAGE(blk, box->loc, i));
+        }
+    }
+}
+
+static inline void _box_adjust_usage(Block *blk, Box *box, int delta, bool occupied) {
+    __adjust_usage(blk, box, delta, occupied);
+    if (box->size == BOX_SIZE_FORTY) {
+        box->loc[blk->box_orientation]++;
+        __adjust_usage(blk, box, delta, occupied);
+        box->loc[blk->box_orientation]--;
+    }
+    if (occupied)
+        __mark_usage(blk, box, delta);
+}
+
 
 int _box_swap(Box *box, int along, bool sink) {
     Block *blk = box->block;
@@ -77,10 +94,11 @@ int _box_swap(Box *box, int along, bool sink) {
     _box_adjust_usage(blk, box, -1, TRUE);
     _box_adjust_usage(blk, box2, -1, TRUE);
 
-    if (sink)
-        _box_adjust_usage(blk, box2, -1, FALSE);
-    else
+    if (box->state == BOX_STATE_STORED)
         _box_adjust_usage(blk, box, -1, FALSE);
+
+    if (box2->state == BOX_STATE_STORED)
+        _box_adjust_usage(blk, box2, -1, FALSE);
 
     int32_t tmp = box->loc[along];
     box->loc[along] = box2->loc[along];
@@ -101,10 +119,11 @@ int _box_swap(Box *box, int along, bool sink) {
     _box_adjust_usage(blk, box, 1, TRUE);
     _box_adjust_usage(blk, box2, 1, TRUE);
 
-    if (sink)
-        _box_adjust_usage(blk, box2, 1, FALSE);
-    else
+    if (box->state == BOX_STATE_STORED)
         _box_adjust_usage(blk, box, 1, FALSE);
+
+    if (box2->state == BOX_STATE_STORED)
+        _box_adjust_usage(blk, box2, 1, FALSE);
 
     return SUCCEED;
 }
@@ -179,6 +198,9 @@ int box_realloc(Box *box, Time time, CellIdx *new_loc) {
     if (!box_position_is_valid(box, blk, new_loc))
         return ERROR_INVALID_LOCATION;
 
+    if (blk->stacking_axis >= 0)
+        _box_float(box);
+
     _box_adjust_usage(blk, box, -1, TRUE);
     _blk_unlink_cell(blk, box);
 
@@ -221,12 +243,13 @@ int box_store(Box *box, Time time) {
     if (time >= 0 && box->state != BOX_STATE_RELOCATING)
         box->store_time = time;
 
+    box->state = BOX_STATE_STORED;
+
     _box_adjust_usage(blk, box, 1, FALSE);
 
     if (blk->stacking_axis >= 0)
         _box_sink(box);
 
-    box->state = BOX_STATE_STORED;
     return SUCCEED;
 }
 
@@ -245,7 +268,9 @@ int box_retrieve(Box *box, Time time) {
     _box_adjust_usage(blk, box, -1, TRUE);
     _box_adjust_usage(blk, box, -1, FALSE);
 
-    if (time >= 0 && box->state != BOX_STATE_RELOCATING)
+    assert(box->state == BOX_STATE_STORED);
+
+    if (time >= 0)
         box->state = BOX_STATE_RETRIEVING;
     return SUCCEED;
 }
@@ -276,6 +301,7 @@ int box_relocate_retrieve(Box *box, CellIdx *new_loc) {
     if ((res = box_retrieve(box, -1)) != SUCCEED)
         goto exit;
 
+    box->state = BOX_STATE_RELOCATING;
     memcpy(box->loc, new_loc, sizeof(CellIdx) * 3);
     if ((res = box_alloc(box, -1)) != SUCCEED)
         goto exit;

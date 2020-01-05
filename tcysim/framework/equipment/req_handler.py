@@ -38,6 +38,7 @@ class ReqHandler(Dispatcher):
 
     @Dispatcher.on(ReqType.RELOCATE)
     def on_request_relocate(self, time, request):
+        yield from self.reshuffle_operations(time, request)
         box = request.box
         if request.acquire_stack(time, box.location, request.new_loc):
             yield self.gen_relocate_op(time, box, request.new_loc, request, reset=True)
@@ -53,9 +54,13 @@ class ReqHandler(Dispatcher):
 
     def reshuffle_operations(self, time, request):
         box = request.box
+        if box.state != box.STATE.STORED:
+            yield None
         request.rsf_count = 0
         for above_box in box.box_above():
             new_loc = self.equipment.yard.smgr.slot_for_relocation(above_box)
+            if not new_loc:
+                yield None
             if request.acquire_stack(time, above_box.location, new_loc):
                 request.rsf_count += 1
                 yield self.gen_relocate_op(time, above_box, new_loc, request, reset=False)
@@ -109,8 +114,8 @@ class ReqHandler(Dispatcher):
 
     def on_retrieve_leaving_block(self, time, request):
         box = request.box
-        box.state = request.box.STATE.RETRIEVING
         box.retrieve(time)
+        # box.state = request.box.STATE.RETRIEVING
         box.block.release_stack(time, box.location)
         box.equipment = request.equipment
 
@@ -129,9 +134,7 @@ class ReqHandler(Dispatcher):
         pass
 
     def on_relocate_start(self, time, box, dst_loc):
-        box.state = box.STATE.RELOCATING
         box.relocate_retrieve(time, dst_loc)
-        pass
 
     def on_relocate_finish_or_fail(self, time, box, dst_loc):
         pass

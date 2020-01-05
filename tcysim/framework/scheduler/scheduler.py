@@ -31,12 +31,16 @@ class JobScheduler(Process):
         self.activate(time, Priority.SCHEDULE)
 
     def on_schedule(self, time):
+        # print("[{:.5f}] Schedule".format(time), self.equipment.idx)
+        # print("COD", list(self.available_requests(time)))
         if self.pending:
-            avail_tasks = self.available_requests(time)
-            request = self.choose_task(time, avail_tasks)
-            if request is not None:
-                request.equipment = self.equipment
-                request.block.req_dispatcher.pop_request(request)
-                setattr(request, "time", time)
-                self.equipment.submit_task(request)
+            if self.equipment.ready_for_new_task():
+                avail_tasks = self.available_requests(time)
+                request = self.choose_task(time, avail_tasks)
+                if request is not None:
+                    request.equipment = self.equipment
+                    request.block.req_dispatcher.pop_request(request)
+                    setattr(request, "time", time)
+                    self.equipment.submit_task(request)
+                    # print("SR", request)
             self.pending = False
