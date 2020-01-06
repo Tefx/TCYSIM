@@ -195,18 +195,18 @@ if __name__ == '__main__':
         ]
     lanes.append(Lane(5, V3(25, -TEU.WIDTH * 2, 0), length=TEU.LENGTH * 50, width=TEU.WIDTH * 2, rotate=0))
     lanes.append(Lane(6, V3(25, TEU.WIDTH * 10, 0), length=TEU.LENGTH * 50, width=TEU.WIDTH * 2, rotate=0))
-    block = Block(yard, V3(25, 0, 0), V3(26, 10, 6), rotate=0, lanes=lanes)
+    block = Block(yard, V3(25, 0, 0), V3(16, 10, 6), rotate=0, lanes=lanes)
 
     rmg1 = RMG(yard, block, 0, idx=0)
     rmg2 = RMG(yard, block, -1, idx=1)
     yard.deploy(block, [rmg1, rmg2])
 
-    # yard.roles.tracer = AnimationLogger(yard, start=3600 * 20, end=3600 * 24, fps=24, speedup=10)
+    yard.roles.tracer = AnimationLogger(yard, start=3600 * 20, end=3600 * 24, fps=24, speedup=10)
     yard.roles.sim_driver = BoxGenerator(yard)
     yard.roles.sim_driver.install_or_add(SimpleBoxBomb(first_time=0))
 
     yard.start()
-    yard.run_until(3600 * 24 * 30)
+    yard.run_until(3600 * 24)
 
     if "tracer" in yard.roles:
         yard.roles.tracer.dump("log2")

@@ -61,7 +61,6 @@ class ReqHandler(Dispatcher):
             new_loc = self.equipment.yard.smgr.slot_for_relocation(above_box)
             assert new_loc
             if request.acquire_stack(time, above_box.location, new_loc):
-                # request.rsf_count += 1
                 yield self.gen_relocate_op(time, above_box, new_loc, request, reset=False)
             else:
                 yield None
@@ -95,7 +94,6 @@ class ReqHandler(Dispatcher):
 
     def on_store_off_agv(self, time, request):
         box = request.box
-        # box.state = box.STATE.STORING
         box.start_store()
         box.equipment = request.equipment
         request.sync(time)
@@ -121,7 +119,6 @@ class ReqHandler(Dispatcher):
 
     def on_retrieve_on_agv(self, time, request):
         box = request.box
-        # box.state = request.box.STATE.RETRIEVED
         box.finish_retrieve()
         box.equipment = None
         request.sync(time)
@@ -136,19 +133,16 @@ class ReqHandler(Dispatcher):
 
     def on_relocate_start(self, time, box, dst_loc):
         box.alloc(time, None, dst_loc)
-        # box.relocate_alloc(time, dst_loc)
 
     def on_relocate_finish_or_fail(self, time, box, dst_loc):
         pass
 
     def on_relocate_pickup(self, time, box, dst_loc):
         box.equipment = self.equipment
-        # box.relocate_retrieve(time)
         box.retrieve(time)
         box.block.release_stack(time, box.location)
 
     def on_relocate_putdown(self, time, box, dst_loc):
-        # box.relocate_store(time)
         box.store(time)
         box.equipment = None
         box.block.release_stack(time, box.location)

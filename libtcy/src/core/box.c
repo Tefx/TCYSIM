@@ -49,28 +49,23 @@ static inline void _box_mark_usage(Block *blk, Box *box, int delta) {
 }
 
 static inline void _box_adjust_usage(Block *blk, Box *box, int delta, bool occupied) {
-//    printf("ADJ <%s|%d>(%d, %d, %d) %d %d\n", box->id, box->size, box->loc[0], box->loc[1], box->loc[2], delta, occupied);
     if (occupied) {
         for (int i = 0; i < 3; ++i) {
-//            printf(">>%d %d\n", i, BLK_USAGE_OCCUPIED(blk, box->loc, i));
             BLK_USAGE_OCCUPIED(blk, box->loc, i) += delta;
 
             if (BLK_USAGE_OCCUPIED(blk, box->loc, i) < 0 || BLK_USAGE_OCCUPIED(blk, box->loc, i) > blk->spec[i])
                 printf("warning[OC]: %s i=%d s=%d d=%d (%d, %d, %d) %d\n", box->id, i, box->state, delta, box->loc[0],
                        box->loc[1], box->loc[2], BLK_USAGE_OCCUPIED(blk, box->loc, i));
             assert(BLK_USAGE_OCCUPIED(blk, box->loc, i) >= 0 && BLK_USAGE_OCCUPIED(blk, box->loc, i) <= blk->spec[i]);
-//            printf(">!%d %d\n", i, BLK_USAGE_OCCUPIED(blk, box->loc, i));
         }
     } else {
         for (int i = 0; i < 3; ++i) {
-//            printf(">>%d %d\n", i, BLK_USAGE(blk, box->loc, i));
             BLK_USAGE(blk, box->loc, i) += delta;
 
             if (BLK_USAGE(blk, box->loc, i) < 0 || BLK_USAGE(blk, box->loc, i) > blk->spec[i])
                 printf("warning[OC]: %s i=%d s=%d d=%d (%d, %d, %d) %d\n", box->id, i, box->state, delta, box->loc[0],
                        box->loc[1], box->loc[2], BLK_USAGE(blk, box->loc, i));
             assert(BLK_USAGE(blk, box->loc, i) >= 0 && BLK_USAGE(blk, box->loc, i) <= blk->spec[i]);
-//            printf(">!%d %d\n", i, BLK_USAGE(blk, box->loc, i));
         }
     }
 }
@@ -130,18 +125,13 @@ static inline int _box_sink(Box *box) {
     if (blk->stacking_axis < 0) return ERROR_CANNOT_FIND_STACKING_AXIS;
     int32_t along = blk->stacking_axis;
     Box *box2;
-//    printf("A %s(%d, %d, %d)\n", box->id, box->loc[0], box->loc[1], box->loc[2]);
     while (box->loc[along] > 0) {
-//        printf("B\n");
         box2 = _blk_neighbor_box(blk, box, along, FALSE);
-//        printf("C\n");
         if (box2->state != BOX_STATE_STORED)
             _box_swap(box2, along, TRUE);
         else
             break;
-//        printf("D\n");
     }
-//    printf("E\n");
     return SUCCEED;
 }
 
@@ -222,7 +212,6 @@ void box_store_position(Box *box, CellIdx *idx) {
 }
 
 int box_store(Box *box, Time time) {
-//    printf("STO: %s(%d, %d, %d)\n", box->id, box->loc[0], box->loc[1], box->loc[2]);
     Block *blk = box->block;
 
     if (time >= 0 && box->state != BOX_STATE_RELOCATING)
@@ -238,7 +227,6 @@ int box_store(Box *box, Time time) {
 }
 
 int box_retrieve(Box *box, Time time) {
-//    printf("RET: %s(%d, %d, %d)\n", box->id, box->loc[0], box->loc[1], box->loc[2]);
     Block *blk = box->block;
 
     if (time >= 0)
@@ -292,13 +280,10 @@ int box_remove_holder(Box *box) {
 }
 
 int box_realloc(Box *box, Time time, CellIdx *new_loc) {
-//    printf("1: (%d, %d, %d)\n", box->loc[0], box->loc[1], box->loc[2]);
     box_place_holder(box, NULL);
-//    printf("2: (%d, %d, %d)\n", box->_holder_or_origin->loc[0], box->_holder_or_origin->loc[1], box->_holder_or_origin->loc[2]);
 
     memcpy(box->loc, new_loc, sizeof(CellIdx) * 3);
     int res = box_alloc(box, -1);
-//    printf("3: (%d, %d, %d)\n", box->loc[0], box->loc[1], box->loc[2]);
     return res;
 }
 
@@ -321,16 +306,8 @@ int box_relocate_retrieve(Box *box, Time time) {
 int box_relocate_store(Box *box, Time time) {
     assert(box->_holder_or_origin);
     memcpy(box->loc, box->_holder_or_origin->loc, sizeof(CellIdx) * 3);
-//    printf("PH %s(%d, %d, %d)\n", box->id,
-//           box->_holder_or_origin->loc[0],
-//           box->_holder_or_origin->loc[1],
-//           box->_holder_or_origin->loc[2]
-//    );
-//    printf("a\n");
     box_remove_holder(box);
-//    printf("b\n");
     box_alloc(box, -1);
-//    printf("c\n");
     return box_store(box, -1);
 }
 

@@ -175,10 +175,6 @@ cdef class CBox:
             return self.equipment.coord_to_box()
         elif self.state == BOX_STATE_STORED:
             return self.block.box_coord(self, None)
-        # elif BOX_STATE_STORED <= self.state < BOX_STATE_RETRIEVING:
-        #     if self.state == BOX_STATE_RELOCATING:
-        #         return self.block.cell_coord(self.previous_loc, None, self.teu)
-        #     return self.block.box_coord(self, None)
 
     def __repr__(self):
         return "Box[{}'|{}]".format(self.size, self.c.id.decode("utf-8"))
