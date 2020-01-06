@@ -21,8 +21,16 @@ class OpBuilder(OpBuilderBase):
 class OptimizedOpBuilder(OpBuilder):
     def move_steps(self, op, src_loc, dst_loc, load=False):
         hoist_mode = "rated load" if load else "no load"
-        block = op.request.block
         equipment = self.equipment
+
+        if op.request:
+            block = op.request.block
+        elif len(equipment.blocks) == 1:
+            block = equipment.blocks[0]
+        else:
+            yield from super(OptimizedOpBuilder, self).move_steps(op, src_loc, dst_loc)
+            return
+
         src_glbl = equipment.coord_l2g(src_loc)
         dst_glbl = equipment.coord_l2g(dst_loc)
 

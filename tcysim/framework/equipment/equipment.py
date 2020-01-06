@@ -3,6 +3,7 @@ from copy import copy
 from enum import Enum, auto
 
 from pesim import TIME_FOREVER, Process
+from ..operation import Operation
 from ..priority import Priority
 from ..layout import EquipmentRangeLayout
 from tcysim.utils import V3
@@ -137,33 +138,31 @@ class Equipment(EquipmentRangeLayout, Process):
         elif self.state != self.STATE.BLOCKING:
             self.wake(priority=Priority.TASK_ARRIVAL)
 
-    def on_idle(self, time):
-        self.job_scheduler.schedule(time)
-
-    def is_idle(self):
-        return not self.next_task
+    def query_new_task(self, time):
+        if self.next_task is None:
+            self.job_scheduler.schedule(time)
 
     def _wait(self, priority=Priority.FOREVER):
         if not self.next_task:
-            return TIME_FOREVER, priority
+            op = self.job_scheduler.on_idle(self.time)
+            if op is not None:
+                self.next_task = op
+                return self.time, priority
+            else:
+                return TIME_FOREVER, priority
         else:
             return self.next_task.time, priority
 
     def perform_op(self, time, op):
         op.commit(self.yard)
-        # if op.op_type == op.TYPE.STORE:
-        #     print(self.gantry.pending_motions)
-        #     print(self.trolley.pending_motions)
-        #     print(self.hoist.pending_motions)
         with self.lock_state(self.STATE.WORKING):
             self.current_op = op
             self.time = yield op.finish_time, Priority.OP_FINISH
             self.current_op = None
 
-    def _process(self):
-        request = self.next_task
-        print("[{:.2f}]<Request/Equipment {}>".format(self.time, self.idx), request, self.local_coord(), getattr(request, "box", None))
-        self.next_task = None
+    def handle_request(self, request):
+        print("[{:.2f}]<Request/Equipment {}>".format(self.time, self.idx), request, self.local_coord(),
+              getattr(request, "box", None))
         request.start_or_resume(self.time)
         for op in request.gen_op(self.time):
             if op and self.op_builder.build_and_check(self.time, op):
@@ -173,8 +172,21 @@ class Equipment(EquipmentRangeLayout, Process):
                 break
         request.finish_or_fail(self.time)
         print("[{:.2f}]<Request/Equipment {}>".format(self.time, self.idx), request, self.local_coord())
-        if self.is_idle():
-            self.job_scheduler.schedule(self.time)
+
+    def handle_operation(self, op):
+        print("[{:.2f}]<Operation/Start {}>".format(self.time, self.idx), op, self.local_coord())
+        if self.op_builder.build_and_check(self.time, op):
+            yield from self.perform_op(self.time, op)
+        print("[{:.2f}]<Operation/FinishOrFail {}>".format(self.time, self.idx), op, self.local_coord())
+
+    def _process(self):
+        op_or_req = self.next_task
+        self.next_task = None
+        if isinstance(op_or_req, Request):
+            yield from self.handle_request(op_or_req)
+        elif isinstance(op_or_req, Operation):
+            yield from self.handle_operation(op_or_req)
+        self.query_new_task(self.time)
 
     def adjust_is_necessary(self, other, dst_loc):
         return (other.local_coord() - dst_loc).dot_product(self.local_coord() - dst_loc) >= 0
