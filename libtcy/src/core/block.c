@@ -69,7 +69,6 @@ inline CellIdx _blk_cell_idx(Block *blk, const CellIdx *loc) {
 
 void _blk_link_cell(Block *blk, Box *box) {
     blk->cells[_blk_cell_idx(blk, box->loc)] = box;
-//    printf("link %s (%d, %d, %d)\n",box->id, box->loc[0], box->loc[1], box->loc[2]);
     if (box->size == BOX_SIZE_FORTY) {
         box->loc[blk->box_orientation]++;
         blk->cells[_blk_cell_idx(blk, box->loc)] = box;
@@ -79,7 +78,6 @@ void _blk_link_cell(Block *blk, Box *box) {
 
 void _blk_unlink_cell(Block *blk, Box *box) {
     blk->cells[_blk_cell_idx(blk, box->loc)] = NULL;
-//    printf("unlink %s (%d, %d, %d)\n",box->id, box->loc[0], box->loc[1], box->loc[2]);
     if (box->size == BOX_SIZE_FORTY) {
         box->loc[blk->box_orientation]++;
         blk->cells[_blk_cell_idx(blk, box->loc)] = NULL;
@@ -91,18 +89,15 @@ Box *_blk_neighbor_box(Block *blk, Box *box, int along, bool inc) {
     CellIdx loc2[3];
     for (int i = 0; i < 3; i++) loc2[i] = box->loc[i];
 
-//    printf("along %d %d %d %d %d\n", along, blk->box_orientation, box->size, loc2[along], blk->spec[along]);
     if (inc && along == blk->box_orientation && box->size == BOX_SIZE_FORTY)
         loc2[along] += 2;
     else if (inc)
         loc2[along] += 1;
     else
         loc2[along] -= 1;
-//    printf(">> (%d, %d, %d)\n", loc2[0], loc2[1], loc2[2]);
     if (loc2[along] >= blk->spec[along] || loc2[along] < 0)
         return NULL;
     else {
-//        printf("%d (%d, %d, %d)\n",_blk_cell_idx(blk, loc2), loc2[0], loc2[1], loc2[2]);
         return blk->cells[_blk_cell_idx(blk, loc2)];
     }
 }
@@ -159,11 +154,7 @@ Box *block_top_box(Block *blk, const CellIdx *idx, int along) {
 
     for (int i = 0; i < 3; i++) tmp_idx[i] = idx[i];
 
-//    printf("%d %d (%d, %d, %d)\n", along, blk->column_usage[along][_blk_clmn_idx(blk, idx, along)], idx[0], idx[1], idx[2]);
     tmp_idx[along] = blk->column_usage[along][_blk_clmn_idx(blk, idx, along)] - 1;
-//    printf("%p (%d, %d, %d)\n", block_box_at(blk, tmp_idx), tmp_idx[0], tmp_idx[1], tmp_idx[2]);
-//    if (block_box_at(blk, tmp_idx))
-//        printf("%s (%d, %d, %d)\n", block_box_at(blk, tmp_idx)->id, block_box_at(blk, tmp_idx)->loc[0], block_box_at(blk, tmp_idx)->loc[1], block_box_at(blk, tmp_idx)->loc[2]);
     return block_box_at(blk, tmp_idx);
 }
 

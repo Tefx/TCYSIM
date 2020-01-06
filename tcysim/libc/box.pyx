@@ -12,7 +12,6 @@ cdef class CBoxState:
     RETRIEVING = BOX_STATE_RETRIEVING
     RETRIEVED = BOX_STATE_RETRIEVED
 
-
 cdef class CBox:
     cdef Box c
     cdef public object equipment
@@ -32,43 +31,42 @@ cdef class CBox:
     def __destroy__(self):
         box_destroy(&self.c)
 
-    def alloc(self, int time, block, loc):
-        if loc:
-            self.set_location(block, *loc)
-            # print("ALLOC", self.id, self.location)
-            box_alloc(&self.c, time)
-            # print("/ALLOC", self.location)
-            return True
-        else:
-            return False
-
-    def realloc(self, int time, loc):
+    def alloc(self, time, block, loc):
         cdef CellIdx new_loc[3];
-        new_loc[:] = loc
-        box_realloc(&self.c, time, new_loc)
+        if self.state == BOX_STATE_INITIAL:
+            self.set_location(block, *loc)
+            box_alloc(&self.c, time)
+        elif self.state == BOX_STATE_ALLOCATED:
+            if not self.c._holder_or_origin:
+                new_loc[:] = loc
+                box_realloc(&self.c, time, new_loc)
+            else:
+                raise Exception("triple alloc")
+        elif self.state == BOX_STATE_STORED:
+            if not self.c._holder_or_origin:
+                new_loc[:] = loc
+                box_relocate_alloc(&self.c, time, new_loc)
+        else:
+            print(self.state)
+            raise NotImplementedError
 
     def store(self, int time):
-        # print("STORE", self.id, self.location)
-        box_store(&self.c, time)
-        # print("/STORE", self.location)
+        if self.state == BOX_STATE_STORING:
+            box_store(&self.c, time)
+        elif self.state == BOX_STATE_RELOCATING:
+            box_relocate_store(&self.c, time)
 
     def retrieve(self, int time):
-        # print("RETRIEVE", self.id, self.location)
-        box_retrieve(&self.c, time)
-        # print("/RETRIEVE")
+        if self.c._holder_or_origin:
+            box_relocate_retrieve(&self.c, time)
+        else:
+            box_retrieve(&self.c, time)
 
-    def relocate_retrieve(self, time, dst_loc):
-        # print("RELOCATE_RETRIEVE", self.id, self.location, dst_loc)
-        cdef CellIdx new_loc[3];
-        new_loc[:] = dst_loc
-        self.previous_loc = self.location
-        box_relocate_retrieve(&self.c, new_loc)
-        # print("/RELOCATE_RETRIEVE")
+    def start_store(self):
+        self.state = BOX_STATE_STORING
 
-    def relocate_store(self, time):
-        # print("RELOCATE_STORE", self.id)
-        self.store(-1)
-        # print("/RELOCATE_STORE")
+    def finish_retrieve(self):
+        self.state = BOX_STATE_RETRIEVED
 
     @property
     def id(self):
@@ -175,11 +173,8 @@ cdef class CBox:
     def coord(self):
         if self.equipment:
             return self.equipment.coord_to_box()
-        elif BOX_STATE_STORED <= self.state < BOX_STATE_RETRIEVING:
-            if self.state == BOX_STATE_RELOCATING:
-                return self.block.cell_coord(self.previous_loc, None, self.teu)
+        elif self.state == BOX_STATE_STORED:
             return self.block.box_coord(self, None)
 
     def __repr__(self):
         return "Box[{}'|{}]".format(self.size, self.c.id.decode("utf-8"))
-

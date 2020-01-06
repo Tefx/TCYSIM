@@ -6,9 +6,9 @@ class DispatchFunc:
 
     def __call__(self, *args, **kwargs):
         # print(self.func, *args, **kwargs)
-        return self.func(*args, **kwargs)
+        res = self.func(*args, **kwargs)
         # print("DONE", self.func)
-        # return res
+        return res
 
 class Dispatcher:
     def __init__(self):

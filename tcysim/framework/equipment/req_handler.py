@@ -59,10 +59,8 @@ class ReqHandler(Dispatcher):
         request.rsf_count = 0
         for above_box in box.box_above():
             new_loc = self.equipment.yard.smgr.slot_for_relocation(above_box)
-            if not new_loc:
-                yield None
+            assert new_loc
             if request.acquire_stack(time, above_box.location, new_loc):
-                request.rsf_count += 1
                 yield self.gen_relocate_op(time, above_box, new_loc, request, reset=False)
             else:
                 yield None
@@ -96,9 +94,9 @@ class ReqHandler(Dispatcher):
 
     def on_store_off_agv(self, time, request):
         box = request.box
-        box.state = box.STATE.STORING
-        request.sync(time)
+        box.start_store()
         box.equipment = request.equipment
+        request.sync(time)
 
     def on_store_in_block(self, time, request):
         box = request.box
@@ -114,16 +112,16 @@ class ReqHandler(Dispatcher):
 
     def on_retrieve_leaving_block(self, time, request):
         box = request.box
+        # box.retrieve(time)
         box.retrieve(time)
-        # box.state = request.box.STATE.RETRIEVING
-        box.block.release_stack(time, box.location)
         box.equipment = request.equipment
+        box.block.release_stack(time, box.location)
 
     def on_retrieve_on_agv(self, time, request):
-        request.sync(time)
         box = request.box
-        box.state = request.box.STATE.RETRIEVED
+        box.finish_retrieve()
         box.equipment = None
+        request.sync(time)
 
     def on_adjust_start(self, time, request):
         blocking_req = request.blocking_request
@@ -134,16 +132,17 @@ class ReqHandler(Dispatcher):
         pass
 
     def on_relocate_start(self, time, box, dst_loc):
-        box.relocate_retrieve(time, dst_loc)
+        box.alloc(time, None, dst_loc)
 
     def on_relocate_finish_or_fail(self, time, box, dst_loc):
         pass
 
     def on_relocate_pickup(self, time, box, dst_loc):
         box.equipment = self.equipment
-        box.block.release_stack(time, box.previous_loc)
+        box.retrieve(time)
+        box.block.release_stack(time, box.location)
 
     def on_relocate_putdown(self, time, box, dst_loc):
-        box.relocate_store(time)
+        box.store(time)
         box.equipment = None
         box.block.release_stack(time, box.location)

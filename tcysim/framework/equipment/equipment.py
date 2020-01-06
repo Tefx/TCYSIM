@@ -162,7 +162,7 @@ class Equipment(EquipmentRangeLayout, Process):
 
     def _process(self):
         request = self.next_task
-        print("[{:.2f}]<Request/Equipment {}>".format(self.time, self.idx), request, self.local_coord())
+        print("[{:.2f}]<Request/Equipment {}>".format(self.time, self.idx), request, self.local_coord(), getattr(request, "box", None))
         self.next_task = None
         request.start_or_resume(self.time)
         for op in request.gen_op(self.time):
