@@ -70,7 +70,7 @@ class OpBuilder(Dispatcher):
             with op.allow_interruption(self.equipment):
                 yield from self.idle_steps(op, op.dst_loc)
 
-    @Dispatcher.on(OpType.MOVE)
+    @Dispatcher.on(OpType.ADJUST)
     def build_adjust(self, op: Operation):
         other = op.request.blocking_request.equipment
         op.dst_loc = op.request.new_loc
@@ -78,6 +78,16 @@ class OpBuilder(Dispatcher):
         if self.equipment.adjust_is_necessary(other, op.dst_loc):
             yield from self.adjust_steps(op, self.equipment.local_coord(), op.dst_loc)
         yield op.emit_signal("finish_or_fail")
+
+    @Dispatcher.on(OpType.MOVE)
+    def build_move(self, op:Operation):
+        load = op.load
+        dst_loc = op.dst_loc
+        if op.interruptable:
+            with op.allow_interruption(self.equipment):
+                yield from self.move_steps(op, self.equipment.local_coord(), dst_loc, load)
+        else:
+            yield from self.move_steps(op, self.equipment.local_coord(), dst_loc, load)
 
     def build_and_check(self, time, op:Operation):
         self.build(op)
@@ -103,7 +113,13 @@ class OpBuilder(Dispatcher):
 
     @classmethod
     def AdjustOp(cls, request):
-        return Operation(cls.OpType.MOVE, request)
+        return Operation(cls.OpType.ADJUST, request)
+
+    def MoveOp(self, dst_loc, load=False, interruptable=True):
+        return Operation(self.OpType.MOVE, self.equipment,
+                         dst_loc=dst_loc,
+                         load=load,
+                         interruptable=interruptable)
 
     def move_steps(self, op, src_loc, dst_loc, load=False):
         raise NotImplementedError

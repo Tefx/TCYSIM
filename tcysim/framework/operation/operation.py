@@ -1,18 +1,23 @@
 from contextlib import contextmanager
 from copy import copy
 
+from .. import Request
 from ..callback import CallBack
 from .step import CallBackStep, EmptyStep, MoverStep
 from tcysim.utils import Paths, V3
 
 
 class Operation:
-    def __init__(self, type, request, locking_pos=(), **attrs):
+    def __init__(self, type, request_or_equipment, locking_pos=(), **attrs):
         self.op_type = type
         self.start_time = -1
         self.finish_time = -1
-        self.request = request
-        self.equipment = request.equipment
+        if isinstance(request_or_equipment, Request):
+            self.request = request_or_equipment
+            self.equipment = request_or_equipment.equipment
+        else:
+            self.request = None
+            self.equipment = request_or_equipment
         self.step = None
         self.paths = {}
         self.__interruption_flag = False
@@ -72,7 +77,7 @@ class Operation:
     @contextmanager
     def allow_interruption(self, equipment):
         self.__interruption_flag = True
-        self.add(CallBackStep(CallBack(equipment.on_idle)))
+        self.add(CallBackStep(CallBack(equipment.query_new_task)))
         yield
         self.__interruption_flag = False
 

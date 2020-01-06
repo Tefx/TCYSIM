@@ -31,8 +31,6 @@ class JobScheduler(Process):
         self.activate(time, Priority.SCHEDULE)
 
     def on_schedule(self, time):
-        # print("[{:.5f}] Schedule".format(time), self.equipment.idx)
-        # print("COD", list(self.available_requests(time)))
         if self.pending:
             if self.equipment.ready_for_new_task():
                 avail_tasks = self.available_requests(time)
@@ -42,5 +40,7 @@ class JobScheduler(Process):
                     request.block.req_dispatcher.pop_request(request)
                     setattr(request, "time", time)
                     self.equipment.submit_task(request)
-                    # print("SR", request)
             self.pending = False
+
+    def on_idle(self, time):
+        return None

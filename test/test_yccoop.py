@@ -57,6 +57,11 @@ class CraneJobScheduler(JobScheduler):
     def choose_task(self, time, tasks):
         return min(filter(Request.is_ready, tasks), key=self.rank_task, default=None)
 
+    def on_idle(self, time):
+        if abs(self.equipment.local_coord().z - self.equipment.hoist.max_height) > 0.1:
+            dst_loc = self.equipment.local_coord().set1(2, self.equipment.hoist.max_height)
+            return self.equipment.op_builder.MoveOp(dst_loc)
+
 
 class Ph2ReqHandler(ReqHandler):
     @Dispatcher.on(ReqType.RETRIEVE)
@@ -158,7 +163,7 @@ class RandomSpaceAllocator(SpaceAllocator):
         block = box.block
         shape = block.shape
         start_bay = i if start_bay is None else start_bay
-        finish_bay = i+1 if finish_bay is None else finish_bay
+        finish_bay = i + 1 if finish_bay is None else finish_bay
         step = 1 if start_bay < finish_bay else -1
         for i1 in range(start_bay, finish_bay, step):
             for j1 in range(0, shape.y):
@@ -190,7 +195,7 @@ if __name__ == '__main__':
     yard = SimpleYard()
 
     lanes = [
-        Lane(i, V3(0, i * TEU.WIDTH * 2, 0), length=20, width=TEU.WIDTH * 2, rotate=0)
+        Lane(i, V3(0, i * TEU.WIDTH * 2, 0), length=20, width=TEU.WIDTH, rotate=0)
         for i in range(4)
         ]
     lanes.append(Lane(5, V3(25, -TEU.WIDTH * 2, 0), length=TEU.LENGTH * 50, width=TEU.WIDTH * 2, rotate=0))
@@ -201,12 +206,12 @@ if __name__ == '__main__':
     rmg2 = RMG(yard, block, -1, idx=1)
     yard.deploy(block, [rmg1, rmg2])
 
-    yard.roles.tracer = AnimationLogger(yard, start=3600 * 20, end=3600 * 24, fps=24, speedup=10)
+    # yard.roles.tracer = AnimationLogger(yard, start=3600 * 20, end=3600 * 24, fps=24, speedup=10)
     yard.roles.sim_driver = BoxGenerator(yard)
     yard.roles.sim_driver.install_or_add(SimpleBoxBomb(first_time=0))
 
     yard.start()
-    yard.run_until(3600 * 24)
+    yard.run_until(3600 * 24 * 30)
 
     if "tracer" in yard.roles:
         yard.roles.tracer.dump("log2")
