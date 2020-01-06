@@ -3,6 +3,7 @@ from copy import copy
 from enum import Enum, auto
 
 from pesim import TIME_FOREVER, Process
+from ..exception.handling import ReqOpRejectionError, ROREquipmentConflictError
 from ..operation import Operation
 from ..priority import Priority
 from ..layout import EquipmentRangeLayout
@@ -164,12 +165,14 @@ class Equipment(EquipmentRangeLayout, Process):
         print("[{:.2f}]<Request/Equipment {}>".format(self.time, self.idx), request, self.local_coord(),
               getattr(request, "box", None))
         request.start_or_resume(self.time)
-        for op in request.gen_op(self.time):
-            if op and self.op_builder.build_and_check(self.time, op):
-                yield from self.perform_op(self.time, op)
-            else:
-                self.req_handler.on_reject(self.time, request, op)
-                break
+        try:
+            for op in request.gen_op(self.time):
+                if self.op_builder.build_and_check(self.time, op):
+                    yield from self.perform_op(self.time, op)
+                else:
+                    raise ROREquipmentConflictError(op)
+        except ReqOpRejectionError as e:
+            self.req_handler.on_reject(self.time, e)
         request.finish_or_fail(self.time)
         print("[{:.2f}]<Request/Equipment {}>".format(self.time, self.idx), request, self.local_coord())
 

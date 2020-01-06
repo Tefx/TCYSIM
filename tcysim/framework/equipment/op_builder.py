@@ -96,8 +96,7 @@ class OpBuilder(Dispatcher):
         if itf:
             op.itf_other = other
             op.itf_loc = new_loc
-            return False
-        return True
+        return not itf
 
     @classmethod
     def StoreOp(cls, request):
