@@ -71,8 +71,12 @@ class Yard:
         return request.state, time
 
     def alloc(self, time, box):
+        print(box, 0, box.state)
         block, loc = self.smgr.alloc_space(box, self.smgr.available_blocks(box))
-        return box.alloc(time, block, loc)
+        if not loc:
+            return False
+        box.alloc2(time, block, loc)
+        return True
 
     def store(self, time, box, lane):
         request = Request(ReqType.STORE, time, box, lane=lane)

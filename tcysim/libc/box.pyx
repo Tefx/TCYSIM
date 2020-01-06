@@ -28,24 +28,55 @@ cdef class CBox:
         box_init(&self.c, box_id, c_size)
         self.c._self = <PyObject*> self
         self.equipment = None
+        print(self.id, self.state)
 
     def __destroy__(self):
         box_destroy(&self.c)
 
-    def alloc(self, int time, block, loc):
-        if loc:
-            self.set_location(block, *loc)
-            # print("ALLOC", self.id, self.location)
-            box_alloc(&self.c, time)
-            # print("/ALLOC", self.location)
-            return True
-        else:
-            return False
+    # def alloc(self, int time, block, loc):
+    #     if loc:
+    #         self.set_location(block, *loc)
+    #         # print("ALLOC", self.id, self.location)
+    #         box_alloc(&self.c, time)
+    #         # print("/ALLOC", self.location)
+    #         return True
+    #     else:
+    #         return False
+    #
+    # def realloc(self, int time, loc):
+    #     if self.c._holder_or_origin:
+    #         return
+    #     cdef CellIdx new_loc[3];
+    #     new_loc[:] = loc
+    #     # print("realloc", self.id, self.location)
+    #     box_realloc(&self.c, time, new_loc)
+    #     # print("/realloc", self.id)
+    #
+    # def relocate_alloc(self, time, dst_loc):
+    #     cdef CellIdx new_loc[3];
+    #     new_loc[:] = dst_loc
+    #     # print("rlct_alloc", self.id, self.location, dst_loc)
+    #     box_relocate_alloc(&self.c, time, new_loc)
+    #     # print("/rlct_alloc")
 
-    def realloc(self, int time, loc):
+    def alloc2(self, time, block, loc):
         cdef CellIdx new_loc[3];
-        new_loc[:] = loc
-        box_realloc(&self.c, time, new_loc)
+        if self.state == BOX_STATE_INITIAL:
+            self.set_location(block, *loc)
+            box_alloc(&self.c, time)
+        elif self.state == BOX_STATE_ALLOCATED:
+            if not self.c._holder_or_origin:
+                new_loc[:] = loc
+                box_realloc(&self.c, time, new_loc)
+            else:
+                raise Exception("triple alloc")
+        elif self.state == BOX_STATE_STORED:
+            if not self.c._holder_or_origin:
+                new_loc[:] = loc
+                box_relocate_alloc(&self.c, time, new_loc)
+        else:
+            print(self.state)
+            raise NotImplementedError
 
     def store(self, int time):
         # print("STORE", self.id, self.location)
@@ -57,18 +88,16 @@ cdef class CBox:
         box_retrieve(&self.c, time)
         # print("/RETRIEVE")
 
-    def relocate_retrieve(self, time, dst_loc):
-        # print("RELOCATE_RETRIEVE", self.id, self.location, dst_loc)
-        cdef CellIdx new_loc[3];
-        new_loc[:] = dst_loc
-        self.previous_loc = self.location
-        box_relocate_retrieve(&self.c, new_loc)
-        # print("/RELOCATE_RETRIEVE")
+    def relocate_retrieve(self, time):
+        # print("rlct_retrieve", self.id, self.location)
+        box_relocate_retrieve(&self.c, time)
+        # print("/rlct_retrieve")
 
     def relocate_store(self, time):
-        # print("RELOCATE_STORE", self.id)
-        self.store(-1)
-        # print("/RELOCATE_STORE")
+        self.previous_loc = self.location
+        # print("rlct_store", self.id, self.location)
+        box_relocate_store(&self.c, time)
+        # print("/rlct_store")
 
     @property
     def id(self):

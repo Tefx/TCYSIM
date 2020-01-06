@@ -43,6 +43,7 @@ typedef enum {
     BOX_STATE_RELOCATING = 4,
     BOX_STATE_RETRIEVING = 5,
     BOX_STATE_RETRIEVED = 6,
+    BOX_STATE_PLACEHOLDER = 7,
 } BoxState;
 
 typedef enum {
@@ -56,7 +57,7 @@ typedef int64_t Time;
 typedef int32_t CellIdx;
 typedef struct Block Block;
 
-typedef struct {
+typedef struct Box {
     char id[BOX_ID_LEN_LIMIT];
     BoxSize size;
     BoxState state;
@@ -64,6 +65,7 @@ typedef struct {
     CellIdx loc[3];
     Block *block;
     void* _self;
+    struct Box* _holder_or_origin;
 } Box;
 
 typedef Box *Cell;

@@ -85,9 +85,9 @@ class Ph2ReqHandler(ReqHandler):
             dst_loc = self.yard.smgr.slot_for_relocation(box, start_bay=start_bay, finish_bay=0)
             if request.acquire_stack(time, dst_loc):
                 request.ph2 = True
-                self.yard.smgr.add_mask(box)
                 box.final_loc = box.location
-                box.realloc(time, dst_loc)
+                # box.realloc(time, dst_loc)
+                box.alloc2(time, None, dst_loc)
                 request.link_signal("start_or_resume", self.on_store_start, request)
                 request.link_signal("off_agv", self.on_store_off_agv, request)
                 request.link_signal("in_block", self.on_store_in_block, request)
@@ -99,19 +99,12 @@ class Ph2ReqHandler(ReqHandler):
             yield from super(Ph2ReqHandler, self).on_request_store(self, time, request)
 
     def gen_relocate_op(self, time, box, new_loc, request, reset, ph2=False):
-        request.link_signal("rlct_start_or_resume", self.on_relocate_start, box=box, dst_loc=new_loc,
-                            original_request=request if ph2 else None)
+        request.link_signal("rlct_start_or_resume", self.on_relocate_start, box=box, dst_loc=new_loc)
         request.link_signal("rlct_pick_up", self.on_relocate_pickup, box=box, dst_loc=new_loc)
         request.link_signal("rlct_put_down", self.on_relocate_putdown, box=box, dst_loc=new_loc,
                             original_request=request if ph2 else None)
         request.link_signal("rlct_finish_or_fail", self.on_relocate_finish_or_fail, box=box, dst_loc=new_loc)
         return self.equipment.op_builder.RelocateOp(request, box, new_loc, reset=reset)
-
-    def on_relocate_start(self, time, box, dst_loc, original_request=None):
-        if original_request:
-            if original_request.req_type == ReqType.STORE and getattr(original_request, "ph2", True):
-                self.yard.smgr.remove_mask(box)
-        super(Ph2ReqHandler, self).on_relocate_start(time, box, dst_loc)
 
     def on_relocate_putdown(self, time, box, dst_loc, original_request=None):
         if original_request:
@@ -153,30 +146,9 @@ class RMG(Crane):
 
 
 class RandomSpaceAllocator(SpaceAllocator):
-    def __init__(self, *args, **kwargs):
-        super(RandomSpaceAllocator, self).__init__(*args, **kwargs)
-        self.masked = set()
-        self.num_masked = {}
-
-    def add_mask(self, box):
-        loc = box.block, box.location[0], box.location[1]
-        self.masked.add(loc)
-        # loc = loc[0], loc[1]
-        # if loc not in self.num_masked:
-        #     self.num_masked[loc] = 0
-        # self.num_masked[loc] += 1
-
-    def remove_mask(self, box):
-        loc = box.block, box.location[0], box.location[1]
-        self.masked.remove(loc)
-        # loc = loc[0], loc[1]
-        # self.num_masked[loc] -= 1
-        # if self.num_masked[loc] == 0:
-        #     del self.num_masked[loc]
-
     def alloc_space(self, box, blocks, *args, **kwargs):
         for block in blocks:
-            locs = [loc for loc in block.available_cells(box) if (block, loc[0], loc[1]) not in self.masked]
+            locs = list(block.available_cells(box))
             if locs:
                 return block, random.choice(locs)
         return None, None
@@ -189,11 +161,8 @@ class RandomSpaceAllocator(SpaceAllocator):
         finish_bay = i+1 if finish_bay is None else finish_bay
         step = 1 if start_bay < finish_bay else -1
         for i1 in range(start_bay, finish_bay, step):
-            # print(self.num_masked)
-            # count = block.count(i1, -1, -1) + self.num_masked.get((block, i1), 0)
-            # if count < block.shape.z * block.shape.y - block.shape.z:
             for j1 in range(0, shape.y):
-                if (i1, j1) != (i, j) and (block, i1, j1) not in self.masked:
+                if (i1, j1) != (i, j):
                     k = block.count(i1, j1)
                     if block.stack_is_valid(box, i1, j1):
                         return V3(i1, j1, k)
