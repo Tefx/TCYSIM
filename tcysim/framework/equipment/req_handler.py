@@ -95,7 +95,8 @@ class ReqHandler(Dispatcher):
 
     def on_store_off_agv(self, time, request):
         box = request.box
-        box.state = box.STATE.STORING
+        # box.state = box.STATE.STORING
+        box.start_store()
         box.equipment = request.equipment
         request.sync(time)
 
@@ -113,13 +114,15 @@ class ReqHandler(Dispatcher):
 
     def on_retrieve_leaving_block(self, time, request):
         box = request.box
+        # box.retrieve(time)
         box.retrieve(time)
-        box.block.release_stack(time, box.location)
         box.equipment = request.equipment
+        box.block.release_stack(time, box.location)
 
     def on_retrieve_on_agv(self, time, request):
         box = request.box
-        box.state = request.box.STATE.RETRIEVED
+        # box.state = request.box.STATE.RETRIEVED
+        box.finish_retrieve()
         box.equipment = None
         request.sync(time)
 
@@ -132,7 +135,7 @@ class ReqHandler(Dispatcher):
         pass
 
     def on_relocate_start(self, time, box, dst_loc):
-        box.alloc2(time, None, dst_loc)
+        box.alloc(time, None, dst_loc)
         # box.relocate_alloc(time, dst_loc)
 
     def on_relocate_finish_or_fail(self, time, box, dst_loc):
@@ -140,10 +143,12 @@ class ReqHandler(Dispatcher):
 
     def on_relocate_pickup(self, time, box, dst_loc):
         box.equipment = self.equipment
-        box.relocate_retrieve(time)
+        # box.relocate_retrieve(time)
+        box.retrieve(time)
         box.block.release_stack(time, box.location)
 
     def on_relocate_putdown(self, time, box, dst_loc):
-        box.relocate_store(time)
+        # box.relocate_store(time)
+        box.store(time)
         box.equipment = None
         box.block.release_stack(time, box.location)

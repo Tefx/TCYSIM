@@ -87,7 +87,7 @@ class Ph2ReqHandler(ReqHandler):
                 request.ph2 = True
                 box.final_loc = box.location
                 # box.realloc(time, dst_loc)
-                box.alloc2(time, None, dst_loc)
+                box.alloc(time, None, dst_loc)
                 request.link_signal("start_or_resume", self.on_store_start, request)
                 request.link_signal("off_agv", self.on_store_off_agv, request)
                 request.link_signal("in_block", self.on_store_in_block, request)
@@ -206,7 +206,7 @@ if __name__ == '__main__':
     yard.roles.sim_driver.install_or_add(SimpleBoxBomb(first_time=0))
 
     yard.start()
-    yard.run_until(3600 * 24)
+    yard.run_until(3600 * 24 * 30)
 
     if "tracer" in yard.roles:
         yard.roles.tracer.dump("log2")
