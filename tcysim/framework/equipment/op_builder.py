@@ -18,8 +18,9 @@ class OpBuilder(Dispatcher):
         request = op.request
         box = request.box
         lane = request.lane
+        dst_loc = getattr(request, "dst_loc", None)
         op.access_loc = self.equipment.coord_from_box(box.access_coord(lane, self.equipment))
-        op.container_loc = self.equipment.coord_from_box(box.store_coord(self.equipment))
+        op.container_loc = self.equipment.coord_from_box(box.store_coord(self.equipment, loc=dst_loc))
 
         yield op.emit_signal("start_or_resume")
         yield from self.move_steps(op, self.equipment.local_coord(), op.access_loc)
