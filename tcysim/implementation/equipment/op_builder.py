@@ -37,7 +37,6 @@ class OptimizedOpBuilder(OpBuilder):
         if src_loc.set1("z", 0) != dst_loc.set1("z", 0):
             max_height = block.max_height_within(src_glbl, dst_glbl) + equipment.height_clearance
         else:
-            # print(src_loc, dst_loc)
             max_height = 0
         if load:
             max_height += TEU.HEIGHT

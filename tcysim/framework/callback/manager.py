@@ -16,6 +16,11 @@ class CallBackManager(Process):
         if self.queue[0] == callback:
             self.activate(callback.time, Priority.CALLBACK)
 
+    def add_callback(self, time, func, *args, **kwargs):
+        cb = CallBack(func, *args, **kwargs)
+        cb.time = time
+        self.add(cb)
+
     def _wait(self, priority=Priority.CALLBACK):
         if self.queue:
             return self.queue[0].time, Priority.CALLBACK
@@ -24,4 +29,6 @@ class CallBackManager(Process):
 
     def _process(self):
         callback = heappop(self.queue)
+        # print("CB:", self.time, id(callback), callback.func.__name__, callback.args, callback.kwargs)
         callback(self.time)
+        # print("CBD:", self.time, id(callback), callback.func.__name__, callback.args, callback.kwargs)

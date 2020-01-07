@@ -1,7 +1,6 @@
-from cmath import inf
 from copy import copy
-from math import sin, cos, pi, sqrt
-
+from math import sin, cos, pi, sqrt, inf
+from .math import feq
 
 class V3:
     __slots__ = ["v", "dim"]
@@ -88,7 +87,10 @@ class V3:
             return V3(*(x // other for x in self))
 
     def __eq__(self, other):
-        return self.v == other.v
+        for i in range(self.dim):
+            if not feq(self.v[i], other.v[i]):
+                return False
+        return True
 
     def __le__(self, other):
         return all(x < y for x, y in zip(self, other))

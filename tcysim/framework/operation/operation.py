@@ -75,9 +75,10 @@ class Operation:
         return MoverStep(component, src_loc, dst_loc, self.__interruption_flag, mode=mode)
 
     @contextmanager
-    def allow_interruption(self, equipment):
+    def allow_interruption(self, equipment, query_task_before_perform=True):
         self.__interruption_flag = True
-        self.add(CallBackStep(CallBack(equipment.query_new_task)))
+        if query_task_before_perform:
+            self.add(CallBackStep(CallBack(equipment.query_new_task)))
         yield
         self.__interruption_flag = False
 

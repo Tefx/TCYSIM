@@ -85,6 +85,7 @@ cdef extern from "block.h":
     void block_lock(Block *blk, const CellIdx*idx)
     void block_unlock(Block *blk, const CellIdx*idx)
     bool block_is_locked(Block *blk, const CellIdx*idx)
+    int block_column_state(Block *blk, const CellIdx *idx, int axis)
 
 cdef extern from "path.h":
     ctypedef struct PathFrameChunk

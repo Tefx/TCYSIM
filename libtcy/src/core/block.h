@@ -42,4 +42,6 @@ DLLEXPORT void block_unlock(Block *blk, const CellIdx *idx);
 
 DLLEXPORT bool block_is_locked(Block *blk, const CellIdx *idx);
 
+DLLEXPORT int block_column_state(Block *blk, const CellIdx *idx, int axis);
+
 #endif //LIBTCY_BLOCK_H

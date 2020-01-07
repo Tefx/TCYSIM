@@ -40,6 +40,11 @@ cdef class CBlock:
         pos[:] = loc
         return blk_stack_hash(&self.c, pos)
 
+    def column_state(self, loc, int axis):
+        cdef CellIdx pos[3]
+        pos[:] = loc
+        return block_column_state(&self.c, pos, axis)
+
     def lock(self, loc):
         cdef CellIdx pos[3]
         pos[:] = loc

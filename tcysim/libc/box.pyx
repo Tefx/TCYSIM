@@ -32,22 +32,31 @@ cdef class CBox:
         box_destroy(&self.c)
 
     def alloc(self, time, block, loc):
+        # print("alloc", loc)
         cdef CellIdx new_loc[3];
         if self.state == BOX_STATE_INITIAL:
             self.set_location(block, *loc)
+            # if self.block.count(loc[0]) >= 54:
+            #     print(self.block.count(loc[0]))
+            # assert self.block.count(loc[0]) < 54
             box_alloc(&self.c, time)
         elif self.state == BOX_STATE_ALLOCATED:
+            # if self.block.count(loc[0]) >= 54:
+            #     print(self.block.count(loc[0]))
+            # assert self.block.count(loc[0]) < 54
             if not self.c._holder_or_origin:
                 new_loc[:] = loc
                 box_realloc(&self.c, time, new_loc)
             else:
                 raise Exception("triple alloc")
         elif self.state == BOX_STATE_STORED:
+            # if self.block.count(loc[0]) >= 55:
+            #     print(self.block.count(loc[0]))
+            # assert self.block.count(loc[0]) < 55
             if not self.c._holder_or_origin:
                 new_loc[:] = loc
                 box_relocate_alloc(&self.c, time, new_loc)
         else:
-            print(self.state)
             raise NotImplementedError
 
     def store(self, int time):
@@ -56,11 +65,16 @@ cdef class CBox:
         elif self.state == BOX_STATE_RELOCATING:
             box_relocate_store(&self.c, time)
 
+    def has_undone_relocation(self):
+        return self.c._holder_or_origin is not NULL
+
     def retrieve(self, int time):
         if self.c._holder_or_origin:
             box_relocate_retrieve(&self.c, time)
+            assert self.state == BOX_STATE_RELOCATING
         else:
             box_retrieve(&self.c, time)
+            assert self.state == BOX_STATE_RETRIEVING
 
     def start_store(self):
         self.state = BOX_STATE_STORING
@@ -177,4 +191,4 @@ cdef class CBox:
             return self.block.box_coord(self, None)
 
     def __repr__(self):
-        return "Box[{}'|{}]".format(self.size, self.c.id.decode("utf-8"))
+        return "Box[{}'|{}|{}]".format(self.size, self.c.id.decode("utf-8"), self.state)

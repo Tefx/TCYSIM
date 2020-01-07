@@ -1,7 +1,7 @@
 from copy import deepcopy, copy
 import numpy as np
 
-from ...utils.vector import V3, TEU, RotateOperator
+from ...utils import V3, TEU, RotateOperator
 
 
 class _LayoutItem:

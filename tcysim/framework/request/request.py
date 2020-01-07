@@ -3,6 +3,7 @@ from enum import IntEnum, auto
 
 from .type import ReqType
 from ..callback import CallBack
+from ..exception.handling import RORAcquireFail
 
 
 class ReqState(IntEnum):
@@ -56,7 +57,11 @@ class Request:
         self.ready_time = time
 
     def is_ready(self):
-        return self.state == ReqState.READY or self.state == ReqState.RESUME_READY
+        if self.state == ReqState.READY or self.state == ReqState.RESUME_READY:
+            if self.req_type == self.TYPE.RETRIEVE:
+                return self.box.state != self.box.STATE.RELOCATING
+            return True
+        return False
 
     def submit(self, time, ready=True):
         if ready:
@@ -71,7 +76,8 @@ class Request:
         self.start_time = time
 
     def acquire_stack(self, time, *locations):
-        return self.block.acquire_stack(time, self, *locations)
+        if not self.block.acquire_stack(time, self, *locations):
+            raise RORAcquireFail(self)
 
     def gen_op(self, time):
         for op in self.equipment.req_handler.handle(time, self):
