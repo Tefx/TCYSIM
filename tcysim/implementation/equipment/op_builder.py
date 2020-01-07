@@ -93,5 +93,6 @@ class OptimizedOpBuilder(OpBuilder):
 
     def adjust_steps(self, op, src_loc, dst_loc):
         dst_loc.y = src_loc.y
-        dst_loc.z = max(src_loc.z, op.request.block.max_height_within(src_loc, dst_loc))
+        max_height = op.request.block.max_height_within(src_loc, dst_loc) + op.equipment.height_clearance
+        dst_loc.z = max(src_loc.z, max_height)
         yield from self.move_steps(op, src_loc, dst_loc, load=False)
