@@ -2,17 +2,17 @@ import os
 import sys
 import random
 
-from tcysim.framework.equipment.req_handler import ReqHandler
-from tcysim.framework.exception.handling import RORUndefinedError
-from tcysim.implementation.equipment.op_builder import OpBuilder
-from tcysim.utils.dispatcher import Dispatcher
-
 sys.path.extend([
     "../",
     "../../pesim",
     ])
 os.environ['PATH'] = "../libtcy/msvc/Release" + os.pathsep + os.environ['PATH']
 os.environ['PATH'] = "../libtcy/cmake-build-debug" + os.pathsep + os.environ['PATH']
+
+from tcysim.framework.equipment.req_handler import ReqHandler
+from tcysim.framework.exception.handling import RORUndefinedError
+from tcysim.implementation.equipment.op_builder import OptimizedOpBuilder
+from tcysim.utils.dispatcher import Dispatcher
 
 from tcysim.framework import Lane, Component, Spec, Yard, Box
 from tcysim.framework.allocator import SpaceAllocator
@@ -156,7 +156,7 @@ class RMG(Crane):
 
     ReqHandler = Ph2ReqHandler
     JobScheduler = CraneJobScheduler
-    OpBuilder = OpBuilder
+    OpBuilder = OptimizedOpBuilder
 
 
 class RandomSpaceAllocator(SpaceAllocator):
@@ -224,7 +224,7 @@ if __name__ == '__main__':
     yard.roles.sim_driver.install_or_add(SimpleBoxBomb(first_time=0))
 
     yard.start()
-    yard.run_until(3600 * 24 * 30)
+    yard.run_until(3600 * 24)
 
     if "tracer" in yard.roles:
         yard.roles.tracer.dump("log2")
