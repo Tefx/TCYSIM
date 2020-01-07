@@ -5,9 +5,16 @@ from tcysim.utils import TEU
 class OpBuilder(OpBuilderBase):
     def move_steps(self, op, src_loc, dst_loc, load=False):
         hoist_mode = "rated load" if load else "no load"
-        yield op.move(self.equipment.hoist, src_loc, self.equipment.hoist.max_height, hoist_mode)
-        yield op.move(self.equipment.gantry, src_loc, dst_loc) | op.move(self.equipment.trolley, src_loc, dst_loc)
-        yield op.move(self.equipment.hoist, self.equipment.hoist.max_height, dst_loc, hoist_mode)
+
+        hm2h = op.move(self.equipment.hoist, src_loc, self.equipment.hoist.max_height, hoist_mode)
+        gm = op.move(self.equipment.gantry, src_loc, dst_loc)
+        tm = op.move(self.equipment.trolley, src_loc, dst_loc)
+        tm2d = op.move(self.equipment.hoist, self.equipment.hoist.max_height, dst_loc, hoist_mode)
+
+        tm2d <<= gm & tm
+
+        yield hm2h
+        yield gm, tm, tm2d
 
     def adjust_steps(self, op, src_loc, dst_loc):
         dst_loc.z = self.equipment.hoist.max_height

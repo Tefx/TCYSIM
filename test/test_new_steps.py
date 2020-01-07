@@ -135,21 +135,6 @@ class Ph2ReqHandler(ReqHandler):
         super(Ph2ReqHandler, self).on_store_in_block(time, request)
 
 
-class NewOpBuilder(OpBuilder):
-    def move_steps(self, op, src_loc, dst_loc, load=False):
-        hoist_mode = "rated load" if load else "no load"
-
-        hm2h = op.move(self.equipment.hoist, src_loc, self.equipment.hoist.max_height, hoist_mode)
-        gm = op.move(self.equipment.gantry, src_loc, dst_loc)
-        tm = op.move(self.equipment.trolley, src_loc, dst_loc)
-        tm2d = op.move(self.equipment.hoist, self.equipment.hoist.max_height, dst_loc, hoist_mode)
-
-        tm2d <<= gm & tm
-
-        yield hm2h
-        yield gm, tm, tm2d
-
-
 class RMG(Crane):
     gantry = Component(
         axis="x",
@@ -171,7 +156,7 @@ class RMG(Crane):
 
     ReqHandler = Ph2ReqHandler
     JobScheduler = CraneJobScheduler
-    OpBuilder = NewOpBuilder
+    OpBuilder = OpBuilder
 
 
 class RandomSpaceAllocator(SpaceAllocator):
@@ -234,12 +219,12 @@ if __name__ == '__main__':
     rmg2 = RMG(yard, block, -1, idx=1)
     yard.deploy(block, [rmg1, rmg2])
 
-    # yard.roles.tracer = AnimationLogger(yard, start=3600 * 20, end=3600 * 20.5, fps=24, speedup=10)
+    yard.roles.tracer = AnimationLogger(yard, start=3600 * 20, end=3600 * 24, fps=24, speedup=10)
     yard.roles.sim_driver = BoxGenerator(yard)
     yard.roles.sim_driver.install_or_add(SimpleBoxBomb(first_time=0))
 
     yard.start()
-    yard.run_until(3600 * 24)
+    yard.run_until(3600 * 24 * 30)
 
     if "tracer" in yard.roles:
         yard.roles.tracer.dump("log2")

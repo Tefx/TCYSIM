@@ -92,7 +92,6 @@ class OpBuilder(Dispatcher):
     def build_and_check(self, time, op:Operation):
         self.build(op)
         op.dry_run(time)
-        print(time, op.finish_time)
         itf, other, new_loc = self.equipment.check_interference(op)
         if itf:
             op.itf_other = other
