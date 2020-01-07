@@ -30,7 +30,7 @@ class Crane(Equipment):
             if abs(self.local_coord().x - other.local_coord(self).x) < 32.5:
                 print(self.time, self.local_coord().x, other.local_coord(self).x)
                 print(self.state, other.state, op, other.current_op)
-                exit(1)
+                raise Exception("cranes crash!")
             new_loc = other.local_coord(self)
             other_loc = copy(new_loc)
             if other_loc[axis] > self_loc[axis]:
