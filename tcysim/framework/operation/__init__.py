@@ -1,3 +1,3 @@
 # from .operation import Operation
-from .op2.operation import Operation
+from tcysim.framework.operation.operation import Operation
 from .type import OpType

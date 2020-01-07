@@ -1,9 +1,8 @@
 from contextlib import contextmanager
-from copy import copy
 
-from .. import Request
-from ..callback import CallBack
-from .step import CallBackStep, EmptyStep, MoverStep
+from tcysim.framework import Request
+from tcysim.framework.callback import CallBack
+from .step import CallBackStep, EmptyStep, MoverStep, AndStep
 from tcysim.utils import Paths, V3
 
 
@@ -18,11 +17,13 @@ class Operation:
         else:
             self.request = None
             self.equipment = request_or_equipment
-        self.step = None
+        self.steps = set()
+        self.last_step = None
         self.paths = {}
         self.__interruption_flag = False
         self.locking_positions = list(locking_pos)
         self.__dict__.update(attrs)
+        self._pps = {}
 
     def add_lock(self, pos):
         self.locking_positions.append(pos)
@@ -33,27 +34,49 @@ class Operation:
 
     def mark_loc(self, component, time, loc):
         if component in self.paths:
-            self.paths[component].append(time, loc)
+            self._pps[component].append((time, loc))
+
+    def record_path_points(self):
+        for component, path in self.paths.items():
+            self._pps[component].sort()
+            for point in self._pps[component]:
+                path.append(*point)
 
     def commit(self, yard):
-        self.step.commit(yard)
+        for step in self.steps:
+            step.commit(yard)
 
     def dry_run(self, start_time):
+        for step in self.steps:
+            step.reset()
         equipment = self.equipment
         for component in equipment.components:
             if component.may_interfere:
                 paths = Paths(64)
                 paths.append(start_time, equipment.local_coord()[component.axis])
                 self.paths[component] = paths
+                self._pps[component] = []
         self.start_time = start_time
         with equipment.save_state():
-            self.finish_time = self.step(self, start_time)
+            for step in self.steps:
+                step(self, self.start_time)
+            self.finish_time = max(step.finish_time for step in self.steps)
+        self.steps = sorted(self.steps, key=lambda x: x.start_time)
+        self.record_path_points()
+
+        # for step in self.steps:
+        #     print(step, step.pred, step.start_time, step.finish_time, step.next_time)
 
     def add(self, step):
-        if not self.step:
-            self.step = step
+        if isinstance(step, tuple):
+            steps = step
         else:
-            self.step = self.step >> step
+            steps = (step,)
+        for step in steps:
+            if self.last_step:
+                step <<= self.last_step
+            self.steps.add(step)
+        self.last_step = AndStep(*steps) if len(steps) > 1 else steps[0]
 
     def extend(self, steps):
         for step in steps:
