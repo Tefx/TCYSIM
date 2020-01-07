@@ -74,6 +74,8 @@ class Ph2ReqHandler(ReqHandler):
             start_bay = request.block.bays // 2 - 1
             dst_loc = self.yard.smgr.slot_for_relocation(box, start_bay=start_bay, finish_bay=0)
             if not dst_loc:
+                # print(box, box.block.count(box.location.x, -1, -1))
+                # self.yard.smgr.slot_for_relocation(box, start_bay=start_bay, finish_bay=0, debug=True)
                 raise RORUndefinedError("no slot for relocation")
             request.acquire_stack(time, box.location, dst_loc)
             yield self.gen_relocate_op(time, request.box, dst_loc, request, reset=False, ph2=True)
@@ -87,10 +89,13 @@ class Ph2ReqHandler(ReqHandler):
         if self.equipment.idx == 0 and box.location.x >= block.bays // 2:
             start_bay = request.block.bays // 2 - 1
             dst_loc = self.yard.smgr.slot_for_relocation(box, start_bay=start_bay, finish_bay=0)
+            if not dst_loc:
+                # print(box, box.block.count(box.location.x, -1, -1))
+                # self.yard.smgr.slot_for_relocation(box, start_bay=start_bay, finish_bay=0, debug=True)
+                raise RORUndefinedError("no slot for relocation")
             request.acquire_stack(time, dst_loc)
             request.ph2 = True
-            box.final_loc = box.location
-            box.alloc(time, None, dst_loc)
+            request.dst_loc = dst_loc
             request.link_signal("start_or_resume", self.on_store_start, request)
             request.link_signal("off_agv", self.on_store_off_agv, request)
             request.link_signal("in_block", self.on_store_in_block, request)
@@ -108,11 +113,19 @@ class Ph2ReqHandler(ReqHandler):
         return self.equipment.op_builder.RelocateOp(request, box, new_loc, reset=reset)
 
     def on_relocate_putdown(self, time, box, dst_loc, original_request=None):
+        super(Ph2ReqHandler, self).on_relocate_putdown(time, box, dst_loc)
         if original_request:
             if original_request.req_type == ReqType.RETRIEVE and getattr(original_request, "ph2", True):
                 req2 = Request(self.ReqType.RETRIEVE, time, box, lane=original_request.lane, ph2=True)
+                # print("PH2", req2.box, req2.box.location)
                 self.yard.submit_request(time, req2)
-        super(Ph2ReqHandler, self).on_relocate_putdown(time, box, dst_loc)
+
+    def on_store_start(self, time, request):
+        if getattr(request, "ph2", False):
+            box = request.box
+            box.final_loc = box.location
+            box.alloc(time, None, request.dst_loc)
+        super(Ph2ReqHandler, self).on_store_start(time, request)
 
     def on_store_in_block(self, time, request):
         if getattr(request, "ph2", False):
@@ -162,17 +175,18 @@ class RandomSpaceAllocator(SpaceAllocator):
         finish_bay = i + 1 if finish_bay is None else finish_bay
         step = 1 if start_bay < finish_bay else -1
         for i1 in range(start_bay, finish_bay, step):
-            for j1 in range(0, shape.y):
-                if (i1, j1) != (i, j):
-                    k = block.count(i1, j1)
-                    if block.stack_is_valid(box, i1, j1):
-                        return V3(i1, j1, k)
+            if i1 == i or block.bay_is_valid(box, i1):
+                for j1 in range(0, shape.y):
+                    if (i1, j1) != (i, j):
+                        k = block.count(i1, j1)
+                        if block.stack_is_valid(box, i1, j1):
+                            return V3(i1, j1, k)
 
 
 class SimpleYard(Yard):
     SpaceAllocator = RandomSpaceAllocator
 
-
+from uuid import uuid4
 class SimpleBoxBomb(BoxBomb):
     def next_time(self, time):
         return time + random.uniform(300, 600)
@@ -184,7 +198,8 @@ class SimpleBoxBomb(BoxBomb):
         return store_time + random.uniform(3600 * 12, 3600 * 24)
 
     def new_box(self):
-        return Box(str(int(self.time)).encode("utf-8"), size=random.choice((20, 40)))
+        # return Box(str(int(self.time)).encode("utf-8"), size=random.choice((20, 40)))
+        return Box(str(uuid4())[:8].encode("utf-8"), size=random.choice((20, 40)))
 
 
 if __name__ == '__main__':
@@ -207,7 +222,7 @@ if __name__ == '__main__':
     yard.roles.sim_driver.install_or_add(SimpleBoxBomb(first_time=0))
 
     yard.start()
-    yard.run_until(3600 * 24)
+    yard.run_until(3600 * 24 * 30)
 
     if "tracer" in yard.roles:
         yard.roles.tracer.dump("log2")

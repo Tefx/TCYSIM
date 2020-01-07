@@ -6,8 +6,9 @@ from tcysim.framework.block import Block
 
 
 class StackingBlock(Block):
-    def __init__(self, yard, offset, shape:V3, stacking_area_size:V3=None, rotate=0, lanes=()):
-        super(StackingBlock, self).__init__(yard, offset, shape, rotate, stacking_axis="z", sync_axes=("y", "z"), lanes=lanes)
+    def __init__(self, yard, offset, shape: V3, stacking_area_size: V3 = None, rotate=0, lanes=()):
+        super(StackingBlock, self).__init__(yard, offset, shape, rotate, stacking_axis="z", sync_axes=("y", "z"),
+                                            lanes=lanes)
 
         self.unit_base_size = TEU.one()
         size = TEU(*shape) if stacking_area_size is None else stacking_area_size
@@ -70,7 +71,8 @@ class StackingBlock(Block):
         return self.stack_height(h_max)
 
     def bay_is_valid(self, box, i):
-        return self.count(i, -1, -1) < self.shape.z * self.shape.y - self.shape.z
+        max_num = self.shape.z * self.shape.y - self.shape.z
+        return self.count(i, -1, -1) < max_num
 
     def stack_is_valid(self, box, i, j):
         k = self.count(i, j)
@@ -79,7 +81,11 @@ class StackingBlock(Block):
     def available_cells(self, box):
         shape = self.shape
         for i in range(shape.x):
-            if self.bay_is_valid(box, i):
+            if box.state == box.STATE.STORED and box.location.x == i:
+                bay_avail = True
+            else:
+                bay_avail = self.bay_is_valid(box, i)
+            if bay_avail:
                 for j in range(shape.y):
                     if self.stack_is_valid(box, i, j):
                         yield V3(i, j, self.count(i, j))

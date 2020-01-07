@@ -175,6 +175,10 @@ CellIdx blk_stack_hash(Block *blk, const CellIdx *idx) {
     return map_idx;
 }
 
+int block_column_state(Block *blk, const CellIdx* idx, int axis){
+    return blk->column_use_type[axis][_blk_clmn_idx(blk, idx, axis)];
+}
+
 void block_lock(Block *blk, const CellIdx* idx) {
     CellIdx map_idx = blk_stack_hash(blk, idx);
     blk->lock_map[map_idx] = TRUE;

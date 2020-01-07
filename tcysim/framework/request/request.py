@@ -57,7 +57,11 @@ class Request:
         self.ready_time = time
 
     def is_ready(self):
-        return self.state == ReqState.READY or self.state == ReqState.RESUME_READY
+        if self.state == ReqState.READY or self.state == ReqState.RESUME_READY:
+            if self.req_type == self.TYPE.RETRIEVE:
+                return self.box.state != self.box.STATE.RELOCATING
+            return True
+        return False
 
     def submit(self, time, ready=True):
         if ready:

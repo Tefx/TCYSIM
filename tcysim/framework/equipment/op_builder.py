@@ -42,11 +42,11 @@ class OpBuilder(Dispatcher):
 
         yield op.emit_signal("start_or_resume")
         yield from self.move_steps(op, self.equipment.local_coord(), op.container_loc)
-        yield op.emit_signal("off_block")
         yield op.wait(self.equipment.GRASP_TIME)
+        yield op.emit_signal("off_block")
         yield from self.move_steps(op, op.container_loc, op.access_loc, load=True)
-        yield op.wait(self.equipment.RELEASE_TIME)
         yield op.emit_signal("on_agv")
+        yield op.wait(self.equipment.RELEASE_TIME)
         yield op.emit_signal("finish_or_fail")
         with op.allow_interruption(self.equipment):
             yield from self.idle_steps(op, op.access_loc)
@@ -60,11 +60,11 @@ class OpBuilder(Dispatcher):
 
         yield op.emit_signal("rlct_start_or_resume")
         yield from self.move_steps(op, self.equipment.local_coord(), op.src_loc)
-        yield op.emit_signal("rlct_pick_up")
         yield op.wait(self.equipment.GRASP_TIME)
+        yield op.emit_signal("rlct_pick_up")
         yield from self.move_steps(op, op.src_loc, op.dst_loc, load=True)
-        yield op.wait(self.equipment.RELEASE_TIME)
         yield op.emit_signal("rlct_put_down")
+        yield op.wait(self.equipment.RELEASE_TIME)
         yield op.emit_signal("rlct_finish_or_fail")
         if op.require_reset:
             with op.allow_interruption(self.equipment):
@@ -84,7 +84,7 @@ class OpBuilder(Dispatcher):
         load = op.load
         dst_loc = op.dst_loc
         if op.interruptable:
-            with op.allow_interruption(self.equipment):
+            with op.allow_interruption(self.equipment, query_task_before_perform=False):
                 yield from self.move_steps(op, self.equipment.local_coord(), dst_loc, load)
         else:
             yield from self.move_steps(op, self.equipment.local_coord(), dst_loc, load)

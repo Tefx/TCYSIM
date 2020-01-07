@@ -174,7 +174,8 @@ class Equipment(EquipmentRangeLayout, Process):
         except ReqOpRejectionError as e:
             self.req_handler.on_reject(self.time, e)
         request.finish_or_fail(self.time)
-        print("[{:.2f}]<Request/Equipment {}>".format(self.time, self.idx), request, self.local_coord())
+        print("[{:.2f}]<Request/Equipment {}>".format(self.time, self.idx), request, self.local_coord(),
+              getattr(request, "box", None))
 
     def handle_operation(self, op):
         print("[{:.2f}]<Operation/Start {}>".format(self.time, self.idx), op, self.local_coord())
@@ -190,6 +191,7 @@ class Equipment(EquipmentRangeLayout, Process):
         elif isinstance(op_or_req, Operation):
             yield from self.handle_operation(op_or_req)
         self.query_new_task(self.time)
+        self.time = yield self.time, Priority.FOREVER
 
     def adjust_is_necessary(self, other, dst_loc):
         return (other.local_coord() - dst_loc).dot_product(self.local_coord() - dst_loc) >= 0

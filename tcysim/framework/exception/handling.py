@@ -10,7 +10,11 @@ class RORAcquireFail(ReqOpRejectionError):
     pass
 
 
-class RORBoxStateError(ReqOpRejectionError):
+class RORBoxBeingOperatedError(ReqOpRejectionError):
+    pass
+
+
+class RORBoxHasUndoneRelocation(ReqOpRejectionError):
     pass
 
 

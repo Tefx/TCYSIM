@@ -26,6 +26,12 @@ class ReqHandler(Dispatcher):
     @Dispatcher.on(ReqType.RETRIEVE)
     def on_request_retrieve(self, time, request):
         yield from self.reshuffle_operations(time, request)
+        box = request.box
+        if box.state == box.STATE.RELOCATING:
+            raise RORBoxBeingOperatedError(request)
+        elif box.state != box.STATE.STORED:
+            print(box, box.state)
+        assert box.state == box.STATE.STORED
         request.acquire_stack(time, request.box.location)
         request.link_signal("start_or_resume", self.on_retrieve_start, request)
         request.link_signal("off_block", self.on_retrieve_leaving_block, request)
@@ -49,11 +55,16 @@ class ReqHandler(Dispatcher):
 
     def reshuffle_operations(self, time, request):
         box = request.box
-        assert box.state == box.STATE.STORED
         request.rsf_count = 0
         for above_box in box.box_above():
+            if above_box.has_undone_relocation():
+                raise RORBoxHasUndoneRelocation(request)
             new_loc = self.equipment.yard.smgr.slot_for_relocation(above_box)
-            assert new_loc
+            if not new_loc:
+                # print(box, box.block.count(box.location.x, -1, -1))
+                # print(above_box, above_box.block.count(above_box.location.x, -1, -1))
+                # self.equipment.yard.smgr.slot_for_relocation(above_box, debug=True)
+                raise RORUndefinedError("no slot for relocation")
             request.acquire_stack(time, above_box.location, new_loc)
             yield self.gen_relocate_op(time, above_box, new_loc, request, reset=False)
 
@@ -64,10 +75,7 @@ class ReqHandler(Dispatcher):
         yield self.equipment.OpBuilder.AdjustOp(request)
 
     def on_reject(self, time, e):
-        if isinstance(e, RORAcquireFail):
-            request = e.args[0]
-            request.on_reject(time)
-        elif isinstance(e, ROREquipmentConflictError):
+        if isinstance(e, ROREquipmentConflictError):
             op = e.args[0]
             op.request.on_reject(time)
             req2 = Request(self.ReqType.ADJUST, time,
@@ -75,9 +83,20 @@ class ReqHandler(Dispatcher):
                            src_loc=op.itf_other.local_coord(),
                            new_loc=op.itf_loc,
                            blocking_request=op.request)
+            # print("submit 1", req2, id(req2), getattr(req2, "box", None))
             self.yard.submit_request(time, req2, ready=True)
+        elif isinstance(e, RORAcquireFail):
+            request = e.args[0]
+            request.on_reject(time)
+        elif isinstance(e, RORBoxBeingOperatedError):
+            request = e.args[0]
+            request.on_reject(time)
+        elif isinstance(e, RORBoxHasUndoneRelocation):
+            request = e.args[0]
+            request.on_reject(time)
+            self.yard.cmgr.add_callback(time + 60, request.ready)
         else:
-            raise NotImplementedError
+            raise NotImplementedError(e)
 
     def on_store_start(self, time, request):
         self.yard.boxes.add(request.box)
@@ -106,7 +125,6 @@ class ReqHandler(Dispatcher):
 
     def on_retrieve_leaving_block(self, time, request):
         box = request.box
-        # box.retrieve(time)
         box.retrieve(time)
         box.equipment = request.equipment
         box.block.release_stack(time, box.location)

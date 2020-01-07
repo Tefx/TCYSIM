@@ -5,10 +5,11 @@ class DispatchFunc:
         self.method = method
 
     def __call__(self, *args, **kwargs):
-        # print(self.func, *args, **kwargs)
+        # print("DF:", self.func.__name__, *args, **kwargs)
         res = self.func(*args, **kwargs)
-        # print("DONE", self.func)
+        # print("DFD:", self.func.__name__)
         return res
+
 
 class Dispatcher:
     def __init__(self):
@@ -27,4 +28,5 @@ class Dispatcher:
     def on(category, method="_"):
         def wrapper(func):
             return DispatchFunc(func, category, method)
+
         return wrapper

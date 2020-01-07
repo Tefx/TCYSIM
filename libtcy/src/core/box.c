@@ -297,8 +297,11 @@ int box_relocate_alloc(Box *box, Time time, CellIdx *new_loc) {
 
 int box_relocate_retrieve(Box *box, Time time) {
     int res;
-    if ((res = box_retrieve(box, -1)) != SUCCEED)
+    if ((res = box_retrieve(box, -1)) != SUCCEED) {
+        assert(res == SUCCEED);
         return res;
+    }
+//    printf("%s relocating\n", box->id);
     box->state = BOX_STATE_RELOCATING;
     return SUCCEED;
 }

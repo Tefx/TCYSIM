@@ -36,6 +36,7 @@ class JobScheduler(Process):
                 avail_tasks = self.available_requests(time)
                 request = self.choose_task(time, avail_tasks)
                 if request is not None:
+                    # print("schedule", time, request, self.equipment.idx, id(request), getattr(request, "box", None))
                     request.equipment = self.equipment
                     request.block.req_dispatcher.pop_request(request)
                     setattr(request, "time", time)
