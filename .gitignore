@@ -68,5 +68,10 @@ test/log
 libtcy/cmake-build-debug/
 tcysim/libc/*.c
 tcysim/libc/*.so
+tcysim/libc/*.html
+
+tcysim/utils/*.c
+tcysim/utils/*.so
+tcysim/utils/*.html
 
 test/log2
