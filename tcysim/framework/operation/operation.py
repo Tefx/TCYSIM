@@ -60,7 +60,8 @@ class Operation:
         with equipment.save_state():
             for step in self.steps:
                 step(self, self.start_time)
-            self.finish_time = max(step.finish_time for step in self.steps)
+                if step.finish_time > self.finish_time:
+                    self.finish_time = step.finish_time
         self.steps = sorted(self.steps, key=lambda x: x.start_time)
         self.record_path_points()
 

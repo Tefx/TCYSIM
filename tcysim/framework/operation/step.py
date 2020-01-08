@@ -19,8 +19,8 @@ class StepBase:
     def cal_start_time(self, op, est):
         if not self.executed:
             self.start_time = est
-            if self.pred:
-                self.start_time = max(self.pred.next_time, est)
+            if self.pred and self.pred.next_time > est:
+                self.start_time = self.pred.next_time
         return self.start_time
 
     def cal_pred(self, op, est):
@@ -152,8 +152,10 @@ class AndStep(StepBase):
             self.next_time = 0
             for step in self.steps:
                 step(op, est)
-                self.finish_time = max(self.finish_time, step.finish_time)
-                self.next_time = max(self.next_time, step.next_time)
+                if step.finish_time > self.finish_time:
+                    self.finish_time = step.finish_time
+                if step.next_time> self.next_time:
+                    self.next_time = step.next_time
         self.executed = True
 
     def __and__(self, other):
@@ -180,8 +182,10 @@ class OrStep(StepBase):
             self.next_time = inf
             for step in self.steps:
                 step(op, est)
-                self.finish_time = max(self.finish_time, step.finish_time)
-                self.next_time = min(self.next_time, step.next_time)
+                if step.finish_time > self.finish_time:
+                    self.finish_time = step.finish_time
+                if step.next_time> self.next_time:
+                    self.next_time = step.next_time
         self.executed = True
 
     def __or__(self, other):

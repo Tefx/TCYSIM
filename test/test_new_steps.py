@@ -29,9 +29,9 @@ class MultiCraneReqDispatcher(ReqDispatcher):
         if request.req_type == request.TYPE.STORE and request.lane.name < 5:
             idx = 0
         elif request.req_type == request.TYPE.RELOCATE:
-            idx = request.new_loc[0] * len(self.block.equipments) // self.block.bays
+            idx = request.new_loc[0] * self.block.num_equipments // self.block.bays
         else:
-            idx = request.box.location[0] * len(self.block.equipments) // self.block.bays
+            idx = request.box.location[0] * self.block.num_equipments// self.block.bays
         for equipment in self.block.equipments:
             if equipment.idx == idx:
                 return equipment

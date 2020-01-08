@@ -9,7 +9,7 @@ class OptimisedOpBuilder(OpBuilder):
 
         if op.request:
             block = op.request.block
-        elif len(equipment.blocks) == 1:
+        elif equipment.num_blocks == 1:
             block = equipment.blocks[0]
         else:
             yield from super(OptimisedOpBuilder, self).move_steps(op, src_loc, dst_loc)
@@ -39,7 +39,8 @@ class OptimisedOpBuilder(OpBuilder):
             return
 
         max_height = block.max_height_within(src_local_in_block, dst_local_in_block) + equipment.height_clearance
-        max_height = max(dst_loc.z, max_height)
+        if max_height < dst_loc.z:
+            max_height = dst_loc.z
         if load:
             max_height += TEU.HEIGHT
 

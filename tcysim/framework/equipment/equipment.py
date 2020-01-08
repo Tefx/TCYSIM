@@ -35,6 +35,7 @@ class Equipment(EquipmentRangeLayout, Process):
         EquipmentRangeLayout.__init__(self, offset, move_range, rotate)
         self.yard = yard
         self.blocks = []
+        self.num_blocks = 0
         self.current_op = None
         self.state = self.STATE.IDLE
         self.next_task = None
@@ -80,6 +81,7 @@ class Equipment(EquipmentRangeLayout, Process):
 
     def assign_block(self, block):
         self.blocks.append(block)
+        self.num_blocks += 1
 
     def run_until(self, time):
         for component in self.components:

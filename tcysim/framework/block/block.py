@@ -19,11 +19,13 @@ class Block(BlockLayout, CBlock):
         CBlock.__init__(self, shape, stacking_axis=stacking_axis, sync_axes=sync_axes)
         self.req_dispatcher = self.ReqDispatcher(self)
         self.lock_waiting_requests = {}
+        self.num_equipments= 0
 
     def deploy(self, equipments):
         for equipment in equipments:
             self.equipments.append(equipment)
             equipment.assign_block(self)
+        self.num_equipments = len(self.equipments)
 
     def box_coord(self, box, transform_to=None):
         return self.coord_from_cell_idx(box.location, box.teu, transform_to)
