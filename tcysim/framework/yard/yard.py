@@ -87,12 +87,3 @@ class Yard:
         for equipment in self.equipments:
             equipment.run_until(time)
 
-    def equipment_coords(self):
-        for equipment in self.equipments:
-            yield equipment, equipment.coord()
-
-    def box_coords(self):
-        for box in self.boxes:
-            coord = box.coord()
-            if coord:
-                yield box, coord

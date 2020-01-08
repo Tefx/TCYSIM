@@ -16,6 +16,8 @@ class CooperativeTwinCraneJobScheduler(JobScheduler):
         return min(filter(Request.is_ready, tasks), key=self.rank_task, default=None)
 
     def on_idle(self, time):
-        if abs(self.equipment.local_coord().z - self.equipment.hoist.max_height) > 0.1:
-            dst_loc = self.equipment.local_coord().set1(2, self.equipment.hoist.max_height)
+        eqp_coord = self.equipment.current_coord(transform_to="g")
+        max_height = self.equipment.hoist.max_height
+        if abs(eqp_coord.z - max_height) > 0.1:
+            dst_loc = self.equipment.coord_g2l(eqp_coord.set1("z", max_height))
             return self.equipment.op_builder.MoveOp(dst_loc)

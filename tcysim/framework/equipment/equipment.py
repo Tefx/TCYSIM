@@ -57,11 +57,11 @@ class Equipment(EquipmentRangeLayout, Process):
         for component in self.components:
             component.restore_state()
 
-    def coord(self):
+    def current_coord(self, transform_to=None):
         v = V3(0, 0, 0)
         for component in self.components:
             v[component.axis] = component.loc
-        return self.coord_l2g(v)
+        return self.transform_to(v, transform_to)
 
     def set_coord(self, v, glob=True):
         if glob:
@@ -69,23 +69,14 @@ class Equipment(EquipmentRangeLayout, Process):
         for component in self.components:
             component.loc = v[component.axis]
 
-    def local_coord(self, equipment=None):
-        if equipment is None:
-            v = V3(0, 0, 0)
-            for component in self.components:
-                v[component.axis] = component.loc
-            return v
-        else:
-            return equipment.coord_g2l(self.coord())
+    def attached_box_coord(self, transform_to="g"):
+        return self.current_coord(transform_to=transform_to)
 
-    def coord_to_box(self):
-        return self.coord()
+    def op_coord_from_box_coord(self, local_coord, transform_to=None):
+        return self.transform_to(local_coord, transform_to)
 
-    def coord_from_box(self, coord):
-        return coord
-
-    def coord_ready_from(self, coord):
-        return coord
+    def prepare_coord_for_op_coord(self, local_coord, transform_to=None):
+        return self.transform_to(local_coord, transform_to)
 
     def assign_block(self, block):
         self.blocks.append(block)
@@ -162,7 +153,7 @@ class Equipment(EquipmentRangeLayout, Process):
             self.current_op = None
 
     def handle_request(self, request):
-        print("[{:.2f}]<Request/Equipment {}>".format(self.time, self.idx), request, self.local_coord(),
+        print("[{:.2f}]<Request/Equipment {}>".format(self.time, self.idx), request, self.current_coord(),
               getattr(request, "box", None))
         request.start_or_resume(self.time)
         try:
@@ -174,14 +165,14 @@ class Equipment(EquipmentRangeLayout, Process):
         except ReqOpRejectionError as e:
             self.req_handler.on_reject(self.time, e)
         request.finish_or_fail(self.time)
-        print("[{:.2f}]<Request/Equipment {}>".format(self.time, self.idx), request, self.local_coord(),
+        print("[{:.2f}]<Request/Equipment {}>".format(self.time, self.idx), request, self.current_coord(),
               getattr(request, "box", None))
 
     def handle_operation(self, op):
-        print("[{:.2f}]<Operation/Start {}>".format(self.time, self.idx), op, self.local_coord())
+        print("[{:.2f}]<Operation/Start {}>".format(self.time, self.idx), op, self.current_coord())
         if self.op_builder.build_and_check(self.time, op):
             yield from self.perform_op(self.time, op)
-        print("[{:.2f}]<Operation/FinishOrFail {}>".format(self.time, self.idx), op, self.local_coord())
+        print("[{:.2f}]<Operation/FinishOrFail {}>".format(self.time, self.idx), op, self.current_coord())
 
     def _process(self):
         op_or_req = self.next_task
@@ -194,10 +185,10 @@ class Equipment(EquipmentRangeLayout, Process):
         self.time = yield self.time, Priority.FOREVER
 
     def adjust_is_necessary(self, other, dst_loc):
-        return (other.local_coord() - dst_loc).dot_product(self.local_coord() - dst_loc) >= 0
+        return (other.current_coord(transform_to=self) - dst_loc).dot_product(self.current_coord() - dst_loc) >= 0
 
     def __getattr__(self, item):
         return self.attrs.get(item, None)
 
     def __repr__(self):
-        return "<{}>{} at {}".format(self.__class__.__name__, str(hash(self))[:4], self.local_coord())
+        return "<{}>{} at {}".format(self.__class__.__name__, str(hash(self))[:4], self.current_coord())

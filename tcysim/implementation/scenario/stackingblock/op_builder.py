@@ -21,11 +21,11 @@ class OptimisedOpBuilder(OpBuilder):
             yield hoist_move
             return
 
-        src_glbl = equipment.coord_l2g(src_loc)
-        dst_glbl = equipment.coord_l2g(dst_loc)
+        src_local_in_block = equipment.transform_to(src_loc, block)
+        dst_local_in_block = equipment.transform_to(dst_loc, block)
 
-        src_v, src_h = block.coord_zone(src_glbl)
-        dst_v, dst_h = block.coord_zone(dst_glbl)
+        src_v, src_h = block.zone_from_coord(src_local_in_block)
+        dst_v, dst_h = block.zone_from_coord(dst_local_in_block)
 
         gantry_move = op.move(equipment.gantry, src_loc, dst_loc)
         trolley_move = op.move(equipment.trolley, src_loc, dst_loc)
@@ -38,7 +38,7 @@ class OptimisedOpBuilder(OpBuilder):
             yield gantry_move, trolley_move, hoist_move
             return
 
-        max_height = block.max_height_within(src_glbl, dst_glbl) + equipment.height_clearance
+        max_height = block.max_height_within(src_local_in_block, dst_local_in_block) + equipment.height_clearance
         max_height = max(dst_loc.z, max_height)
         if load:
             max_height += TEU.HEIGHT
@@ -70,8 +70,10 @@ class OptimisedOpBuilder(OpBuilder):
 
     def adjust_steps(self, op, src_loc, dst_loc):
         dst_loc.y = src_loc.y
-        src_glbl = op.equipment.coord_l2g(src_loc)
-        dst_glbl = op.equipment.coord_l2g(dst_loc)
-        max_height = op.request.block.max_height_within(src_glbl, dst_glbl) + op.equipment.height_clearance
+        equipment = op.equipment
+        block = op.request.block
+        max_height = block.max_height_within(
+            equipment.transform_to(src_loc, block),
+            equipment.transform_to(dst_loc, block)) + op.equipment.height_clearance
         dst_loc.z = max(src_loc.z, max_height)
         yield from self.move_steps(op, src_loc, dst_loc, load=False)
