@@ -32,27 +32,17 @@ cdef class CBox:
         box_destroy(&self.c)
 
     def alloc(self, time, block, loc):
-        # print("alloc", loc)
         cdef CellIdx new_loc[3];
         if self.state == BOX_STATE_INITIAL:
             self.set_location(block, *loc)
-            # if self.block.count(loc[0]) >= 54:
-            #     print(self.block.count(loc[0]))
-            # assert self.block.count(loc[0]) < 54
             box_alloc(&self.c, time)
         elif self.state == BOX_STATE_ALLOCATED:
-            # if self.block.count(loc[0]) >= 54:
-            #     print(self.block.count(loc[0]))
-            # assert self.block.count(loc[0]) < 54
             if not self.c._holder_or_origin:
                 new_loc[:] = loc
                 box_realloc(&self.c, time, new_loc)
             else:
                 raise Exception("triple alloc")
         elif self.state == BOX_STATE_STORED:
-            # if self.block.count(loc[0]) >= 55:
-            #     print(self.block.count(loc[0]))
-            # assert self.block.count(loc[0]) < 55
             if not self.c._holder_or_origin:
                 new_loc[:] = loc
                 box_relocate_alloc(&self.c, time, new_loc)
@@ -178,7 +168,13 @@ cdef class CBox:
         return self.block.box_coord(self, equipment)
 
     def store_coord(self, equipment=None, loc=None):
-        loc = loc or self.store_position()
+        if loc:
+            tmp = self.location
+            self.location = loc
+            loc = self.store_position()
+            self.location = tmp
+        else:
+            loc = self.store_position()
         return self.block.cell_coord(loc, equipment, self.teu)
 
     def access_coord(self, lane, equipment=None):
