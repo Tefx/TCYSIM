@@ -48,9 +48,9 @@ class ReqHandler(Dispatcher):
 
     def gen_relocate_op(self, time, box, new_loc, request, reset):
         request.link_signal("rlct_start_or_resume", self.on_relocate_start, box=box, dst_loc=new_loc)
-        request.link_signal("rlct_pick_up", self.on_relocate_pickup, box=box, dst_loc=new_loc)
-        request.link_signal("rlct_put_down", self.on_relocate_putdown, box=box, dst_loc=new_loc)
-        request.link_signal("rlct_finish_or_fail", self.on_relocate_finish_or_fail, box=box, dst_loc=new_loc)
+        request.link_signal("rlct_pick_up", self.on_relocate_pickup, box=box)
+        request.link_signal("rlct_put_down", self.on_relocate_putdown, box=box)
+        request.link_signal("rlct_finish_or_fail", self.on_relocate_finish_or_fail, box=box)
         return self.equipment.op_builder.RelocateOp(request, box, new_loc, reset=reset)
 
     def reshuffle_operations(self, time, request):
@@ -146,15 +146,15 @@ class ReqHandler(Dispatcher):
     def on_relocate_start(self, time, box, dst_loc):
         box.alloc(time, None, dst_loc)
 
-    def on_relocate_finish_or_fail(self, time, box, dst_loc):
+    def on_relocate_finish_or_fail(self, time, box):
         pass
 
-    def on_relocate_pickup(self, time, box, dst_loc):
+    def on_relocate_pickup(self, time, box):
         box.equipment = self.equipment
         box.retrieve(time)
         box.block.release_stack(time, box.location)
 
-    def on_relocate_putdown(self, time, box, dst_loc):
+    def on_relocate_putdown(self, time, box):
         box.store(time)
         box.equipment = None
         box.block.release_stack(time, box.location)

@@ -32,27 +32,17 @@ cdef class CBox:
         box_destroy(&self.c)
 
     def alloc(self, time, block, loc):
-        # print("alloc", loc)
         cdef CellIdx new_loc[3];
         if self.state == BOX_STATE_INITIAL:
             self.set_location(block, *loc)
-            # if self.block.count(loc[0]) >= 54:
-            #     print(self.block.count(loc[0]))
-            # assert self.block.count(loc[0]) < 54
             box_alloc(&self.c, time)
         elif self.state == BOX_STATE_ALLOCATED:
-            # if self.block.count(loc[0]) >= 54:
-            #     print(self.block.count(loc[0]))
-            # assert self.block.count(loc[0]) < 54
             if not self.c._holder_or_origin:
                 new_loc[:] = loc
                 box_realloc(&self.c, time, new_loc)
             else:
                 raise Exception("triple alloc")
         elif self.state == BOX_STATE_STORED:
-            # if self.block.count(loc[0]) >= 55:
-            #     print(self.block.count(loc[0]))
-            # assert self.block.count(loc[0]) < 55
             if not self.c._holder_or_origin:
                 new_loc[:] = loc
                 box_relocate_alloc(&self.c, time, new_loc)
@@ -144,9 +134,13 @@ cdef class CBox:
         self.c.block = &block.c
         self.c.loc[:] = x, y, z
 
-    def store_position(self):
+    def store_position(self, new_loc=None):
         cdef CellIdx loc[3]
-        box_store_position(&self.c, loc)
+        if new_loc:
+            loc[:] = new_loc
+            box_store_position(&self.c, loc, True)
+        else:
+            box_store_position(&self.c, loc, False)
         return V3(loc[0], loc[1], loc[2])
 
     def relocate_position(self, new_loc):
@@ -178,7 +172,7 @@ cdef class CBox:
         return self.block.box_coord(self, equipment)
 
     def store_coord(self, equipment=None, loc=None):
-        loc = loc or self.store_position()
+        loc = self.store_position(loc)
         return self.block.cell_coord(loc, equipment, self.teu)
 
     def access_coord(self, lane, equipment=None):

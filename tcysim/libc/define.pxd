@@ -65,7 +65,7 @@ cdef extern from "box.h":
     int box_store(Box *box, Time time)
     int box_retrieve(Box *box, Time time)
     bool box_position_is_valid(Box *box, Block *blk, CellIdx *loc)
-    void box_store_position(Box *box, CellIdx *idx)
+    void box_store_position(Box *box, CellIdx *id, bool new_locx)
     int box_place_holder(Box *box, CellIdx *new_loc)
     int box_remove_holder(Box *box)
     int box_realloc(Box *box, Time time, CellIdx *new_loc)
