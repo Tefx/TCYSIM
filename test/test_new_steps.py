@@ -106,14 +106,14 @@ class Ph2ReqHandler(ReqHandler):
 
     def gen_relocate_op(self, time, box, new_loc, request, reset, ph2=False):
         request.link_signal("rlct_start_or_resume", self.on_relocate_start, box=box, dst_loc=new_loc)
-        request.link_signal("rlct_pick_up", self.on_relocate_pickup, box=box, dst_loc=new_loc)
-        request.link_signal("rlct_put_down", self.on_relocate_putdown, box=box, dst_loc=new_loc,
+        request.link_signal("rlct_pick_up", self.on_relocate_pickup, box=box)
+        request.link_signal("rlct_put_down", self.on_relocate_putdown, box=box,
                             original_request=request if ph2 else None)
-        request.link_signal("rlct_finish_or_fail", self.on_relocate_finish_or_fail, box=box, dst_loc=new_loc)
+        request.link_signal("rlct_finish_or_fail", self.on_relocate_finish_or_fail, box=box)
         return self.equipment.op_builder.RelocateOp(request, box, new_loc, reset=reset)
 
-    def on_relocate_putdown(self, time, box, dst_loc, original_request=None):
-        super(Ph2ReqHandler, self).on_relocate_putdown(time, box, dst_loc)
+    def on_relocate_putdown(self, time, box, original_request=None):
+        super(Ph2ReqHandler, self).on_relocate_putdown(time, box)
         if original_request:
             if original_request.req_type == ReqType.RETRIEVE and getattr(original_request, "ph2", True):
                 req2 = Request(self.ReqType.RETRIEVE, time, box, lane=original_request.lane, ph2=True)
@@ -219,7 +219,7 @@ if __name__ == '__main__':
     rmg2 = RMG(yard, block, -1, idx=1)
     yard.deploy(block, [rmg1, rmg2])
 
-    yard.roles.tracer = AnimationLogger(yard, start=3600 * 20, end=3600 * 24, fps=24, speedup=10)
+    # yard.roles.tracer = AnimationLogger(yard, start=3600 * 20, end=3600 * 24, fps=24, speedup=10)
     yard.roles.sim_driver = BoxGenerator(yard)
     yard.roles.sim_driver.install_or_add(SimpleBoxBomb(first_time=0))
 
