@@ -1,6 +1,6 @@
 from .env import YardEnv
 from ..request import ReqType, Request
-from ..roles.roles import Roles
+from ..roles import Roles
 from ..callback import CallBackManager
 from ..allocator import SpaceAllocator
 

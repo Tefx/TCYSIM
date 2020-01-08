@@ -1,6 +1,6 @@
 from math import inf
 
-from tcysim.framework.motion.motion import Motion
+from ..motion import Motion
 
 
 class StepBase:

@@ -1,5 +1,5 @@
-from tcysim.utils.dispatcher import Dispatcher
 from ..operation import Operation, OpType as _OpType
+from tcysim.utils.dispatcher import Dispatcher
 
 
 class OpBuilder(Dispatcher):

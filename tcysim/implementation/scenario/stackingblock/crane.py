@@ -1,7 +1,6 @@
 from copy import copy
 
-from tcysim.framework import Component
-from tcysim.framework.equipment import Equipment
+from tcysim.framework import Component, Equipment
 from tcysim.utils import V3, TEU
 
 
@@ -25,8 +24,8 @@ class CraneForStackingBlock(Equipment):
     def coord_from_box(self, coord):
         return coord.add1("z", TEU.HEIGHT / 2)
 
-    def coord_ready_for_box(self, coord):
-        return coord.add("z", self.height_clearance)
+    def coord_ready_from(self, coord):
+        return coord.add1("z", self.height_clearance)
 
     def check_interference(self, op):
         axis = self.gantry.axis

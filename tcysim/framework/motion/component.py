@@ -1,6 +1,5 @@
 from .mover import Mover
-from tcysim.utils import V3
-from tcysim.utils import Paths
+from tcysim.utils import V3, Paths
 
 
 class Component(Mover):

@@ -1,5 +1,5 @@
-from tcysim.framework import ReqState
-from tcysim.framework.scheduler.pool import ReqPool
+from ..request import ReqState
+from .pool import ReqPool
 
 
 class ReqDispatcher:

@@ -1,6 +1,5 @@
-from tcysim.framework import Request
+from tcysim.framework import Request, ReqType
 from tcysim.framework.exception.handling import RORUndefinedError
-from tcysim.framework.request import ReqType
 from tcysim.implementation.base.policy.req_handler import ReqHandler
 from tcysim.utils.dispatcher import Dispatcher
 

@@ -1,8 +1,8 @@
 from contextlib import contextmanager
 
-from tcysim.framework import Request
-from tcysim.framework.callback import CallBack
 from .step import CallBackStep, EmptyStep, MoverStep, AndStep
+from ..request import Request
+from ..callback import CallBack
 from tcysim.utils import Paths, V3
 
 

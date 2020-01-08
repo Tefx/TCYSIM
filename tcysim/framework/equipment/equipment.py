@@ -8,9 +8,9 @@ from ..operation import Operation
 from ..priority import Priority
 from ..layout import EquipmentRangeLayout
 from tcysim.utils import V3
-from ..request import Request
 from .req_handler import ReqHandler
 from .op_builder import OpBuilder
+from ..request import Request
 from ..scheduler.scheduler import JobScheduler
 
 
@@ -84,7 +84,7 @@ class Equipment(EquipmentRangeLayout, Process):
     def coord_from_box(self, coord):
         return coord
 
-    def coord_ready_for_box(self, coord):
+    def coord_ready_from(self, coord):
         return coord
 
     def assign_block(self, block):

@@ -2,10 +2,6 @@ import os
 import sys
 import random
 
-from tcysim.implementation.base.policy.allocator import RandomSpaceAllocator
-from tcysim.implementation.scenario.stackingblock.req_handler import CooperativeTwinCraneReqHandler
-from tcysim.implementation.scenario.stackingblock.scheduler import CooperativeTwinCraneJobScheduler
-
 sys.path.extend([
     "../",
     "../../pesim",
@@ -13,15 +9,17 @@ sys.path.extend([
 os.environ['PATH'] = "../libtcy/msvc/Release" + os.pathsep + os.environ['PATH']
 os.environ['PATH'] = "../libtcy/cmake-build-debug" + os.pathsep + os.environ['PATH']
 
+from tcysim.implementation.base.policy.allocator import RandomSpaceAllocator
+from tcysim.implementation.base.roles.animation_logger import AnimationLogger
 from tcysim.implementation.base.roles.box_generator import BoxBomb, BoxGenerator
+
+from tcysim.implementation.scenario.stackingblock.req_handler import CooperativeTwinCraneReqHandler
+from tcysim.implementation.scenario.stackingblock.scheduler import CooperativeTwinCraneJobScheduler
 from tcysim.implementation.scenario.stackingblock.op_builder import OptimisedOpBuilder
-
-from tcysim.framework import Lane, Component, Spec, Yard, Box
-from tcysim.framework.scheduler import ReqDispatcher
-from tcysim.framework.request import ReqState
-
 from tcysim.implementation.scenario.stackingblock.block import StackingBlock
 from tcysim.implementation.scenario.stackingblock.crane import CraneForStackingBlock
+
+from tcysim.framework import Lane, Component, Spec, Yard, Box, ReqDispatcher, ReqState
 
 from tcysim.utils import V3, TEU
 
@@ -103,7 +101,7 @@ if __name__ == '__main__':
     rmg2 = RMG(yard, block, -1, idx=1)
     yard.deploy(block, [rmg1, rmg2])
 
-    # yard.roles.tracer = AnimationLogger(yard, start=3600 * 20, end=3600 * 24, fps=24, speedup=10)
+    yard.roles.animation_logger = AnimationLogger(yard, start=3600 * 20, end=3600 * 24, fps=24, speedup=10)
     yard.roles.sim_driver = BoxGenerator(yard)
     yard.roles.sim_driver.install_or_add(SimpleBoxBomb(first_time=0))
 
@@ -111,7 +109,7 @@ if __name__ == '__main__':
     yard.run_until(3600 * 24)
 
     if "tracer" in yard.roles:
-        yard.roles.tracer.dump("log2")
+        yard.roles.animation_logger.dump("log2")
 
     print("{:<12}: {}".format("TOTAL", len(yard.requests)))
     print("{:<12}: {}".format("TOTAL (AC)", len([req for req in yard.requests if req.finish_time > req.start_time])))

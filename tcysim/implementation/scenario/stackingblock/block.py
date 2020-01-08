@@ -2,7 +2,7 @@ from copy import copy
 from itertools import product
 
 from tcysim.utils import V3, TEU
-from tcysim.framework.block import Block
+from tcysim.framework import Block
 
 
 class StackingBlock(Block):

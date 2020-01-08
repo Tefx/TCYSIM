@@ -4,7 +4,6 @@ from tcysim.libc import CBlock
 from tcysim.utils import V3
 
 from ..layout import BlockLayout
-
 from ..equipment import Equipment
 from ..scheduler import ReqDispatcher
 

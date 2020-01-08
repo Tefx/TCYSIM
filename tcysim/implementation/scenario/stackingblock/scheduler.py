@@ -1,5 +1,4 @@
-from tcysim.framework import Request, ReqState
-from tcysim.framework.scheduler import JobScheduler
+from tcysim.framework import Request, ReqState, JobScheduler
 
 
 class CooperativeTwinCraneJobScheduler(JobScheduler):

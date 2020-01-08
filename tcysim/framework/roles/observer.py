@@ -1,5 +1,5 @@
 from pesim import Process, TIME_FOREVER
-from tcysim.framework.priority import Priority
+from ..priority import Priority
 
 
 class Observer(Process):

@@ -1,4 +1,4 @@
-from tcysim.framework.equipment.req_handler import ReqHandler as ReqHandlerBase
+from tcysim.framework.equipment import ReqHandler as ReqHandlerBase
 from tcysim.framework.exception.handling import *
 from tcysim.framework.request import ReqType
 from tcysim.utils.dispatcher import Dispatcher

@@ -1,7 +1,7 @@
 from pickle import dump
 
 from pesim import TIME_FOREVER
-from tcysim.framework.roles.observer import Observer
+from tcysim.framework.roles import Observer
 
 
 class AnimationLogger(Observer):

@@ -1,7 +1,7 @@
 import heapq
-
 from pesim import Process, TIME_FOREVER
-from tcysim.framework.priority import Priority
+
+from ..priority import Priority
 from tcysim.utils.dispatcher import Dispatcher
 
 
