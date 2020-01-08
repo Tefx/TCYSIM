@@ -1,11 +1,11 @@
 from copy import copy
 
-from tcysim.framework.motion.component import Component
+from tcysim.framework import Component
 from tcysim.framework.equipment import Equipment
 from tcysim.utils import V3, TEU
 
 
-class Crane(Equipment):
+class CraneForStackingBlock(Equipment):
     gantry: Component = NotImplemented
     trolley: Component = NotImplemented
     hoist: Component = NotImplemented
@@ -19,8 +19,14 @@ class Crane(Equipment):
         super().__init__(yard, components, block.offset, block.size, block.rotate, init_offset, **attrs)
         self.gantry, self.trolley, self.hoist = self.components
 
-    def box_equipment_shift(self):
-        return V3.zero().add1(2, TEU.HEIGHT / 2)
+    def coord_to_box(self):
+        return self.coord().sub1("z", TEU.HEIGHT / 2)
+
+    def coord_from_box(self, coord):
+        return coord.add1("z", TEU.HEIGHT / 2)
+
+    def coord_ready_for_box(self, coord):
+        return coord.add("z", self.height_clearance)
 
     def check_interference(self, op):
         axis = self.gantry.axis

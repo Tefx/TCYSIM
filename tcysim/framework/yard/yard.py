@@ -1,17 +1,8 @@
-from pesim import Environment
+from .env import YardEnv
 from ..request import ReqType, Request
 from ..roles.roles import Roles
 from ..callback import CallBackManager
-from tcysim.framework.allocator.allocator import SpaceAllocator
-
-
-class YardEnv(Environment):
-    def __init__(self, yard):
-        self.yard = yard
-        super(YardEnv, self).__init__()
-
-    def pre_ev_hook(self, time):
-        self.yard.run_equipments(time)
+from ..allocator import SpaceAllocator
 
 
 class Yard:

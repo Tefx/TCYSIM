@@ -1,31 +1,8 @@
-from tcysim.framework.equipment import OpBuilder as OpBuilderBase
+from tcysim.implementation.base.policy.op_builder import OpBuilder
 from tcysim.utils import TEU
 
 
-class OpBuilder(OpBuilderBase):
-    def move_steps(self, op, src_loc, dst_loc, load=False):
-        hoist_mode = "rated load" if load else "no load"
-
-        hm2h = op.move(self.equipment.hoist, src_loc, self.equipment.hoist.max_height, hoist_mode)
-        gm = op.move(self.equipment.gantry, src_loc, dst_loc)
-        tm = op.move(self.equipment.trolley, src_loc, dst_loc)
-        tm2d = op.move(self.equipment.hoist, self.equipment.hoist.max_height, dst_loc, hoist_mode)
-
-        tm2d <<= gm & tm
-
-        yield hm2h
-        yield gm, tm, tm2d
-
-    def adjust_steps(self, op, src_loc, dst_loc):
-        dst_loc.z = self.equipment.hoist.max_height
-        yield from self.move_steps(op, src_loc, dst_loc, load=False)
-
-    def idle_steps(self, op, cur_loc):
-        dst_loc = cur_loc.set1("z", self.equipment.hoist.max_height)
-        yield from self.move_steps(op, cur_loc, dst_loc, load=False)
-
-
-class OptimizedOpBuilder(OpBuilder):
+class OptimisedOpBuilder(OpBuilder):
     def move_steps(self, op, src_loc, dst_loc, load=False):
         hoist_mode = "rated load" if load else "no load"
         equipment = self.equipment
@@ -35,7 +12,7 @@ class OptimizedOpBuilder(OpBuilder):
         elif len(equipment.blocks) == 1:
             block = equipment.blocks[0]
         else:
-            yield from super(OptimizedOpBuilder, self).move_steps(op, src_loc, dst_loc)
+            yield from super(OptimisedOpBuilder, self).move_steps(op, src_loc, dst_loc)
             return
 
         hoist_move = op.move(equipment.hoist, src_loc, dst_loc, hoist_mode)

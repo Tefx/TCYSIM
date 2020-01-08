@@ -78,14 +78,14 @@ class Equipment(EquipmentRangeLayout, Process):
         else:
             return equipment.coord_g2l(self.coord())
 
-    def box_equipment_shift(self):
-        return V3.zero()
-
     def coord_to_box(self):
-        return self.coord() - self.box_equipment_shift()
+        return self.coord()
 
     def coord_from_box(self, coord):
-        return coord + self.box_equipment_shift()
+        return coord
+
+    def coord_ready_for_box(self, coord):
+        return coord
 
     def assign_block(self, block):
         self.blocks.append(block)

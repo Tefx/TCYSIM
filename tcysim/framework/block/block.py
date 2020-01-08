@@ -48,11 +48,9 @@ class Block(BlockLayout, CBlock):
             for pos in positions:
                 self.lock(pos)
                 acquirer.on_acquire_success(time, pos)
-            # print("LOCKING", positions)
         return succeed
 
     def release_stack(self, time, *positions):
-        # print("UNLOCKING", positions)
         for pos in positions:
             pos = pos.set1(self.stacking_axis, 0)
             self.unlock(pos)

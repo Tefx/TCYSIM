@@ -14,10 +14,10 @@ from tcysim.framework.allocator import SpaceAllocator
 from tcysim.framework.scheduler import JobScheduler, ReqDispatcher
 from tcysim.framework.request import ReqState, Request
 
-from tcysim.implementation.block.stacking_block import StackingBlock
-from tcysim.implementation.equipment.crane import Crane
-from tcysim.implementation.roles.animation_logger import AnimationLogger
-from tcysim.implementation.roles.box_generator import BoxBomb, BoxGenerator
+from tcysim.implementation.scenario.stackingblock.block import StackingBlock
+from tcysim.implementation.scenario.stackingblock.crane import CraneForStackingBlock
+from tcysim.implementation.base.roles.animation_logger import AnimationLogger
+from tcysim.implementation.base.roles import BoxBomb, BoxGenerator
 
 from tcysim.utils import V3, TEU
 
@@ -47,7 +47,7 @@ class CraneJobScheduler(JobScheduler):
         return min(filter(Request.is_ready, tasks), key=self.rank_task, default=None)
 
 
-class RMG(Crane):
+class RMG(CraneForStackingBlock):
     gantry = Component(
         axis="x",
         specs=Spec(200 / 60, 0.25),
