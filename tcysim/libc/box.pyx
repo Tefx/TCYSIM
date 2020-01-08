@@ -134,9 +134,13 @@ cdef class CBox:
         self.c.block = &block.c
         self.c.loc[:] = x, y, z
 
-    def store_position(self):
+    def store_position(self, new_loc=None):
         cdef CellIdx loc[3]
-        box_store_position(&self.c, loc)
+        if new_loc:
+            loc[:] = new_loc
+            box_store_position(&self.c, loc, True)
+        else:
+            box_store_position(&self.c, loc, False)
         return V3(loc[0], loc[1], loc[2])
 
     def relocate_position(self, new_loc):
@@ -168,13 +172,7 @@ cdef class CBox:
         return self.block.box_coord(self, equipment)
 
     def store_coord(self, equipment=None, loc=None):
-        if loc:
-            tmp = self.location
-            self.location = loc
-            loc = self.store_position()
-            self.location = tmp
-        else:
-            loc = self.store_position()
+        loc = self.store_position(loc)
         return self.block.cell_coord(loc, equipment, self.teu)
 
     def access_coord(self, lane, equipment=None):
