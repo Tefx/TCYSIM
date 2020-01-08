@@ -43,7 +43,6 @@ class StackingBlock(Block):
                 idx[i] = self.shape[i]
             elif idx[i] < 0:
                 idx[i] = -1
-        # print("CI", coord, self.coord_g2l(coord), self.unit_bound_size, idx)
         return idx
 
     def stack_height(self, num):
@@ -55,19 +54,18 @@ class StackingBlock(Block):
 
         idx_0 = copy(self.coord2cell_idx(src_loc))
         idx_1 = copy(self.coord2cell_idx(dst_loc))
-        # print(src_loc, dst_loc, idx_0, idx_1)
 
         for i in range(3):
             if idx_0[i] > idx_1[i]:
                 idx_0[i], idx_1[i] = idx_1[i], idx_0[i]
 
+        idx_0[1] -= 1
+        idx_1[1] += 1
+
         rs = [range(max(idx_0[i], 0), min(idx_1[i] + 1, self.shape[i])) for i in range(3)]
         rs[self.stacking_axis] = (-1,)
-        # print("RS", rs)
+
         h_max = max((self.count(*idx, include_occupied=False) for idx in product(*rs)), default=0)
-        # for idx in product(*rs):
-        #     print("$$", idx, self.count(*idx, include_occupied=False))
-        # print(">>", h_max, self.stack_height(h_max))
         return self.stack_height(h_max)
 
     def bay_is_valid(self, box, i):
