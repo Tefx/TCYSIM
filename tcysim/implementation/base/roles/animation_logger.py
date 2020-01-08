@@ -16,14 +16,15 @@ class AnimationLogger(Observer):
         equ_coords = {}
         box_coords = {}
 
-        for i, (equipment, coord) in enumerate(self.yard.equipment_coords()):
+        for i, equipment in enumerate(self.yard.equipments):
+            coord = equipment.current_coord(transform_to="g")
             if i not in self.crane_last_position or coord != self.crane_last_position[i]:
                 self.crane_last_position[i] = coord
                 equ_coords[i] = coord.to_tuple()
 
         current_box_location = {}
         for box in self.yard.boxes:
-            coord = box.coord()
+            coord = box.current_coord(transform_to="g")
             if coord:
                 current_box_location[box.id] = coord
                 if box.id not in self.box_last_positions or self.box_last_positions[box.id] != coord:

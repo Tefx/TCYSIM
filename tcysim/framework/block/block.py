@@ -4,14 +4,13 @@ from tcysim.libc import CBlock
 from tcysim.utils import V3
 
 from ..layout import BlockLayout
-from ..equipment import Equipment
 from ..scheduler import ReqDispatcher
 
 
 class Block(BlockLayout, CBlock):
     ReqDispatcher = ReqDispatcher
 
-    def __init__(self, yard, offset, shape:V3, rotate, stacking_axis, sync_axes, lanes=()):
+    def __init__(self, yard, offset, shape: V3, rotate, stacking_axis, sync_axes, lanes=()):
         sync_axes = tuple(V3.axis_idx(x) for x in sync_axes)
         stacking_axis = V3.axis_idx(stacking_axis)
         self.equipments = []
@@ -26,11 +25,11 @@ class Block(BlockLayout, CBlock):
             self.equipments.append(equipment)
             equipment.assign_block(self)
 
-    def box_coord(self, box, equipment:Equipment):
-        return self.cell_coord(box.location, equipment, box.teu)
-    
-    def access_coord(self, lane, box, equipment:Equipment):
-        return self.cell_coord_map_to_lane(lane, box.location, equipment, box.teu)
+    def box_coord(self, box, transform_to=None):
+        return self.coord_from_cell_idx(box.location, box.teu, transform_to)
+
+    def access_coord(self, lane, box, transform_to=None):
+        return self.projected_coord_on_lane_from_cell_idx(lane, box.location, box.teu, transform_to)
 
     def acquire_stack(self, time, acquirer, *positions):
         succeed = True

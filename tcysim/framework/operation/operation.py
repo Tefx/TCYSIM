@@ -53,7 +53,7 @@ class Operation:
         for component in equipment.components:
             if component.may_interfere:
                 paths = Paths(64)
-                paths.append(start_time, equipment.local_coord()[component.axis])
+                paths.append(start_time, equipment.current_coord()[component.axis])
                 self.paths[component] = paths
                 self._pps[component] = []
         self.start_time = start_time

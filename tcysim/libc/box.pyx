@@ -139,6 +139,8 @@ cdef class CBox:
         if new_loc:
             loc[:] = new_loc
             box_store_position(&self.c, loc, True)
+        elif self.state == BOX_STATE_STORED:
+            return self.location
         else:
             box_store_position(&self.c, loc, False)
         return V3(loc[0], loc[1], loc[2])
@@ -155,7 +157,6 @@ cdef class CBox:
             return
         while True:
             loc = self.location
-            axis = V3.axis_idx(axis)
             # print("ABOVE", self.id, self.location)
             box = self.block.top_box(loc, axis)
             # print("/ABOVE")
@@ -168,21 +169,21 @@ cdef class CBox:
         loc[:] = x, y, z
         return box_position_is_valid(&self.c, &block.c, loc)
 
-    def current_coord(self, equipment=None):
-        return self.block.box_coord(self, equipment)
+    def store_coord(self, loc=None, transform_to=None):
+        idx = self.store_position(loc)
+        return self.block.coord_from_cell_idx(idx, self.teu, transform_to)
 
-    def store_coord(self, equipment=None, loc=None):
-        loc = self.store_position(loc)
-        return self.block.cell_coord(loc, equipment, self.teu)
+    def access_coord(self, lane, transform_to=None):
+        return self.block.access_coord(lane, self, transform_to)
 
-    def access_coord(self, lane, equipment=None):
-        return self.block.access_coord(lane, self, equipment)
-
-    def coord(self):
+    def current_coord(self, transform_to=None):
         if self.equipment:
-            return self.equipment.coord_to_box()
+            v = self.equipment.attached_box_coord(transform_to=self.block)
         elif self.state == BOX_STATE_STORED:
-            return self.block.box_coord(self, None)
+            v = self.block.box_coord(self)
+        else:
+            return None
+        return self.block.transform_to(v, transform_to)
 
     def __repr__(self):
         return "Box[{}'|{}|{}]".format(self.size, self.c.id.decode("utf-8"), self.state)

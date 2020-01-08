@@ -10,13 +10,13 @@ class OpBuilder(OpBuilderBase):
         box = request.box
         lane = request.lane
         dst_loc = getattr(request, "dst_loc", None)
-        op.access_loc = self.equipment.coord_from_box(box.access_coord(lane, self.equipment))
-        op.container_loc = self.equipment.coord_from_box(box.store_coord(self.equipment, loc=dst_loc))
-        access_ready_loc = self.equipment.coord_ready_from(op.access_loc)
-        container_ready_loc = self.equipment.coord_ready_from(op.container_loc)
+        op.access_loc = self.equipment.op_coord_from_box_coord(box.access_coord(lane, transform_to=self.equipment))
+        op.container_loc = self.equipment.op_coord_from_box_coord(box.store_coord(dst_loc, transform_to=self.equipment))
+        access_ready_loc = self.equipment.prepare_coord_for_op_coord(op.access_loc)
+        container_ready_loc = self.equipment.prepare_coord_for_op_coord(op.container_loc)
 
         yield op.emit_signal("start_or_resume")
-        yield from self.move_steps(op, self.equipment.local_coord(), access_ready_loc)
+        yield from self.move_steps(op, self.equipment.current_coord(), access_ready_loc)
         yield from self.move_steps(op, access_ready_loc, op.access_loc)
         yield op.wait(self.equipment.GRASP_TIME)
         yield op.emit_signal("off_agv")
@@ -31,13 +31,13 @@ class OpBuilder(OpBuilderBase):
         request = op.request
         box = request.box
         lane = request.lane
-        op.access_loc = self.equipment.coord_from_box(box.access_coord(lane, self.equipment))
-        op.container_loc = self.equipment.coord_from_box(box.current_coord(self.equipment))
-        access_ready_loc = self.equipment.coord_ready_from(op.access_loc)
-        container_ready_loc = self.equipment.coord_ready_from(op.container_loc)
+        op.access_loc = self.equipment.op_coord_from_box_coord(box.access_coord(lane, transform_to=self.equipment))
+        op.container_loc = self.equipment.op_coord_from_box_coord(box.store_coord(transform_to=self.equipment))
+        access_ready_loc = self.equipment.prepare_coord_for_op_coord(op.access_loc)
+        container_ready_loc = self.equipment.prepare_coord_for_op_coord(op.container_loc)
 
         yield op.emit_signal("start_or_resume")
-        yield from self.move_steps(op, self.equipment.local_coord(), container_ready_loc)
+        yield from self.move_steps(op, self.equipment.current_coord(), container_ready_loc)
         yield from self.move_steps(op, container_ready_loc, op.container_loc)
         yield op.wait(self.equipment.GRASP_TIME)
         yield op.emit_signal("off_block")
@@ -49,13 +49,13 @@ class OpBuilder(OpBuilderBase):
 
     @Dispatcher.on(OpType.RELOCATE)
     def build_relocate(self, op: Operation):
-        op.src_loc = self.equipment.coord_from_box(op.box.current_coord(self.equipment))
-        op.dst_loc = self.equipment.coord_from_box(op.box.store_coord(self.equipment, op.new_loc))
-        src_ready_loc = self.equipment.coord_ready_from(op.src_loc)
-        dst_ready_loc = self.equipment.coord_ready_from(op.dst_loc)
+        op.src_loc = self.equipment.op_coord_from_box_coord(op.box.store_coord(transform_to=self.equipment))
+        op.dst_loc = self.equipment.op_coord_from_box_coord(op.box.store_coord(op.new_loc, transform_to=self.equipment))
+        src_ready_loc = self.equipment.prepare_coord_for_op_coord(op.src_loc)
+        dst_ready_loc = self.equipment.prepare_coord_for_op_coord(op.dst_loc)
 
         yield op.emit_signal("rlct_start_or_resume")
-        yield from self.move_steps(op, self.equipment.local_coord(), src_ready_loc)
+        yield from self.move_steps(op, self.equipment.current_coord(), src_ready_loc)
         yield from self.move_steps(op, src_ready_loc, op.src_loc)
         yield op.wait(self.equipment.GRASP_TIME)
         yield op.emit_signal("rlct_pick_up")
@@ -71,7 +71,7 @@ class OpBuilder(OpBuilderBase):
         op.dst_loc = op.request.new_loc
         yield op.emit_signal("start_or_resume")
         if self.equipment.adjust_is_necessary(other, op.dst_loc):
-            yield from self.adjust_steps(op, self.equipment.local_coord(), op.dst_loc)
+            yield from self.adjust_steps(op, self.equipment.current_coord(), op.dst_loc)
         yield op.emit_signal("finish_or_fail")
 
     @Dispatcher.on(OpType.MOVE)
@@ -80,9 +80,9 @@ class OpBuilder(OpBuilderBase):
         dst_loc = op.dst_loc
         if op.interruptable:
             with op.allow_interruption(self.equipment, query_task_before_perform=False):
-                yield from self.move_steps(op, self.equipment.local_coord(), dst_loc, load)
+                yield from self.move_steps(op, self.equipment.current_coord(), dst_loc, load)
         else:
-            yield from self.move_steps(op, self.equipment.local_coord(), dst_loc, load)
+            yield from self.move_steps(op, self.equipment.current_coord(), dst_loc, load)
 
     def move_steps(self, op, src_loc, dst_loc, load=False):
         hoist_mode = "rated load" if load else "no load"

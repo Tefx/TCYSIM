@@ -18,25 +18,26 @@ class CraneForStackingBlock(Equipment):
         super().__init__(yard, components, block.offset, block.size, block.rotate, init_offset, **attrs)
         self.gantry, self.trolley, self.hoist = self.components
 
-    def coord_to_box(self):
-        return self.coord().sub1("z", TEU.HEIGHT / 2)
+    def attached_box_coord(self, transform_to="g"):
+        return self.current_coord(transform_to=transform_to).sub1("z", TEU.HEIGHT / 2)
 
-    def coord_from_box(self, coord):
-        return coord.add1("z", TEU.HEIGHT / 2)
+    def op_coord_from_box_coord(self, local_coord, transform_to=None):
+        return self.transform_to(local_coord.add1("z", TEU.HEIGHT / 2), transform_to)
 
-    def coord_ready_from(self, coord):
-        return coord.add1("z", self.height_clearance)
+    def prepare_coord_for_op_coord(self, local_coord, transform_to=None):
+        return self.transform_to(local_coord.add1("z", self.height_clearance), transform_to)
 
     def check_interference(self, op):
         axis = self.gantry.axis
         p0 = op.paths[self.gantry]
-        self_loc = self.local_coord()
+        self_loc = self.current_coord()
         for other in self.nearby_equipments():
-            if abs(self.local_coord().x - other.local_coord(self).x) < 32.5:
-                print(self.time, self.local_coord().x, other.local_coord(self).x)
+            other_loc = other.current_coord(transform_to=self)
+            if abs(self.current_coord().x - other_loc.x) < 32.5:
+                print(self.time, self.current_coord().x, other_loc.x)
                 print(self.state, other.state, op, other.current_op)
                 raise Exception("cranes crash!")
-            new_loc = other.local_coord(self)
+            new_loc = other_loc
             other_loc = copy(new_loc)
             if other_loc[axis] > self_loc[axis]:
                 dis = other_loc[axis] - p0.max
@@ -46,10 +47,10 @@ class CraneForStackingBlock(Equipment):
                 new_loc[axis] = p0.min - self.between_clearance - 1
             if other.state == self.STATE.WORKING:
                 p1 = other.current_op.paths[other.gantry]
-                shift = self.coord_g2l(other.offset)[axis]
+                shift = other.transform_to(V3.zero(), self)[axis]
                 if p0.intersect_test(p1, self.between_clearance, shift):
-                    return True, other, self.transform(other, new_loc)
+                    return True, other, self.transform_to(new_loc, other)
             else:
                 if dis < self.between_clearance:
-                    return True, other, self.transform(other, new_loc)
+                    return True, other, self.transform_to(new_loc, other)
         return False, None, None

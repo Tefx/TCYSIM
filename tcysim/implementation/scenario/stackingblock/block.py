@@ -33,11 +33,11 @@ class StackingBlock(Block):
     def tiers(self):
         return self.shape[2]
 
-    def in_stacking_area(self, coord):
-        return coord in self
+    def in_stacking_area(self, global_coord):
+        return global_coord in self
 
-    def coord2cell_idx(self, coord):
-        idx = (self.coord_g2l(coord) // self.unit_bound_size).astype(int)
+    def cell_idx_from_coord(self, local_coord):
+        idx = (local_coord // self.unit_bound_size).astype(int)
         for i in range(3):
             if idx[i] > self.shape[i]:
                 idx[i] = self.shape[i]
@@ -48,12 +48,12 @@ class StackingBlock(Block):
     def stack_height(self, num):
         return self.unit_bound_size[self.stacking_axis] * num - self.stacking_interval[self.stacking_axis]
 
-    def max_height_within(self, src_loc, dst_loc):
+    def max_height_within(self, src_local_coord, dst_local_coord):
         if self.stacking_axis < 0:
             raise NotImplementedError
 
-        idx_0 = copy(self.coord2cell_idx(src_loc))
-        idx_1 = copy(self.coord2cell_idx(dst_loc))
+        idx_0 = copy(self.cell_idx_from_coord(src_local_coord))
+        idx_1 = copy(self.cell_idx_from_coord(dst_local_coord))
 
         for i in range(3):
             if idx_0[i] > idx_1[i]:
@@ -88,7 +88,7 @@ class StackingBlock(Block):
                     if self.stack_is_valid(box, i, j):
                         yield V3(i, j, self.count(i, j))
 
-    def coord_zone(self, loc):
+    def zone_from_coord(self, local_coord):
         """
           (2,0) *    (2,1)    * (2,2)
         ********.-------------.********
@@ -96,16 +96,15 @@ class StackingBlock(Block):
         ********.-------------.********
           (0,0) *    (0,1)    * (0,2)
         """
-        loc = self.coord_g2l(loc)
-        if loc.x < 0:
+        if local_coord.x < 0:
             h = 0
-        elif loc.x > self.size.x:
+        elif local_coord.x > self.size.x:
             h = 2
         else:
             h = 1
-        if loc.y < 0:
+        if local_coord.y < 0:
             v = 0
-        elif loc.y > self.size.y:
+        elif local_coord.y > self.size.y:
             v = 2
         else:
             v = 1
