@@ -44,14 +44,14 @@ class ReqHandler(Dispatcher):
         yield from self.reshuffle_operations(time, request)
         box = request.box
         request.acquire_stack(time, box.location, request.new_loc)
-        yield self.gen_relocate_op(time, box, request.new_loc, request, reset=True)
+        yield self.gen_relocate_op(time, box, request.new_loc, request)
 
-    def gen_relocate_op(self, time, box, new_loc, request, reset):
+    def gen_relocate_op(self, time, box, new_loc, request):
         request.link_signal("rlct_start_or_resume", self.on_relocate_start, box=box, dst_loc=new_loc)
         request.link_signal("rlct_pick_up", self.on_relocate_pickup, box=box)
         request.link_signal("rlct_put_down", self.on_relocate_putdown, box=box)
         request.link_signal("rlct_finish_or_fail", self.on_relocate_finish_or_fail, box=box)
-        return self.equipment.op_builder.RelocateOp(request, box, new_loc, reset=reset)
+        return self.equipment.op_builder.RelocateOp(request, box, new_loc)
 
     def reshuffle_operations(self, time, request):
         box = request.box
@@ -66,7 +66,7 @@ class ReqHandler(Dispatcher):
                 # self.equipment.yard.smgr.slot_for_relocation(above_box, debug=True)
                 raise RORUndefinedError("no slot for relocation")
             request.acquire_stack(time, above_box.location, new_loc)
-            yield self.gen_relocate_op(time, above_box, new_loc, request, reset=False)
+            yield self.gen_relocate_op(time, above_box, new_loc, request)
 
     @Dispatcher.on(ReqType.ADJUST)
     def on_request_adjust(self, time, request):

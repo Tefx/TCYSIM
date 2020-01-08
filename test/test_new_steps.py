@@ -76,7 +76,7 @@ class Ph2ReqHandler(ReqHandler):
             if not dst_loc:
                 raise RORUndefinedError("no slot for relocation")
             request.acquire_stack(time, box.location, dst_loc)
-            yield self.gen_relocate_op(time, request.box, dst_loc, request, reset=False, ph2=True)
+            yield self.gen_relocate_op(time, request.box, dst_loc, request, ph2=True)
         else:
             yield from super(Ph2ReqHandler, self).on_request_retrieve(self, time, request)
 
@@ -100,13 +100,13 @@ class Ph2ReqHandler(ReqHandler):
         else:
             yield from super(Ph2ReqHandler, self).on_request_store(self, time, request)
 
-    def gen_relocate_op(self, time, box, new_loc, request, reset, ph2=False):
+    def gen_relocate_op(self, time, box, new_loc, request, ph2=False):
         request.link_signal("rlct_start_or_resume", self.on_relocate_start, box=box, dst_loc=new_loc)
         request.link_signal("rlct_pick_up", self.on_relocate_pickup, box=box)
         request.link_signal("rlct_put_down", self.on_relocate_putdown, box=box,
                             original_request=request if ph2 else None)
         request.link_signal("rlct_finish_or_fail", self.on_relocate_finish_or_fail, box=box)
-        return self.equipment.op_builder.RelocateOp(request, box, new_loc, reset=reset)
+        return self.equipment.op_builder.RelocateOp(request, box, new_loc)
 
     def on_relocate_putdown(self, time, box, original_request=None):
         super(Ph2ReqHandler, self).on_relocate_putdown(time, box)

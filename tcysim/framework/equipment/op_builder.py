@@ -30,8 +30,6 @@ class OpBuilder(Dispatcher):
         yield op.emit_signal("in_block")
         yield op.wait(self.equipment.RELEASE_TIME)
         yield op.emit_signal("finish_or_fail")
-        with op.allow_interruption(self.equipment):
-            yield from self.idle_steps(op, op.container_loc)
 
     @Dispatcher.on(OpType.RETRIEVE)
     def build_retrieve(self, op: Operation):
@@ -49,8 +47,6 @@ class OpBuilder(Dispatcher):
         yield op.emit_signal("on_agv")
         yield op.wait(self.equipment.RELEASE_TIME)
         yield op.emit_signal("finish_or_fail")
-        with op.allow_interruption(self.equipment):
-            yield from self.idle_steps(op, op.access_loc)
 
     @Dispatcher.on(OpType.RELOCATE)
     def build_relocate(self, op: Operation):
@@ -67,9 +63,6 @@ class OpBuilder(Dispatcher):
         yield op.emit_signal("rlct_put_down")
         yield op.wait(self.equipment.RELEASE_TIME)
         yield op.emit_signal("rlct_finish_or_fail")
-        if op.require_reset:
-            with op.allow_interruption(self.equipment):
-                yield from self.idle_steps(op, op.dst_loc)
 
     @Dispatcher.on(OpType.ADJUST)
     def build_adjust(self, op: Operation):
@@ -108,8 +101,8 @@ class OpBuilder(Dispatcher):
         return Operation(cls.OpType.RETRIEVE, request)
 
     @classmethod
-    def RelocateOp(cls, request, box, new_loc, reset):
-        return Operation(cls.OpType.RELOCATE, request, box=box, new_loc=new_loc, require_reset=reset)
+    def RelocateOp(cls, request, box, new_loc):
+        return Operation(cls.OpType.RELOCATE, request, box=box, new_loc=new_loc)
 
     @classmethod
     def AdjustOp(cls, request):
