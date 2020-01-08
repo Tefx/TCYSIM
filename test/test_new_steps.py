@@ -74,8 +74,6 @@ class Ph2ReqHandler(ReqHandler):
             start_bay = request.block.bays // 2 - 1
             dst_loc = self.yard.smgr.slot_for_relocation(box, start_bay=start_bay, finish_bay=0)
             if not dst_loc:
-                # print(box, box.block.count(box.location.x, -1, -1))
-                # self.yard.smgr.slot_for_relocation(box, start_bay=start_bay, finish_bay=0, debug=True)
                 raise RORUndefinedError("no slot for relocation")
             request.acquire_stack(time, box.location, dst_loc)
             yield self.gen_relocate_op(time, request.box, dst_loc, request, reset=False, ph2=True)
@@ -90,8 +88,6 @@ class Ph2ReqHandler(ReqHandler):
             start_bay = request.block.bays // 2 - 1
             dst_loc = self.yard.smgr.slot_for_relocation(box, start_bay=start_bay, finish_bay=0)
             if not dst_loc:
-                # print(box, box.block.count(box.location.x, -1, -1))
-                # self.yard.smgr.slot_for_relocation(box, start_bay=start_bay, finish_bay=0, debug=True)
                 raise RORUndefinedError("no slot for relocation")
             request.acquire_stack(time, dst_loc)
             request.ph2 = True
@@ -117,7 +113,6 @@ class Ph2ReqHandler(ReqHandler):
         if original_request:
             if original_request.req_type == ReqType.RETRIEVE and getattr(original_request, "ph2", True):
                 req2 = Request(self.ReqType.RETRIEVE, time, box, lane=original_request.lane, ph2=True)
-                # print("PH2", req2.box, req2.box.location)
                 self.yard.submit_request(time, req2)
 
     def on_store_start(self, time, request):
@@ -224,7 +219,7 @@ if __name__ == '__main__':
     yard.roles.sim_driver.install_or_add(SimpleBoxBomb(first_time=0))
 
     yard.start()
-    yard.run_until(3600 * 24)
+    yard.run_until(3600 * 24 * 30)
 
     if "tracer" in yard.roles:
         yard.roles.tracer.dump("log2")
