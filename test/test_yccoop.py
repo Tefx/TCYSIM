@@ -2,17 +2,17 @@ import os
 import sys
 import random
 
-from tcysim.framework.equipment.req_handler import ReqHandler
-from tcysim.framework.exception.handling import RORUndefinedError
-from tcysim.implementation.equipment.op_builder import OptimizedOpBuilder
-from tcysim.utils.dispatcher import Dispatcher
-
 sys.path.extend([
     "../",
     "../../pesim",
     ])
 os.environ['PATH'] = "../libtcy/msvc/Release" + os.pathsep + os.environ['PATH']
 os.environ['PATH'] = "../libtcy/cmake-build-debug" + os.pathsep + os.environ['PATH']
+
+from tcysim.framework.equipment.req_handler import ReqHandler
+from tcysim.framework.exception.handling import RORUndefinedError
+from tcysim.implementation.equipment.op_builder import OptimizedOpBuilder
+from tcysim.utils.dispatcher import Dispatcher
 
 from tcysim.framework import Lane, Component, Spec, Yard, Box
 from tcysim.framework.allocator import SpaceAllocator
@@ -106,14 +106,14 @@ class Ph2ReqHandler(ReqHandler):
 
     def gen_relocate_op(self, time, box, new_loc, request, reset, ph2=False):
         request.link_signal("rlct_start_or_resume", self.on_relocate_start, box=box, dst_loc=new_loc)
-        request.link_signal("rlct_pick_up", self.on_relocate_pickup, box=box, dst_loc=new_loc)
-        request.link_signal("rlct_put_down", self.on_relocate_putdown, box=box, dst_loc=new_loc,
+        request.link_signal("rlct_pick_up", self.on_relocate_pickup, box=box)
+        request.link_signal("rlct_put_down", self.on_relocate_putdown, box=box,
                             original_request=request if ph2 else None)
-        request.link_signal("rlct_finish_or_fail", self.on_relocate_finish_or_fail, box=box, dst_loc=new_loc)
+        request.link_signal("rlct_finish_or_fail", self.on_relocate_finish_or_fail, box=box)
         return self.equipment.op_builder.RelocateOp(request, box, new_loc, reset=reset)
 
-    def on_relocate_putdown(self, time, box, dst_loc, original_request=None):
-        super(Ph2ReqHandler, self).on_relocate_putdown(time, box, dst_loc)
+    def on_relocate_putdown(self, time, box, original_request=None):
+        super(Ph2ReqHandler, self).on_relocate_putdown(time, box)
         if original_request:
             if original_request.req_type == ReqType.RETRIEVE and getattr(original_request, "ph2", True):
                 req2 = Request(self.ReqType.RETRIEVE, time, box, lane=original_request.lane, ph2=True)

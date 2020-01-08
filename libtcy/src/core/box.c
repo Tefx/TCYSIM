@@ -205,9 +205,10 @@ int box_alloc(Box *box, Time time) {
     return SUCCEED;
 }
 
-void box_store_position(Box *box, CellIdx *idx) {
+void box_store_position(Box *box, CellIdx *idx, bool new_loc) {
     Block *blk = box->block;
-    for (int i = 0; i < 3; ++i) idx[i] = box->loc[i];
+    if (!new_loc)
+        memcpy(idx, box->loc, sizeof(CellIdx) * 3);
     _blk_top_of_stack(blk, idx);
 }
 
@@ -288,7 +289,7 @@ int box_realloc(Box *box, Time time, CellIdx *new_loc) {
 }
 
 void box_relocate_position(Box *box, CellIdx *loc) {
-    return box_store_position(box->_holder_or_origin, loc);
+    return box_store_position(box->_holder_or_origin, loc, 0);
 }
 
 int box_relocate_alloc(Box *box, Time time, CellIdx *new_loc) {
