@@ -5,6 +5,8 @@ from ..request import Request
 from ..callback import CallBack
 from tcysim.utils import Paths, V3
 
+import heapq
+
 
 class Operation:
     def __init__(self, type, request_or_equipment, locking_pos=(), **attrs):
@@ -34,13 +36,17 @@ class Operation:
 
     def mark_loc(self, component, time, loc):
         if component in self.paths:
-            self._pps[component].append((time, loc))
+            heapq.heappush(self._pps[component], (time, loc))
+            # self._pps[component].append((time, loc))
 
     def record_path_points(self):
         for component, path in self.paths.items():
-            self._pps[component].sort()
-            for point in self._pps[component]:
-                path.append(*point)
+            pps = self._pps[component]
+            while pps:
+                path.append(*heapq.heappop(pps))
+            # self._pps[component].sort()
+            # for point in self._pps[component]:
+            #     path.append(*point)
 
     def commit(self, yard):
         for step in self.steps:
@@ -62,22 +68,25 @@ class Operation:
                 step(self, self.start_time)
                 if step.finish_time > self.finish_time:
                     self.finish_time = step.finish_time
-        self.steps = sorted(self.steps, key=lambda x: x.start_time)
+        self.steps = sorted(self.steps, key=self._step_sort_key)
         self.record_path_points()
 
-        # for step in self.steps:
-        #     print(step, step.pred, step.start_time, step.finish_time, step.next_time)
+    @staticmethod
+    def _step_sort_key(step):
+        return step.start_time
 
-    def add(self, step):
-        if isinstance(step, tuple):
-            steps = step
+    def add(self, step_or_steps):
+        if isinstance(step_or_steps, tuple):
+            for step in step_or_steps:
+                if self.last_step:
+                    step <<= self.last_step
+                self.steps.add(step)
+            self.last_step = AndStep(*step_or_steps)
         else:
-            steps = (step,)
-        for step in steps:
             if self.last_step:
-                step <<= self.last_step
-            self.steps.add(step)
-        self.last_step = AndStep(*steps) if len(steps) > 1 else steps[0]
+                step_or_steps <<= self.last_step
+            self.steps.add(step_or_steps)
+            self.last_step = step_or_steps
 
     def extend(self, steps):
         for step in steps:
