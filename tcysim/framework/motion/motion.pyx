@@ -1,5 +1,9 @@
+cimport cython
+
+
+@cython.freelist(10000)
 cdef class Motion:
-    def __init__(self, float start_time, float timespan, float v, float a, bint allow_interruption=False):
+    def __cinit__(self, float start_time, float timespan, float v, float a, bint allow_interruption=False):
         self.start_v = v
         self.a = a
         self.start_time = start_time

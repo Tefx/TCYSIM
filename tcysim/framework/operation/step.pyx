@@ -3,6 +3,9 @@ from math import inf
 from ..motion.motion cimport Motion
 from ..motion.mover cimport Mover
 
+cimport cython
+
+@cython.freelist(10000)
 cdef class StepBase:
     cdef StepBase pred
     cdef readonly float start_time
@@ -11,7 +14,7 @@ cdef class StepBase:
     cdef bint executed
     cdef bint committed
 
-    def __init__(StepBase self):
+    def __cinit__(StepBase self):
         self.pred = None
         self.start_time = 0
         self.finish_time = 0
@@ -78,7 +81,7 @@ cdef class EmptyStep(StepBase):
     cdef Motion motion
 
     def __init__(EmptyStep self, Mover mover, float time):
-        super(EmptyStep, self).__init__()
+        # super(EmptyStep, self).__init__()
         self.mover = mover
         self.time = time
         self.motion = None
@@ -103,7 +106,7 @@ cdef class CallBackStep(StepBase):
     cdef object callback
 
     def __init__(CallBackStep self, callback):
-        super(CallBackStep, self).__init__()
+        # super(CallBackStep, self).__init__()
         self.callback = callback
 
     cdef execute(CallBackStep self, op, float est):
@@ -129,7 +132,7 @@ cdef class MoverStep(StepBase):
     cdef bint allow_interruption
 
     def __init__(Mover self, Mover mover, float src, float dst, bint allow_interruption=False, mode="default"):
-        super(MoverStep, self).__init__()
+        # super(MoverStep, self).__init__()
         self.mover = mover
         self.src_loc = src
         self.dst_loc = dst
@@ -174,7 +177,7 @@ cdef class AndStep(StepBase):
     cdef list steps
 
     def __init__(AndStep self, *steps):
-        super(AndStep, self).__init__()
+        # super(AndStep, self).__init__()
         self.steps = list(steps)
 
     cdef execute(AndStep self, op, float est):
@@ -209,7 +212,7 @@ cdef class OrStep(StepBase):
     cdef list steps
 
     def __init__(OrStep self, *steps):
-        super(OrStep, self).__init__()
+        # super(OrStep, self).__init__()
         self.steps = list(steps)
 
     cdef execute(OrStep self, op, float est):
