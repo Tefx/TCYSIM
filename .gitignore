@@ -75,3 +75,7 @@ tcysim/utils/*.so
 tcysim/utils/*.html
 
 test/log2
+
+tcysim/framework/motion/*.c
+tcysim/framework/motion/*.so
+tcysim/framework/motion/*.html
