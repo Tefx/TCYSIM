@@ -3,14 +3,7 @@ from libc.math cimport sqrt, fabs
 
 from .motion cimport Motion
 
-
 cdef class Spec:
-    cdef float v
-    cdef float a
-    cdef float d
-    cdef float _cache_w0
-    cdef float _cache_w1
-
     def __cinit__(self, float v, float a, float d=-1):
         self.v = v
         self.a = a
@@ -21,17 +14,7 @@ cdef class Spec:
         self._cache_w0 = v * v * (a + d) / (2 * a * d)
         self._cache_w1 = 2 * a * d / (a + d)
 
-
 cdef class Mover:
-    cdef float curr_v
-    cdef float curr_a
-    cdef float _state_curr_v
-    cdef float _state_curr_a
-    cdef readonly object pending_motions
-    cdef public float loc
-    cdef float time
-    cdef dict specs
-
     def __init__(self, specs):
         self.curr_v = 0
         self.curr_a = 0
@@ -103,7 +86,7 @@ cdef class Mover:
             time += m.timespan
         return time
 
-    def create_motions(self, float start_time, float displacement, bint allow_interruption=False, mode="default"):
+    cdef create_motions(self, float start_time, float displacement, bint allow_interruption=False, mode="default"):
         cdef Spec spec = self.specs[mode]
         cdef float v0 = self.curr_v
         cdef float a = spec.a
@@ -173,5 +156,5 @@ cdef class Mover:
 
         return st - start_time, motions
 
-    def commit_motions(self, motions):
+    cpdef commit_motions(self, motions):
         self.pending_motions.extend(motions)

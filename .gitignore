@@ -79,3 +79,7 @@ test/log2
 tcysim/framework/motion/*.c
 tcysim/framework/motion/*.so
 tcysim/framework/motion/*.html
+
+tcysim/framework/operation/*.c
+tcysim/framework/operation/*.so
+tcysim/framework/operation/*.html
