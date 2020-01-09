@@ -1,6 +1,6 @@
 from .define cimport *
 from .block cimport CBlock
-from tcysim.utils import V3
+from tcysim.utils.vector cimport V3
 from cpython cimport PyObject
 
 cdef class CBoxState:
@@ -31,25 +31,29 @@ cdef class CBox:
     def __destroy__(self):
         box_destroy(&self.c)
 
-    def alloc(self, time, block, loc):
+    def alloc(self, Time time, block, V3 loc):
         cdef CellIdx new_loc[3];
         if self.state == BOX_STATE_INITIAL:
-            self.set_location(block, *loc)
+            self.set_location(block, loc.x, loc.y, loc.z)
             box_alloc(&self.c, time)
         elif self.state == BOX_STATE_ALLOCATED:
             if not self.c._holder_or_origin:
-                new_loc[:] = loc
+                new_loc[0] = loc.x
+                new_loc[1] = loc.y
+                new_loc[2] = loc.z
                 box_realloc(&self.c, time, new_loc)
             else:
                 raise Exception("triple alloc")
         elif self.state == BOX_STATE_STORED:
             if not self.c._holder_or_origin:
-                new_loc[:] = loc
+                new_loc[0] = loc.x
+                new_loc[1] = loc.y
+                new_loc[2] = loc.z
                 box_relocate_alloc(&self.c, time, new_loc)
         else:
             raise NotImplementedError
 
-    def store(self, int time):
+    def store(self, Time time):
         if self.state == BOX_STATE_STORING:
             box_store(&self.c, time)
         elif self.state == BOX_STATE_RELOCATING:
@@ -58,7 +62,7 @@ cdef class CBox:
     def has_undone_relocation(self):
         return self.c._holder_or_origin is not NULL
 
-    def retrieve(self, int time):
+    def retrieve(self, Time time):
         if self.c._holder_or_origin:
             box_relocate_retrieve(&self.c, time)
             assert self.state == BOX_STATE_RELOCATING
@@ -93,8 +97,10 @@ cdef class CBox:
         return V3(self.c.loc[0], self.c.loc[1], self.c.loc[2])
 
     @location.setter
-    def location(self, loc):
-        self.c.loc[:] = loc
+    def location(self, V3 loc):
+        self.c.loc[0] = loc.x
+        self.c.loc[1] = loc.y
+        self.c.loc[2] = loc.z
 
     @property
     def state(self):
@@ -132,12 +138,16 @@ cdef class CBox:
 
     def set_location(self, CBlock block, CellIdx x, CellIdx y, CellIdx z):
         self.c.block = &block.c
-        self.c.loc[:] = x, y, z
+        self.c.loc[0] = x
+        self.c.loc[1] = y
+        self.c.loc[2] = z
 
-    def store_position(self, new_loc=None):
+    def store_position(self, V3 new_loc=None):
         cdef CellIdx loc[3]
         if new_loc:
-            loc[:] = new_loc
+            loc[0] = new_loc.x
+            loc[1] = new_loc.y
+            loc[2] = new_loc.z
             box_store_position(&self.c, loc, True)
         elif self.state == BOX_STATE_STORED:
             return self.location
@@ -145,9 +155,11 @@ cdef class CBox:
             box_store_position(&self.c, loc, False)
         return V3(loc[0], loc[1], loc[2])
 
-    def relocate_position(self, new_loc):
+    def relocate_position(self, V3 new_loc):
         cdef CellIdx loc[3]
-        loc[:] = new_loc
+        loc[0] = new_loc.x
+        loc[1] = new_loc.y
+        loc[2] = new_loc.z
         box_relocate_position(&self.c, loc)
         return V3(loc[0], loc[1], loc[2])
 
@@ -166,17 +178,20 @@ cdef class CBox:
 
     def position_is_valid(self, CBlock block, CellIdx x, CellIdx y, CellIdx z):
         cdef CellIdx loc[3]
-        loc[:] = x, y, z
+        loc[0] = x
+        loc[1] = y
+        loc[2] = z
         return box_position_is_valid(&self.c, &block.c, loc)
 
-    def store_coord(self, loc=None, transform_to=None):
-        idx = self.store_position(loc)
+    def store_coord(self, V3 loc=None, transform_to=None):
+        cdef V3 idx = self.store_position(loc)
         return self.block.coord_from_cell_idx(idx, self.teu, transform_to)
 
     def access_coord(self, lane, transform_to=None):
         return self.block.access_coord(lane, self, transform_to)
 
     def current_coord(self, transform_to=None):
+        cdef V3 v
         if self.equipment:
             v = self.equipment.attached_box_coord(transform_to=self.block)
         elif self.state == BOX_STATE_STORED:
