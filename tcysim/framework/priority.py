@@ -1,4 +1,4 @@
-from pesim.sim import PRIORITY_MAX
+from pesim import PRIORITY_MAX
 from enum import IntEnum, auto
 
 
