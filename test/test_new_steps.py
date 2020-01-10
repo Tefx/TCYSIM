@@ -2,6 +2,8 @@ import os
 import sys
 import random
 
+from tcysim.implementation.base.roles.animation_logger import AnimationLogger
+
 sys.path.extend([
     "../",
     "../../pesim",
@@ -9,8 +11,7 @@ sys.path.extend([
 os.environ['PATH'] = "../libtcy/msvc/Release" + os.pathsep + os.environ['PATH']
 os.environ['PATH'] = "../libtcy/cmake-build-debug" + os.pathsep + os.environ['PATH']
 
-from tcysim.implementation.base.policy.allocator import RandomSpaceAllocator
-from tcysim.implementation.base.roles.animation_logger import AnimationLogger
+from tcysim.implementation.scenario.stackingblock.allocator import RandomSpaceAllocator
 from tcysim.implementation.base.roles.box_generator import BoxBomb, BoxGenerator
 
 from tcysim.implementation.scenario.stackingblock.req_handler import CooperativeTwinCraneReqHandler
@@ -101,12 +102,12 @@ if __name__ == '__main__':
     rmg2 = RMG(yard, block, -1, idx=1)
     yard.deploy(block, [rmg1, rmg2])
 
-    # yard.roles.animation_logger = AnimationLogger(yard, start=3600 * 20, end=3600 * 24, fps=24, speedup=10)
+    yard.roles.animation_logger = AnimationLogger(yard, start=3600 * 20, end=3600 * 24, fps=24, speedup=10)
     yard.roles.sim_driver = BoxGenerator(yard)
     yard.roles.sim_driver.install_or_add(SimpleBoxBomb(first_time=0))
 
     yard.start()
-    yard.run_until(3600 * 24 * 30)
+    yard.run_until(3600 * 24)
 
     if "tracer" in yard.roles:
         yard.roles.animation_logger.dump("log2")

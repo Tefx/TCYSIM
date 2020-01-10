@@ -41,14 +41,11 @@ extensions = [
         sources=["tcysim/framework/operation/*.pyx"],
         extra_compile_args=extra_compile_args,
         ),
-    # Extension(
-    #     name="tcysim.utils.*",
-    #     sources=["tcysim/utils/*.pyx"],
-    #     extra_compile_args=extra_compile_args,
-    #     libraries=["tcy"],
-    #     library_dirs=[os.path.abspath(library_dir)],
-    #     include_dirs=[os.path.abspath("libtcy/src/core")]
-    #     ),
+    Extension(
+        name="tcysim.utils.*",
+        sources=["tcysim/utils/*.pyx"],
+        extra_compile_args=extra_compile_args,
+        ),
     ]
 
 setup(ext_modules=cythonize(

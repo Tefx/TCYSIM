@@ -3,22 +3,22 @@ from itertools import product
 
 from tcysim.utils import V3, TEU
 from tcysim.framework import Block
+from tcysim.utils.vector import V3i
 
 
 class StackingBlock(Block):
     def __init__(self, yard, offset, shape: V3, stacking_area_size: V3 = None, rotate=0, lanes=()):
         super(StackingBlock, self).__init__(yard, offset, shape, rotate, stacking_axis="z", sync_axes=("y", "z"),
                                             lanes=lanes)
-
         self.unit_base_size = TEU.one()
         size = TEU(*shape) if stacking_area_size is None else stacking_area_size
         self.stacking_interval = (size - shape * self.unit_base_size) / (shape - 1)
         self.unit_bound_size = self.unit_base_size + self.stacking_interval
 
-        for i in range(shape[0]):
-            for j in range(shape[1]):
-                for k in range(shape[2]):
-                    idx = V3(i, j, k)
+        for i in range(self.shape[0]):
+            for j in range(self.shape[1]):
+                for k in range(self.shape[2]):
+                    idx = V3i(i, j, k)
                     self.make_cell(idx, self.unit_bound_size * idx)
 
     @property
@@ -37,7 +37,7 @@ class StackingBlock(Block):
         return global_coord in self
 
     def cell_idx_from_coord(self, local_coord):
-        idx = (local_coord // self.unit_bound_size).astype(int)
+        idx = (local_coord // self.unit_bound_size).as_V3i()
         for i in range(3):
             if idx[i] > self.shape[i]:
                 idx[i] = self.shape[i]
@@ -69,7 +69,7 @@ class StackingBlock(Block):
         return self.stack_height(h_max)
 
     def bay_is_valid(self, box, i):
-        max_num = self.shape.z * self.shape.y - self.shape.z
+        max_num = self.rows * self.tiers - self.tiers
         return self.count(i, -1, -1) < max_num
 
     def stack_is_valid(self, box, i, j):
@@ -77,16 +77,15 @@ class StackingBlock(Block):
         return k < self.shape.z and box.position_is_valid(self, i, j, k)
 
     def available_cells(self, box):
-        shape = self.shape
-        for i in range(shape.x):
+        for i in range(self.bays):
             if box.state == box.STATE.STORED and box.location.x == i:
                 bay_avail = True
             else:
                 bay_avail = self.bay_is_valid(box, i)
             if bay_avail:
-                for j in range(shape.y):
+                for j in range(self.rows):
                     if self.stack_is_valid(box, i, j):
-                        yield V3(i, j, self.count(i, j))
+                        yield V3i(i, j, self.count(i, j))
 
     def zone_from_coord(self, local_coord):
         """

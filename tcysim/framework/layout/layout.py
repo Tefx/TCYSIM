@@ -33,10 +33,10 @@ class LayoutItem:
         return self.transform_to(self.size / 2, transform_to)
 
     def top_coord(self, transform_to=None):
-        return self.transform_to((self.size/2).add1("z", self.size.z / 2), transform_to)
+        return self.transform_to((self.size / 2).add1("z", self.size.z / 2), transform_to)
 
     def bottom_coord(self, transform_to=None):
-        return self.transform_to((self.size/2).sub1("z", self.size.z / 2), transform_to)
+        return self.transform_to((self.size / 2).sub1("z", self.size.z / 2), transform_to)
 
     def transform_to(self, coord: V3, other=None):
         if other is None:
@@ -67,11 +67,13 @@ class BlockLayout(LayoutItem):
     def __init__(self, offset: V3, shape: V3, rotate=0, lanes=()):
         super(BlockLayout, self).__init__(offset, V3.zero(), rotate)
         self.lanes = {lane.name: lane for lane in lanes}
-        self.shape = shape.astype(int)
-        self._cells = np.empty(list(self.shape), dtype=object)
+        # self.shape = shape.astype(int)
+        # self._cells = np.empty(list(self.shape), dtype=object)
+        self.shape = shape.as_V3i()
+        self._cells = np.empty(self.shape.to_list(), dtype=object)
 
     def make_cell(self, idx: V3, local_offset):
-        i, j, k = idx
+        i, j, k = idx.as_ints()
         teu = TEU.one()
         offset = self.coord_l2g(local_offset)
         self._cells[i, j, k] = CellLayout(idx, offset, self.rotate)
@@ -104,7 +106,8 @@ class BlockLayout(LayoutItem):
         if box_teu == 1:
             coord = self._cells[i, j, k].center_coord(transform_to=self)
         elif box_teu == 2:
-            coord = (self._cells[i, j, k].center_coord(transform_to=self) + self.next_cell(cell_idx).center_coord(transform_to=self)) / 2
+            coord = (self._cells[i, j, k].center_coord(transform_to=self) + self.next_cell(cell_idx).center_coord(
+                transform_to=self)) / 2
         else:
             raise NotImplementedError
         return self.transform_to(coord, transform_to)

@@ -1,7 +1,7 @@
 from itertools import product
 
 from tcysim.libc import CBlock
-from tcysim.utils import V3
+from tcysim.utils import V3, V3i
 
 from ..layout import BlockLayout
 from ..scheduler import ReqDispatcher
