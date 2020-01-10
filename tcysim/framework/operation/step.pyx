@@ -87,11 +87,10 @@ cdef class EmptyStep(StepBase):
     cdef float time
     cdef Motion motion
 
-    def __init__(EmptyStep self, StepWorkflow wf, Mover mover, float time):
+    def __init__(EmptyStep self, Mover mover, float time):
         self.mover = mover
         self.time = time
         self.motion = None
-        wf.register(self)
 
     cdef execute(EmptyStep self, op, float est):
         if not self.executed:
@@ -112,9 +111,8 @@ cdef class EmptyStep(StepBase):
 cdef class CallBackStep(StepBase):
     cdef object callback
 
-    def __init__(CallBackStep self, StepWorkflow wf, callback):
+    def __init__(CallBackStep self, callback):
         self.callback = callback
-        wf.register(self)
 
     cdef execute(CallBackStep self, op, float est):
         if not self.executed:
@@ -138,14 +136,13 @@ cdef class MoverStep(StepBase):
     cdef object mode
     cdef bint allow_interruption
 
-    def __init__(Mover self, StepWorkflow wf, Mover mover, float src, float dst, bint allow_interruption=False, mode="default"):
+    def __init__(Mover self, Mover mover, float src, float dst, bint allow_interruption=False, mode="default"):
         self.mover = mover
         self.src_loc = src
         self.dst_loc = dst
         self.motions = None
         self.mode = mode
         self.allow_interruption = allow_interruption
-        wf.register(self)
 
     cdef execute(MoverStep self, op, float est):
         cdef Mover mover
@@ -179,6 +176,9 @@ cdef class MoverStep(StepBase):
             mover = self.mover
             mover.commit_motions(self.motions)
         self.committed = True
+
+    def __repr__(self):
+        return "[{}]Move<{:.2f}=>{:.2f}|{:.2f}/{:.2f}>".format(self.mover.axis, self.src_loc, self.dst_loc, self.start_time, self.finish_time)
 
 cdef class CompoundStep(StepBase):
     cdef list steps
@@ -257,18 +257,17 @@ cdef class StepWorkflow:
         self.last_step = None
         self.finish_time = 0
 
-    def register(self, step):
-        self.steps.append(step)
-
     def add(self, step_or_steps):
         cdef StepBase step
         if isinstance(step_or_steps, StepBase):
             step = step_or_steps
+            self.steps.append(step)
             if self.last_step:
                 step.add_pred(self.last_step)
             self.last_step = step
         else:
             for step in step_or_steps:
+                self.steps.append(step)
                 if self.last_step:
                     step.add_pred(self.last_step)
             self.last_step = AndStep(*step_or_steps)
@@ -286,6 +285,8 @@ cdef class StepWorkflow:
             heapq.heappush(self.sorted_steps, step)
             if self.finish_time < step.finish_time:
                 self.finish_time = step.finish_time
+        # print(self.steps)
+        # print(self.sorted_steps)
         return self.finish_time
 
     def commit(self, yard):

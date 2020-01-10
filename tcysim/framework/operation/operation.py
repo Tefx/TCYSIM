@@ -66,17 +66,17 @@ class Operation:
             self.workflow.add(step)
 
     def emit_signal(self, name):
-        return CallBackStep(self.workflow, self.request.signals[name])
+        return CallBackStep(self.request.signals[name])
 
     def wait(self, time):
-        return EmptyStep(self.workflow, self.equipment.components[0], time)
+        return EmptyStep(self.equipment.components[0], time)
 
     def move(self, component, src_loc, dst_loc, mode="default"):
         if isinstance(src_loc, V3):
             src_loc = src_loc[component.axis]
         if isinstance(dst_loc, V3):
             dst_loc = dst_loc[component.axis]
-        return MoverStep(self.workflow, component, src_loc, dst_loc, self.__interruption_flag, mode=mode)
+        return MoverStep(component, src_loc, dst_loc, self.__interruption_flag, mode=mode)
 
     @contextmanager
     def allow_interruption(self, equipment, query_task_before_perform=True):
