@@ -66,20 +66,12 @@ test/debug
 test/log
 
 libtcy/cmake-build-debug/
-tcysim/libc/*.c
-tcysim/libc/*.so
-tcysim/libc/*.html
+tcysim/*/*.c
+tcysim/*/*.so
+tcysim/*/*.html
 
-tcysim/utils/*.c
-tcysim/utils/*.so
-tcysim/utils/*.html
+tcysim/*/*/*.c
+tcysim/*/*/*.so
+tcysim/*/*/*.html
 
 test/log2
-
-tcysim/framework/motion/*.c
-tcysim/framework/motion/*.so
-tcysim/framework/motion/*.html
-
-tcysim/framework/operation/*.c
-tcysim/framework/operation/*.so
-tcysim/framework/operation/*.html
