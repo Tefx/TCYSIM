@@ -102,14 +102,14 @@ if __name__ == '__main__':
     rmg2 = RMG(yard, block, -1, idx=1)
     yard.deploy(block, [rmg1, rmg2])
 
-    yard.roles.animation_logger = AnimationLogger(yard, start=3600 * 20, end=3600 * 24, fps=24, speedup=10)
+    yard.roles.animation_logger = AnimationLogger(yard, start=3600 * 20, end=3600 * 21, fps=24, speedup=10)
     yard.roles.sim_driver = BoxGenerator(yard)
     yard.roles.sim_driver.install_or_add(SimpleBoxBomb(first_time=0))
 
     yard.start()
     yard.run_until(3600 * 24)
 
-    if "tracer" in yard.roles:
+    if "animation_logger" in yard.roles:
         yard.roles.animation_logger.dump("log2")
 
     print("{:<12}: {}".format("TOTAL", len(yard.requests)))
