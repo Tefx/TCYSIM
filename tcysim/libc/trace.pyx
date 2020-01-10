@@ -1,3 +1,6 @@
+cimport cython
+
+@cython.freelist(10000)
 cdef class Paths:
     def __init__(self, int chunk_size):
         pathtrace_init(&self.c, chunk_size)
@@ -9,8 +12,7 @@ cdef class Paths:
         pathtrace_append_frame(&self.c, time, pos, NULL)
 
     def intersect_test(self, Paths other, float clearance, float shift):
-        res = pathtrace_intersect_test_with_clearance(&self.c, &other.c, clearance, shift)
-        return res
+        return pathtrace_intersect_test_with_clearance(&self.c, &other.c, clearance, shift)
 
     @property
     def max(self):
