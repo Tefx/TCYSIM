@@ -1,2 +1,2 @@
-from .vector import V3, TEU, RotateOperator
+from .vector import V3, V3i, TEU, RotateOperator
 from .path import Paths

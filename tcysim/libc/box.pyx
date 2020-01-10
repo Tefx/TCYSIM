@@ -1,6 +1,6 @@
 from .define cimport *
 from .block cimport CBlock
-from tcysim.utils.vector cimport V3
+from tcysim.utils.vector cimport V3, V3i
 from cpython cimport PyObject
 
 cdef class CBoxState:
@@ -90,7 +90,7 @@ cdef class CBox:
 
     @property
     def location(self):
-        return V3(self.c.loc[0], self.c.loc[1], self.c.loc[2])
+        return V3i(self.c.loc[0], self.c.loc[1], self.c.loc[2])
 
     @location.setter
     def location(self, V3 loc):
@@ -145,7 +145,7 @@ cdef class CBox:
             return self.location
         else:
             box_store_position(&self.c, loc, False)
-        return V3(loc[0], loc[1], loc[2])
+        return V3i(loc[0], loc[1], loc[2])
 
     def relocate_position(self, V3 new_loc):
         cdef CellIdx loc[3]
@@ -174,7 +174,7 @@ cdef class CBox:
         return box_position_is_valid(&self.c, &block.c, loc)
 
     def store_coord(self, V3 loc=None, transform_to=None):
-        cdef V3 idx = self.store_position(loc)
+        cdef V3i idx = self.store_position(loc)
         return self.block.coord_from_cell_idx(idx, self.teu, transform_to)
 
     def access_coord(self, lane, transform_to=None):
