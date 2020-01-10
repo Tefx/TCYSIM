@@ -222,6 +222,16 @@ cdef class V3:
         cdef float z2 = other.z
         return x1 * x2 + y1 * y2 + z1 * z2
 
+    cdef cpy2mem_f(self, float* ptr):
+        ptr[0] = <float>self.x
+        ptr[1] = <float>self.y
+        ptr[2] = <float>self.z
+
+    cdef cpy2mem_i(self, int32_t* ptr):
+        ptr[0] = <int32_t>self.x
+        ptr[1] = <int32_t>self.y
+        ptr[2] = <int32_t>self.z
+
 _TEU_LENGTH = 6.1
 _TEU_WIDTH = 2.44
 _TEU_HEIGHT = 2.59

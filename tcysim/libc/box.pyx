@@ -38,17 +38,13 @@ cdef class CBox:
             box_alloc(&self.c, time)
         elif self.state == BOX_STATE_ALLOCATED:
             if not self.c._holder_or_origin:
-                new_loc[0] = loc.x
-                new_loc[1] = loc.y
-                new_loc[2] = loc.z
+                loc.cpy2mem_i(new_loc)
                 box_realloc(&self.c, time, new_loc)
             else:
                 raise Exception("triple alloc")
         elif self.state == BOX_STATE_STORED:
             if not self.c._holder_or_origin:
-                new_loc[0] = loc.x
-                new_loc[1] = loc.y
-                new_loc[2] = loc.z
+                loc.cpy2mem_i(new_loc)
                 box_relocate_alloc(&self.c, time, new_loc)
         else:
             raise NotImplementedError
@@ -98,9 +94,7 @@ cdef class CBox:
 
     @location.setter
     def location(self, V3 loc):
-        self.c.loc[0] = loc.x
-        self.c.loc[1] = loc.y
-        self.c.loc[2] = loc.z
+        loc.cpy2mem_i(self.c.loc)
 
     @property
     def state(self):
@@ -145,9 +139,7 @@ cdef class CBox:
     def store_position(self, V3 new_loc=None):
         cdef CellIdx loc[3]
         if new_loc:
-            loc[0] = new_loc.x
-            loc[1] = new_loc.y
-            loc[2] = new_loc.z
+            new_loc.cpy2mem_i(loc)
             box_store_position(&self.c, loc, True)
         elif self.state == BOX_STATE_STORED:
             return self.location
@@ -157,9 +149,7 @@ cdef class CBox:
 
     def relocate_position(self, V3 new_loc):
         cdef CellIdx loc[3]
-        loc[0] = new_loc.x
-        loc[1] = new_loc.y
-        loc[2] = new_loc.z
+        new_loc.cpy2mem_i(loc)
         box_relocate_position(&self.c, loc)
         return V3(loc[0], loc[1], loc[2])
 
