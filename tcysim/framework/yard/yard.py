@@ -1,3 +1,4 @@
+from pesim import Environment
 from .env import YardEnv
 from ..request import ReqType, Request
 from ..roles import Roles
@@ -9,7 +10,8 @@ class Yard:
     SpaceAllocator: SpaceAllocator.__class__ = SpaceAllocator
 
     def __init__(self):
-        self.env = YardEnv(self)
+        # self.env = YardEnv(self)
+        self.env = Environment()
         self.blocks = set()
         self.equipments = set()
 
@@ -87,8 +89,6 @@ class Yard:
         self.run_equipments(time)
 
     def run_equipments(self, time):
-        for mover in self.movers:
-            mover.run_until(time)
-        # for equipment in self.equipments:
-        #     equipment.run_until(time)
+        for equipment in self.equipments:
+            equipment.run_until(time)
 

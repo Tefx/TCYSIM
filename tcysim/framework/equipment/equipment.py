@@ -45,6 +45,7 @@ class Equipment(EquipmentRangeLayout, Process):
         self.req_handler = self.ReqHandler(self)
         self.op_builder = self.OpBuilder(self)
         self.job_scheduler = self.JobScheduler(self)
+        self.last_running_time = -1
 
     def setup(self):
         super(Equipment, self).setup()
@@ -59,6 +60,7 @@ class Equipment(EquipmentRangeLayout, Process):
             component.restore_state()
 
     def current_coord(self, transform_to=None):
+        self.run_until(self.yard.env.current_time)
         v = V3(0, 0, 0)
         for component in self.components:
             v[component.axis] = component.loc
@@ -84,8 +86,10 @@ class Equipment(EquipmentRangeLayout, Process):
         self.num_blocks += 1
 
     def run_until(self, time):
-        for component in self.components:
-            component.run_until(time)
+        if time > self.last_running_time:
+            for component in self.components:
+                component.run_until(time)
+            self.last_running_time = time
 
     def interrupt(self):
         for component in self.components:
@@ -177,6 +181,7 @@ class Equipment(EquipmentRangeLayout, Process):
         print("[{:.2f}]<Operation/FinishOrFail {}>".format(self.time, self.idx), op, self.current_coord())
 
     def _process(self):
+        self.run_until(self.time)
         op_or_req = self.next_task
         self.next_task = None
         if isinstance(op_or_req, Request):
