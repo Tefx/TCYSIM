@@ -12,7 +12,7 @@ cdef int _axis_idx(name):
     else:
         return name
 
-@cython.freelist(10000)
+@cython.freelist(512)
 cdef class V3:
 
     @staticmethod

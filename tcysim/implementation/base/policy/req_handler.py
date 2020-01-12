@@ -89,6 +89,7 @@ class ReqHandler(ReqHandlerBase):
 
     def on_retrieve_finish_or_fail(self, time, request):
         self.yard.boxes.remove(request.box)
+        pass
 
     def on_retrieve_leaving_block(self, time, request):
         box = request.box

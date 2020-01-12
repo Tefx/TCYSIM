@@ -6,6 +6,8 @@ from tcysim.utils import V3
 
 class RandomSpaceAllocator(SpaceAllocator):
     def alloc_space(self, box, blocks, *args, **kwargs):
+        blocks = list(blocks)
+        random.shuffle(blocks)
         for block in blocks:
             locs = list(block.available_cells(box))
             if locs:

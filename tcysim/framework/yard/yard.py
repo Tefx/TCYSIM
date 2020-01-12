@@ -20,6 +20,7 @@ class Yard:
         self.cmgr = CallBackManager(self)
 
         self.roles = Roles()
+        self.movers = []
 
     def add_role(self, name, role):
         self.roles[name] = role
@@ -32,6 +33,8 @@ class Yard:
 
         for equipment in equipments:
             self.equipments.add(equipment)
+            for component in equipment.components:
+                self.movers.append(component)
 
     def start(self):
         self.cmgr.setup()
@@ -84,6 +87,8 @@ class Yard:
         self.run_equipments(time)
 
     def run_equipments(self, time):
-        for equipment in self.equipments:
-            equipment.run_until(time)
+        for mover in self.movers:
+            mover.run_until(time)
+        # for equipment in self.equipments:
+        #     equipment.run_until(time)
 

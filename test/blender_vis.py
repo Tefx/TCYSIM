@@ -3,8 +3,8 @@ import bpy, pickle, os, random
 log_path = "D:\\Dropbox\\Projects\\TCYSIM\\test\\log2"
 #log_path = "/home/tefx/Dropbox/Projects/TCYSIM/test/.log"
 
-fps = 60
-speedup = 10
+fps = 24
+speedup = 30
 start_time = 3600 * 20
 
 sample_box = {1:None, 2:None}
@@ -17,12 +17,14 @@ def mk_box_sample(name, teu=1):
         bpy.ops.mesh.primitive_cube_add()
         sample = bpy.context.selected_objects[0]
         sample.name =  "box_{}".format(name)
-        sample.scale = 6.1 / 2, 2.44 / 2, 2.59 / 2
+#        sample.scale = 6.1 / 2, 2.44 / 2, 2.59 / 2
+        sample.scale = 2.44 / 2, 6.1 / 2, 2.59 / 2
     elif teu == 2:
         bpy.ops.mesh.primitive_cube_add()
         sample = bpy.context.selected_objects[0]
         sample.name =  "box_{}".format(name)
-        sample.scale =  6.1, 2.44 / 2, 2.59 / 2
+#        sample.scale =  6.1, 2.44 / 2, 2.59 / 2
+        sample.scale =   2.44 / 2, 6.1, 2.59 / 2
     return sample
 
 def mk_yc_sample(name):

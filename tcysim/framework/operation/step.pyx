@@ -6,7 +6,7 @@ from ..motion.mover cimport Mover
 
 cimport cython
 
-@cython.freelist(10000)
+@cython.freelist(512)
 cdef class StepBase:
     cdef StepBase pred
     cdef readonly float start_time
@@ -228,7 +228,7 @@ cdef class OrStep(CompoundStep):
                 step.execute(op, est)
                 if step.finish_time > self.finish_time:
                     self.finish_time = step.finish_time
-                if step.next_time > self.next_time:
+                if step.next_time < self.next_time:
                     self.next_time = step.next_time
         self.executed = True
 
@@ -285,8 +285,6 @@ cdef class StepWorkflow:
             heapq.heappush(self.sorted_steps, step)
             if self.finish_time < step.finish_time:
                 self.finish_time = step.finish_time
-        # print(self.steps)
-        # print(self.sorted_steps)
         return self.finish_time
 
     def commit(self, yard):

@@ -36,12 +36,10 @@ class AnimationLogger(Observer):
         if equ_coords or box_coords:
             self.log.append((self.time, equ_coords, box_coords))
 
+    def __iter__(self):
+        for item in self.log:
+            yield item
 
-def __iter__(self):
-    for item in self.log:
-        yield item
-
-
-def dump(self, path):
-    with open(path, "wb") as f:
-        dump(self.log, f)
+    def dump(self, path):
+        with open(path, "wb") as f:
+            dump(self.log, f)

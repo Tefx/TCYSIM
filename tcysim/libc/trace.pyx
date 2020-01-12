@@ -1,6 +1,6 @@
 cimport cython
 
-@cython.freelist(10000)
+@cython.freelist(512)
 cdef class Paths:
     def __init__(self, int chunk_size):
         pathtrace_init(&self.c, chunk_size)

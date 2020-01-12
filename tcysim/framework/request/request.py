@@ -80,7 +80,7 @@ class Request:
 
     def gen_op(self, time):
         for op in self.equipment.req_handler.handle(time, self):
-            self.ops.append(op)
+            # self.ops.append(op)
             yield op
 
     @property
@@ -105,6 +105,8 @@ class Request:
             for pos in self.acquired_positions:
                 self.block.release_stack(time, pos)
             self.acquired_positions = []
+        if self.state == ReqState.FINISHED:
+            self.clean()
 
     def on_acquire_fail(self, time, pos_hash):
         self.acquire_fails.add(pos_hash)
@@ -116,6 +118,10 @@ class Request:
         self.acquire_fails.remove(pos_hash)
         if not self.acquire_fails:
             self.ready(time)
+
+    def clean(self):
+        self.signals = None
+        self.ops = None
 
     def __repr__(self):
         return "[{}/{}]({}/AT:{:.2f})".format(self.req_type, self.state.name, self.equipment, self.arrival_time)
