@@ -160,8 +160,8 @@ class Equipment(EquipmentRangeLayout, Process):
             self.current_op = None
 
     def handle_request(self, request):
-        print("[{:.2f}]<Request/Equipment {}>".format(self.time, self.idx), request, self.current_coord(),
-              getattr(request, "box", None))
+        # print("[{:.2f}]<Request/Equipment {}>".format(self.time, self.idx), request, self.current_coord(),
+        #       getattr(request, "box", None))
         request.start_or_resume(self.time)
         try:
             for op in request.gen_op(self.time):
@@ -172,14 +172,14 @@ class Equipment(EquipmentRangeLayout, Process):
         except ReqOpRejectionError as e:
             self.req_handler.on_reject(self.time, e)
         request.finish_or_fail(self.time)
-        print("[{:.2f}]<Request/Equipment {}>".format(self.time, self.idx), request, self.current_coord(),
-              getattr(request, "box", None))
+        # print("[{:.2f}]<Request/Equipment {}>".format(self.time, self.idx), request, self.current_coord(),
+        #       getattr(request, "box", None))
 
     def handle_operation(self, op):
-        print("[{:.2f}]<Operation/Start {}>".format(self.time, self.idx), op, self.current_coord())
+        # print("[{:.2f}]<Operation/Start {}>".format(self.time, self.idx), op, self.current_coord())
         if self.op_builder.build_and_check(self.time, op):
             yield from self.perform_op(self.time, op)
-        print("[{:.2f}]<Operation/FinishOrFail {}>".format(self.time, self.idx), op, self.current_coord())
+        # print("[{:.2f}]<Operation/FinishOrFail {}>".format(self.time, self.idx), op, self.current_coord())
 
     def _process(self):
         # self.run_until(self.time)

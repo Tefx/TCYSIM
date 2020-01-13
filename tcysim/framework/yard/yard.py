@@ -58,7 +58,6 @@ class Yard:
         return self.requests[handler]
 
     def submit_request(self, time, request, ready=True):
-        # print("submit_x", id(request), getattr(request, "box", None))
         if request.req_type == request.TYPE.RETRIEVE and request.box.state == request.box.STATE.RETRIEVED:
             raise Exception("here!")
         request.submit(time, ready)

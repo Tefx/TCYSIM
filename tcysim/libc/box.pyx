@@ -16,7 +16,7 @@ cdef class CBox:
     cdef Box c
     cdef public object equipment
 
-    def __cinit__(self, bytes box_id, int size=20):
+    def __cinit__(self, bytes box_id, int size=20, *args, **kwargs):
         cdef BoxSize c_size
         if size == 20:
             c_size = BOX_SIZE_TWENTY
