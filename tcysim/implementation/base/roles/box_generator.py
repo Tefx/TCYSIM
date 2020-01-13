@@ -1,11 +1,12 @@
-from enum import Enum, auto
+from enum import IntEnum, auto
 import random
 
 from tcysim.utils.dispatcher import Dispatcher
 from tcysim.framework.roles.generator import ChainedEventBomb, GeneratorEvent, EventHandler, EventGenerator
 
 
-class BoxEventType(Enum):
+class BoxEventType(IntEnum):
+    BOMB = auto()
     ALLOC = auto()
     STORE = auto()
     RETRIEVE = auto()
