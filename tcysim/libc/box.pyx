@@ -33,16 +33,16 @@ cdef class CBox:
 
     def alloc(self, Time time, block, V3 loc):
         cdef CellIdx new_loc[3];
-        if self.state == BOX_STATE_INITIAL:
+        if self.c.state == BOX_STATE_INITIAL:
             self.set_location(block, loc.x, loc.y, loc.z)
             box_alloc(&self.c, time)
-        elif self.state == BOX_STATE_ALLOCATED:
+        elif self.c.state == BOX_STATE_ALLOCATED:
             if not self.c._holder_or_origin:
                 loc.cpy2mem_i(new_loc)
                 box_realloc(&self.c, time, new_loc)
             else:
                 raise Exception("triple alloc")
-        elif self.state == BOX_STATE_STORED:
+        elif self.c.state == BOX_STATE_STORED:
             if not self.c._holder_or_origin:
                 loc.cpy2mem_i(new_loc)
                 box_relocate_alloc(&self.c, time, new_loc)
@@ -50,9 +50,9 @@ cdef class CBox:
             raise NotImplementedError
 
     def store(self, Time time):
-        if self.state == BOX_STATE_STORING:
+        if self.c.state == BOX_STATE_STORING:
             box_store(&self.c, time)
-        elif self.state == BOX_STATE_RELOCATING:
+        elif self.c.state == BOX_STATE_RELOCATING:
             box_relocate_store(&self.c, time)
 
     def has_undone_relocation(self):
@@ -61,16 +61,16 @@ cdef class CBox:
     def retrieve(self, Time time):
         if self.c._holder_or_origin:
             box_relocate_retrieve(&self.c, time)
-            assert self.state == BOX_STATE_RELOCATING
+            assert self.c.state == BOX_STATE_RELOCATING
         else:
             box_retrieve(&self.c, time)
-            assert self.state == BOX_STATE_RETRIEVING
+            assert self.c.state == BOX_STATE_RETRIEVING
 
     def start_store(self):
-        self.state = BOX_STATE_STORING
+        self.c.state = BOX_STATE_STORING
 
     def finish_retrieve(self):
-        self.state = BOX_STATE_RETRIEVED
+        self.c.state = BOX_STATE_RETRIEVED
 
     @property
     def id(self):
@@ -136,12 +136,12 @@ cdef class CBox:
         self.c.loc[1] = y
         self.c.loc[2] = z
 
-    def store_position(self, V3 new_loc=None):
+    cpdef V3i store_position(self, V3 new_loc=None):
         cdef CellIdx loc[3]
         if new_loc:
             new_loc.cpy2mem_i(loc)
             box_store_position(&self.c, loc, True)
-        elif self.state == BOX_STATE_STORED:
+        elif self.c.state == BOX_STATE_STORED:
             return self.location
         else:
             box_store_position(&self.c, loc, False)
@@ -184,7 +184,7 @@ cdef class CBox:
         cdef V3 v
         if self.equipment:
             v = self.equipment.attached_box_coord(transform_to=self.block)
-        elif self.state == BOX_STATE_STORED:
+        elif self.c.state == BOX_STATE_STORED:
             v = self.block.box_coord(self)
         else:
             return None

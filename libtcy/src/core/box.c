@@ -165,14 +165,16 @@ bool box_position_is_valid(Box *box, Block *blk, CellIdx *loc) {
     if (box->size == BOX_SIZE_FORTY && loc[blk->box_orientation] > blk->spec[blk->box_orientation] - 2)
         return FALSE;
     for (int i = 0; i < 3; ++i) {
-        if (blk->column_use_type[i]) {
+        if (loc[i] >= blk->spec[i])
+            return FALSE;
+        if (blk->column_use_type[i] && blk->column_sync[i]) {
             column_use_type = blk->column_use_type[i][_blk_clmn_idx(blk, loc, i)];
             if (box->size == BOX_SIZE_FORTY) {
                 loc[blk->box_orientation]++;
                 column_use_type2 = blk->column_use_type[i][_blk_clmn_idx(blk, loc, i)];
                 loc[blk->box_orientation]--;
             }
-            if (blk->column_sync[i] && !_box_match_usage(box, column_use_type, column_use_type2))
+            if (!_box_match_usage(box, column_use_type, column_use_type2))
                 return FALSE;
         }
     }

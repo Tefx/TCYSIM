@@ -2,10 +2,6 @@ import os
 import sys
 import random
 
-from tcysim.framework.exception.handling import RORUndefinedError
-from tcysim.implementation.base.policy.req_handler import ReqHandler
-from tcysim.implementation.base.roles.animation_logger import AnimationLogger
-from tcysim.utils.dispatcher import Dispatcher
 
 sys.path.extend([
     "../",
@@ -14,8 +10,12 @@ sys.path.extend([
 os.environ['PATH'] = "../libtcy/msvc/Release" + os.pathsep + os.environ['PATH']
 os.environ['PATH'] = "../libtcy/cmake-build-debug" + os.pathsep + os.environ['PATH']
 
-from tcysim.implementation.scenario.stackingblock.allocator import RandomSpaceAllocator
+from tcysim.framework.exception.handling import RORUndefinedError
+from tcysim.implementation.base.policy.req_handler import ReqHandler
+from tcysim.implementation.base.roles.animation_logger import AnimationLogger
+from tcysim.utils import Dispatcher
 from tcysim.implementation.base.roles.box_generator import BoxBomb, BoxGenerator
+from tcysim.implementation.scenario.stackingblock.allocator import RandomSpaceAllocator
 from tcysim.implementation.scenario.stackingblock.scheduler import CooperativeTwinCraneJobScheduler
 from tcysim.implementation.scenario.stackingblock.op_builder import OptimisedOpBuilder
 from tcysim.implementation.scenario.stackingblock.block import StackingBlock

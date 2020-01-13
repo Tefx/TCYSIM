@@ -60,7 +60,7 @@ class Equipment(EquipmentRangeLayout, Process):
             component.restore_state()
 
     def current_coord(self, transform_to=None):
-        self.run_until(self.yard.env.current_time)
+        self.run_until(self.env.current_time)
         v = V3(0, 0, 0)
         for component in self.components:
             v[component.axis] = component.loc
@@ -97,6 +97,7 @@ class Equipment(EquipmentRangeLayout, Process):
         self.wake(priority=Priority.INTERRUPT)
 
     def allow_interruption(self):
+        self.run_until(self.env.current_time)
         return all(component.allow_interruption() for component in self.components)
 
     def check_interference(self, operation):
@@ -181,7 +182,7 @@ class Equipment(EquipmentRangeLayout, Process):
         print("[{:.2f}]<Operation/FinishOrFail {}>".format(self.time, self.idx), op, self.current_coord())
 
     def _process(self):
-        self.run_until(self.time)
+        # self.run_until(self.time)
         op_or_req = self.next_task
         self.next_task = None
         if isinstance(op_or_req, Request):
@@ -198,4 +199,4 @@ class Equipment(EquipmentRangeLayout, Process):
         return self.attrs.get(item, None)
 
     def __repr__(self):
-        return "<{}>{} at {}".format(self.__class__.__name__, str(hash(self))[:4], self.current_coord())
+        return "<{}>{} at {}".format(self.__class__.__name__, str(hash(self))[-4:], self.current_coord())
