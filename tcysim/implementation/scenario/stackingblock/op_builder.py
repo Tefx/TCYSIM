@@ -78,3 +78,7 @@ class OptimisedOpBuilder(OpBuilder):
             equipment.transform_to(dst_loc, block)) + op.equipment.height_clearance
         dst_loc.z = max(src_loc.z, max_height)
         yield from self.move_steps(op, src_loc, dst_loc, load=False)
+
+    def adjust_is_necessary(self, other_equipment, dst_loc):
+        return (other_equipment.current_coord(transform_to=self.equipment).x - dst_loc.x) * \
+               (self.equipment.current_coord().x - dst_loc.x) > 0
