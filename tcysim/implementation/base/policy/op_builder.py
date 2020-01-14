@@ -70,9 +70,20 @@ class OpBuilder(OpBuilderBase):
         other = op.request.blocking_request.equipment
         op.dst_loc = op.request.new_loc
         yield op.emit_signal("start_or_resume")
-        if self.equipment.adjust_is_necessary(other, op.dst_loc):
+        if self.adjust_is_necessary(other, op.dst_loc):
             yield from self.adjust_steps(op, self.equipment.current_coord(), op.dst_loc)
         yield op.emit_signal("finish_or_fail")
+
+    def adjust_is_necessary(self, other_equipment, dst_loc):
+        # print("ain",
+        #       other_equipment.current_coord(transform_to=self.equipment),
+        #       self.equipment.current_coord(),
+        #       dst_loc,
+        #       other_equipment.current_coord(transform_to=self.equipment) - dst_loc,
+        #       self.equipment.current_coord() - dst_loc,
+        #       (other_equipment.current_coord(transform_to=self.equipment) - dst_loc).dot_product(self.equipment.current_coord() - dst_loc) >= 0
+        #       )
+        return (other_equipment.current_coord(transform_to=self.equipment) - dst_loc).dot_product(self.equipment.current_coord() - dst_loc) >= 0
 
     @Dispatcher.on(OpType.MOVE)
     def build_move(self, op: Operation):

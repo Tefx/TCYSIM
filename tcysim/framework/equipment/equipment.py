@@ -45,6 +45,7 @@ class Equipment(EquipmentRangeLayout, Process):
         self.req_handler = self.ReqHandler(self)
         self.op_builder = self.OpBuilder(self)
         self.job_scheduler = self.JobScheduler(self)
+        self.last_running_time = -1
 
     def setup(self):
         super(Equipment, self).setup()
@@ -59,6 +60,7 @@ class Equipment(EquipmentRangeLayout, Process):
             component.restore_state()
 
     def current_coord(self, transform_to=None):
+        self.run_until(self.env.current_time)
         v = V3(0, 0, 0)
         for component in self.components:
             v[component.axis] = component.loc
@@ -84,8 +86,10 @@ class Equipment(EquipmentRangeLayout, Process):
         self.num_blocks += 1
 
     def run_until(self, time):
-        for component in self.components:
-            component.run_until(time)
+        if time > self.last_running_time:
+            for component in self.components:
+                component.run_until(time)
+            self.last_running_time = time
 
     def interrupt(self):
         for component in self.components:
@@ -93,6 +97,7 @@ class Equipment(EquipmentRangeLayout, Process):
         self.wake(priority=Priority.INTERRUPT)
 
     def allow_interruption(self):
+        self.run_until(self.env.current_time)
         return all(component.allow_interruption() for component in self.components)
 
     def check_interference(self, operation):
@@ -149,34 +154,43 @@ class Equipment(EquipmentRangeLayout, Process):
 
     def perform_op(self, time, op):
         op.commit(self.yard)
+        # if op.op_type == op.TYPE.RETRIEVE or op.op_type == op.TYPE.RELOCATE:
+        #     print("Equipment {}.{}".format(str(id(self.blocks[0]))[-4:], self.idx), self.gantry.pending_motions)
         with self.lock_state(self.STATE.WORKING):
             self.current_op = op
             self.time = yield op.finish_time, Priority.OP_FINISH
             self.current_op = None
 
     def handle_request(self, request):
-        print("[{:.2f}]<Request/Equipment {}>".format(self.time, self.idx), request, self.current_coord(),
-              getattr(request, "box", None))
+        # print("[{:.2f}]<Request/Equipment {}.{}>".format(self.time,  str(id(request.block))[-4:], self.idx), request, self.current_coord(),
+        #       getattr(request, "box", None))
         request.start_or_resume(self.time)
         try:
             for op in request.gen_op(self.time):
+                # print("!![{:.2f}]<Operation/Start {}.{}>".format(self.time, str(id(self.blocks[0]))[-4:], self.idx), op,
+                #       self.current_coord())
                 if self.op_builder.build_and_check(self.time, op):
                     yield from self.perform_op(self.time, op)
                 else:
                     raise ROREquipmentConflictError(op)
+                # print("!![{:.2f}]<Operation/FinishOrFail {}.{}>".format(self.time, str(id(self.blocks[0]))[-4:],
+                #                                                           self.idx), op, self.current_coord())
+            self.yard.probe_mgr.fire(self.time, 'request.finish', request)
         except ReqOpRejectionError as e:
             self.req_handler.on_reject(self.time, e)
+            self.yard.probe_mgr.fire(self.time, 'request.reject', request)
         request.finish_or_fail(self.time)
-        print("[{:.2f}]<Request/Equipment {}>".format(self.time, self.idx), request, self.current_coord(),
-              getattr(request, "box", None))
+        # print("[{:.2f}]<Request/Equipment {}.{}>".format(self.time, str(id(request.block))[-4:], self.idx), request, self.current_coord(),
+        #       getattr(request, "box", None))
 
     def handle_operation(self, op):
-        print("[{:.2f}]<Operation/Start {}>".format(self.time, self.idx), op, self.current_coord())
+        # print("[{:.2f}]<Operation/Start {}.{}>".format(self.time,  str(id(self.blocks[0]))[-4:], self.idx), op, self.current_coord())
         if self.op_builder.build_and_check(self.time, op):
             yield from self.perform_op(self.time, op)
-        print("[{:.2f}]<Operation/FinishOrFail {}>".format(self.time, self.idx), op, self.current_coord())
+        # print("[{:.2f}]<Operation/FinishOrFail {}.{}>".format(self.time,  str(id(self.blocks[0]))[-4:], self.idx), op, self.current_coord())
 
     def _process(self):
+        # self.run_until(self.time)
         op_or_req = self.next_task
         self.next_task = None
         if isinstance(op_or_req, Request):
@@ -186,11 +200,8 @@ class Equipment(EquipmentRangeLayout, Process):
         self.query_new_task(self.time)
         self.time = yield self.time, Priority.FOREVER
 
-    def adjust_is_necessary(self, other, dst_loc):
-        return (other.current_coord(transform_to=self) - dst_loc).dot_product(self.current_coord() - dst_loc) >= 0
-
     def __getattr__(self, item):
         return self.attrs.get(item, None)
 
     def __repr__(self):
-        return "<{}>{} at {}".format(self.__class__.__name__, str(hash(self))[:4], self.current_coord())
+        return "<{}>{} at {}".format(self.__class__.__name__, str(hash(self))[-4:], self.current_coord())

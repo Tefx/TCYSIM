@@ -1,13 +1,13 @@
 cdef class Motion:
-    cdef float start_v
-    cdef float a
-    cdef float start_time
-    cdef float timespan
+    cdef double start_v
+    cdef double a
+    cdef double start_time
+    cdef double timespan
     cdef bint allow_interruption
 
-    cdef readonly float displacement
-    cdef float finish_velocity
-    cdef readonly float finish_time
+    cdef readonly double displacement
+    cdef double finish_velocity
+    cdef readonly double finish_time
 
-    cdef Motion split(self, float time)
+    cdef Motion split(self, double time)
     cdef update(self)

@@ -25,5 +25,5 @@ class RandomSpaceAllocator(SpaceAllocator):
                 for j1 in range(0, block.rows):
                     if (i1, j1) != (i, j):
                         k = block.count(i1, j1)
-                        if block.stack_is_valid(box, i1, j1):
+                        if box.position_is_valid(block, i1, j1, k):
                             return V3(i1, j1, k)

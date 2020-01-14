@@ -1,9 +1,13 @@
 import heapq
+from enum import IntEnum, auto
+
 from pesim import Process, TIME_FOREVER
 
 from ..priority import Priority
 from tcysim.utils.dispatcher import Dispatcher
 
+class BoxEventType(IntEnum):
+    BOMB = auto()
 
 class GeneratorEvent:
     def __init__(self, time, type=None, *args, **kwargs):
@@ -13,12 +17,12 @@ class GeneratorEvent:
         self.kwargs = kwargs
 
     def __lt__(self, other):
-        return (self.time, self.type) < (other.time, other.type)
+        return (self.time, self.type.value) < (other.time, other.type.value)
 
 
 class ChainedEventBomb(GeneratorEvent):
     def __init__(self, first_time, *args, **kwargs):
-        super(ChainedEventBomb, self).__init__(first_time, type=None, *args, **kwargs)
+        super(ChainedEventBomb, self).__init__(first_time, type=BoxEventType.BOMB, *args, **kwargs)
 
     def trigger(self, time):
         raise NotImplementedError

@@ -8,10 +8,10 @@ cdef class Paths:
     def __destroy__(self):
         pathtrace_destroy(&self.c)
 
-    def append(self, Time time, float pos):
+    def append(self, Time time, double pos):
         pathtrace_append_frame(&self.c, time, pos, NULL)
 
-    def intersect_test(self, Paths other, float clearance, float shift):
+    def intersect_test(self, Paths other, double clearance, double shift):
         return pathtrace_intersect_test_with_clearance(&self.c, &other.c, clearance, shift)
 
     @property

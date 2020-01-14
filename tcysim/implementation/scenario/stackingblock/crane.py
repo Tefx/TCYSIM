@@ -8,8 +8,8 @@ class CraneForStackingBlock(Equipment):
     gantry: Component = NotImplemented
     trolley: Component = NotImplemented
     hoist: Component = NotImplemented
-    between_clearance: float = 32.5 + 5
-    height_clearance: float = 1
+    between_clearance = 32.5 + 5
+    height_clearance = 1
 
     def __init__(self, yard, block, init_offset, **attrs):
         components = self.gantry, self.trolley, self.hoist

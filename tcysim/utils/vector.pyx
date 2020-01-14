@@ -19,7 +19,7 @@ cdef class V3:
     def axis_idx(name):
         return _axis_idx(name)
 
-    def __init__(V3 self, float x, float y, float z):
+    def __init__(V3 self, double x, double y, double z):
         self.x = x
         self.y = y
         self.z = z
@@ -32,7 +32,7 @@ cdef class V3:
         elif item == 2:
             return self.z
 
-    def __setitem__(V3 self, int key, float value):
+    def __setitem__(V3 self, int key, double value):
         if key == 0:
             self.x = value
         elif key == 1:
@@ -47,7 +47,7 @@ cdef class V3:
 
     def __add__(V3 self, other):
         cdef V3 o
-        cdef float f
+        cdef double f
         if isinstance(other, V3):
             o = other
             return V3(self.x + o.x, self.y + o.y, self.z + o.z)
@@ -57,7 +57,7 @@ cdef class V3:
 
     def __iadd__(V3 self, other):
         cdef V3 o
-        cdef float f
+        cdef double f
         if isinstance(other, V3):
             o = other
             self.x += o.x
@@ -72,7 +72,7 @@ cdef class V3:
 
     def __sub__(V3 self, other):
         cdef V3 o
-        cdef float f
+        cdef double f
         if isinstance(other, V3):
             o = other
             return V3(self.x - o.x, self.y - o.y, self.z - o.z)
@@ -82,7 +82,7 @@ cdef class V3:
 
     def __mul__(V3 self, other):
         cdef V3 o
-        cdef float f
+        cdef double f
         if isinstance(other, V3):
             o = other
             return V3(self.x * o.x, self.y * o.y, self.z * o.z)
@@ -92,7 +92,7 @@ cdef class V3:
 
     def __truediv__(V3 self, other):
         cdef V3 o
-        cdef float f
+        cdef double f
         if isinstance(other, V3):
             o = other
             return V3(self.x / o.x, self.y / o.y, self.z / o.z)
@@ -102,7 +102,7 @@ cdef class V3:
 
     def __floordiv__(V3 self, other):
         cdef V3 o
-        cdef float f
+        cdef double f
         if isinstance(other, V3):
             o = other
             return V3(self.x // o.x, self.y // o.y, self.z // o.z)
@@ -125,7 +125,7 @@ cdef class V3:
     def __repr__(V3 self):
         return "V({})".format(", ".join(map("{:.2f}".format, self)))
 
-    cpdef iadd1(V3 self, axis, float value):
+    cpdef iadd1(V3 self, axis, double value):
         cdef int axis_idx = _axis_idx(axis)
         if axis_idx == 0:
             self.x += value
@@ -137,7 +137,7 @@ cdef class V3:
             raise NotImplementedError
         return self
 
-    cpdef isub1(V3 self, axis, float value):
+    cpdef isub1(V3 self, axis, double value):
         cdef int axis_idx = _axis_idx(axis)
         if axis_idx == 0:
             self.x -= value
@@ -149,7 +149,7 @@ cdef class V3:
             raise NotImplementedError
         return self
 
-    cpdef imul1(V3 self, axis, float value):
+    cpdef imul1(V3 self, axis, double value):
         cdef int axis_idx = _axis_idx(axis)
         if axis_idx == 0:
             self.x *= value
@@ -161,7 +161,7 @@ cdef class V3:
             raise NotImplementedError
         return self
 
-    cpdef iset1(V3 self, axis, float value):
+    cpdef iset1(V3 self, axis, double value):
         cdef int axis_idx = _axis_idx(axis)
         if axis_idx == 0:
             self.x = value
@@ -173,7 +173,7 @@ cdef class V3:
             raise NotImplementedError
         return self
 
-    def add1(V3 self, axis, float value):
+    def add1(V3 self, axis, double value):
         return V3(self.x, self.y, self.z).iadd1(axis, value)
 
     def sub1(V3 self, axis, value):
@@ -186,7 +186,7 @@ cdef class V3:
         return V3(self.x, self.y, self.z).iset1(axis, value)
 
     def unit(V3 self):
-        cdef float l = self.length()
+        cdef double l = self.length()
         return V3(self.x / l, self.y / l, self.z / l)
 
     # def astype(self, t):
@@ -207,7 +207,7 @@ cdef class V3:
         return self.x, self.y, self.z
 
     cpdef rotate(V3 self, RotateOperator rtt_op, V3 ref=None):
-        cdef float x, y
+        cdef double x, y
 
         if ref:
             return (self - ref).rotate(rtt_op) + ref
@@ -216,16 +216,16 @@ cdef class V3:
             y = self.x * rtt_op.sinv + self.y * rtt_op.cosv
             return V3(x, y, self.z)
 
-    cpdef float length(V3 self):
+    cpdef double length(V3 self):
         return sqrt(self.x * self.x + self.y * self.y + self.z * self.z)
 
-    cpdef float dot_product(V3 self, V3 other):
+    cpdef double dot_product(V3 self, V3 other):
         return self.x * other.x + self.y * other.y + self.z * other.z
 
-    cdef cpy2mem_f(self, float* ptr):
-        ptr[0] = <float>self.x
-        ptr[1] = <float>self.y
-        ptr[2] = <float>self.z
+    cdef cpy2mem_f(self, double* ptr):
+        ptr[0] = <double>self.x
+        ptr[1] = <double>self.y
+        ptr[2] = <double>self.z
 
     cdef cpy2mem_i(V3 self, int32_t* ptr):
         ptr[0] = <int32_t>self.x
@@ -288,7 +288,7 @@ cdef class TEU(V3):
         return TEU(1, 1, 1, along=along)
 
 cdef class RotateOperator:
-    def __cinit__(self, float angle):
+    def __cinit__(self, double angle):
         self.angle = angle
         self.radian = angle / 180.0 * pi
         self.sinv = sin(self.radian)

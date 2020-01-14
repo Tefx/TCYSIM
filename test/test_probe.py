@@ -2,6 +2,12 @@ import os
 import sys
 import random
 
+from tcysim.framework.exception.handling import RORUndefinedError
+from tcysim.framework.probe import ProbeProcessor, on_probe
+from tcysim.implementation.base.policy.req_handler import ReqHandler
+
+from tcysim.implementation.base.roles.animation_logger import AnimationLogger
+from tcysim.utils.dispatcher import Dispatcher
 
 sys.path.extend([
     "../",
@@ -10,12 +16,8 @@ sys.path.extend([
 os.environ['PATH'] = "../libtcy/msvc/Release" + os.pathsep + os.environ['PATH']
 os.environ['PATH'] = "../libtcy/cmake-build-debug" + os.pathsep + os.environ['PATH']
 
-from tcysim.framework.exception.handling import RORUndefinedError
-from tcysim.implementation.base.policy.req_handler import ReqHandler
-from tcysim.implementation.base.roles.animation_logger import AnimationLogger
-from tcysim.utils import Dispatcher
-from tcysim.implementation.base.roles.box_generator import BoxBomb, BoxGenerator
 from tcysim.implementation.scenario.stackingblock.allocator import RandomSpaceAllocator
+from tcysim.implementation.base.roles.box_generator import BoxBomb, BoxGenerator
 from tcysim.implementation.scenario.stackingblock.scheduler import CooperativeTwinCraneJobScheduler
 from tcysim.implementation.scenario.stackingblock.op_builder import OptimisedOpBuilder
 from tcysim.implementation.scenario.stackingblock.block import StackingBlock
@@ -28,7 +30,7 @@ from tcysim.utils import V3, TEU
 
 class MultiCraneReqDispatcher(ReqDispatcher):
     def choose_equipment(self, time, request):
-        if request.req_type == request.TYPE.STORE and request.lane.name != "s":
+        if request.req_type == request.TYPE.STORE and request.lane.name < 5:
             idx = 0
         elif request.req_type == request.TYPE.RELOCATE:
             idx = request.new_loc[0] * self.block.num_equipments // self.block.bays
@@ -46,7 +48,7 @@ class Block(StackingBlock):
 class CooperativeTwinCraneReqHandler(ReqHandler):
     @Dispatcher.on(ReqType.RETRIEVE)
     def on_request_retrieve(self, time, request):
-        if self.equipment.idx == 1 and request.lane.name != "s":
+        if self.equipment.idx == 1 and request.lane.name < 5:
             yield from self.reshuffle_operations(time, request)
             request.coop_flag = True
             box = request.box
@@ -142,60 +144,51 @@ from uuid import uuid4
 
 class SimpleBoxBomb(BoxBomb):
     def next_time(self, time):
-        return time + random.uniform(8, 32)
+        return time + random.uniform(300, 600)
 
     def store_time(self, alloc_time):
         return alloc_time + random.uniform(5, 10)
 
     def retrieve_time(self, store_time):
-        return store_time + random.uniform(3600 * 6, 3600 * 12)
+        return store_time + random.uniform(3600 * 12, 3600 * 24)
 
     def new_box(self):
         return Box(str(uuid4())[:8].encode("utf-8"), size=random.choice((20, 40)))
 
 
-def make_dual_blocks(yard, start_offset, spec, el_len):
-    num_end_lanes = int(spec.y // 2)
+class SimpleProbeProcessor(ProbeProcessor):
+    @on_probe("request.finish")
+    def on_request_finish(self, request):
+        print("[{:.2f}]<Finish>{}".format(self.yard.env.current_time, request))
 
-    offset = start_offset
-    lanes = [
-        Lane("s", V3(offset, el_len + 5, 0), length=TEU.LENGTH * spec.x, width=5, rotate=90)
-        ]
-    lanes.extend([
-        # Lane("e{}".format(i), V3(offset - 5 - TEU.WIDTH * 2 * i, 0, 0), length=el_len, width=TEU.WIDTH * 2, rotate=90)
-        # for i in range(num_end_lanes)
-        ])
-    block1 = Block(yard, V3(offset - 5, el_len + 5, 0), spec, rotate=90, lanes=lanes)
-    rmg1 = RMG(yard, block1, 0, idx=0)
-    rmg2 = RMG(yard, block1, -1, idx=1)
-    yard.deploy(block1, [rmg1, rmg2])
-
-    offset_x = offset - block1.size.y - 10
-    lanes = [
-        Lane("e{}".format(i), V3(offset_x - TEU.WIDTH * 2 * i, 0, 0), length=el_len, width=TEU.WIDTH * 2, rotate=90)
-        for i in range(num_end_lanes)
-        ]
-    lanes.extend([
-        Lane("s", V3(offset_x - TEU.WIDTH * spec.y, el_len + 5, 0), length=TEU.LENGTH * spec.x, width=5, rotate=90)
-        ])
-    block2 = Block(yard, V3(offset_x, el_len + 5, 0), spec, rotate=90, lanes=lanes)
-    rmg3 = RMG(yard, block2, 0, idx=0)
-    rmg4 = RMG(yard, block2, -1, idx=1)
-    yard.deploy(block2, [rmg3, rmg4])
+    @on_probe("request.reject")
+    def on_request_reject(self, request):
+        print("[{:.2f}]<Reject>{}".format(self.yard.env.current_time, request))
 
 
 if __name__ == '__main__':
     yard = SimpleYard()
 
-    for i in range(5):
-        make_dual_blocks(yard, -80 * i, V3(52, 10, 6), 20)
+    lanes = [
+        Lane(i, V3(0, i * TEU.WIDTH * 2, 0), length=20, width=TEU.WIDTH * 2, rotate=0)
+        for i in range(4)
+        ]
+    lanes.append(Lane(5, V3(25, -TEU.WIDTH * 2, 0), length=TEU.LENGTH * 50, width=TEU.WIDTH * 2, rotate=0))
+    lanes.append(Lane(6, V3(25, TEU.WIDTH * 10, 0), length=TEU.LENGTH * 50, width=TEU.WIDTH * 2, rotate=0))
+    block = Block(yard, V3(25, 0, 0), V3(16, 10, 6), rotate=0, lanes=lanes)
+
+    rmg1 = RMG(yard, block, 0, idx=0)
+    rmg2 = RMG(yard, block, -1, idx=1)
+    yard.deploy(block, [rmg1, rmg2])
 
     # yard.roles.animation_logger = AnimationLogger(yard, start=3600 * 20, end=3600 * 21, fps=24, speedup=10)
     yard.roles.sim_driver = BoxGenerator(yard)
     yard.roles.sim_driver.install_or_add(SimpleBoxBomb(first_time=0))
 
+    yard.roles.probe1 = SimpleProbeProcessor(yard)
+
     yard.start()
-    yard.run_until(3600 * 24)
+    yard.run_until(3600 * 24 * 30)
 
     if "animation_logger" in yard.roles:
         yard.roles.animation_logger.dump("log2")

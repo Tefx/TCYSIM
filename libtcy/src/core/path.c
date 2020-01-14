@@ -55,7 +55,7 @@ static inline PathKeyFrame *pathtrace_last_frame(PathTrace *pt) {
 }
 
 
-static inline bool pathframechunk_frame_values(PathFrameChunk *chunk, int i, Time *time, float *coord, void **other) {
+static inline bool pathframechunk_frame_values(PathFrameChunk *chunk, int i, Time *time, double *coord, void **other) {
     PathKeyFrame *frame;
     while (i >= chunk->num) {
         i -= chunk->num;
@@ -70,7 +70,7 @@ static inline bool pathframechunk_frame_values(PathFrameChunk *chunk, int i, Tim
     return TRUE;
 }
 
-static inline bool pathtrace_last_frame_values(PathTrace *pt, Time *time, float *coord, void **other) {
+static inline bool pathtrace_last_frame_values(PathTrace *pt, Time *time, double *coord, void **other) {
     PathFrameChunk *chunk = pt->last_chunk;
     if (chunk->num > 0) {
         pathframechunk_frame_values(chunk, chunk->num - 1, time, coord, other);
@@ -84,7 +84,7 @@ static inline bool pathtrace_is_last_frame(PathTrace *pt, PathFrameChunk *pfc, i
     return pt->last_chunk == pfc && pfc->num == idx + 1;
 }
 
-void pathtrace_append_frame(PathTrace *pt, Time time, float coord, void *other) {
+void pathtrace_append_frame(PathTrace *pt, Time time, double coord, void *other) {
     PathFrameChunk *chunk = pt->last_chunk;
     PathKeyFrame *frame;
     Time last_time = -1;
@@ -104,12 +104,12 @@ void pathtrace_append_frame(PathTrace *pt, Time time, float coord, void *other) 
 }
 
 
-bool pathtrace_intersect_test_with_clearance(PathTrace *pt0, PathTrace *pt1, float clearance, float shift) {
+bool pathtrace_intersect_test_with_clearance(PathTrace *pt0, PathTrace *pt1, double clearance, double shift) {
     int i = 0, j = 0;
     PathFrameChunk *pfc0 = pt0->chunks;
     PathFrameChunk *pfc1 = pt1->chunks;
     Time x1 = 0, x2 = 0, x3 = 0, x4 = 0;
-    float y1 = 0, y2 = 0, y3 = 0, y4 = 0;
+    double y1 = 0, y2 = 0, y3 = 0, y4 = 0;
     Time et0 = 0, et1 = 0;
 
     pathtrace_last_frame_values(pt0, &et0, NULL, NULL);
@@ -150,7 +150,7 @@ bool pathtrace_intersect_test_with_clearance(PathTrace *pt0, PathTrace *pt1, flo
     return FALSE;
 }
 
-void pathtrace_boundary(PathTrace *pt, float *pmax, float *pmin) {
+void pathtrace_boundary(PathTrace *pt, double *pmax, double *pmin) {
     PathFrameChunk *chunk = pt->chunks;
     if (pmax) *pmax = FLT_MIN;
     if (pmin) *pmin = FLT_MAX;

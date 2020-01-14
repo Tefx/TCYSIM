@@ -4,7 +4,7 @@ from libc.math cimport sqrt, fabs
 from .motion cimport Motion
 
 cdef class Spec:
-    def __cinit__(self, float v, float a, float d=-1):
+    def __cinit__(self, double v, double a, double d=-1):
         self.v = v
         self.a = a
         if d < 0:
@@ -49,7 +49,7 @@ cdef class Mover:
         self.curr_v = other.curr_v
         self.curr_a = other.curr_a
 
-    def run_until(self, float time):
+    def run_until(self, double time):
         cdef Motion m
         while self.pending_motions:
             m = self.pending_motions[0]
@@ -79,23 +79,23 @@ cdef class Mover:
 
     def available_time(self, bint interrupt=False):
         cdef Motion m
-        cdef float time = 0
+        cdef double time = 0
         for m in self.pending_motions:
             if interrupt and m.allow_interruption:
                 break
             time += m.timespan
         return time
 
-    cdef create_motions(self, float start_time, float displacement, bint allow_interruption=False, mode="default"):
+    cdef create_motions(self, double start_time, double displacement, bint allow_interruption=False, mode="default"):
         cdef Spec spec = self.specs[mode]
-        cdef float v0 = self.curr_v
-        cdef float a = spec.a
-        cdef float d = spec.d
-        cdef float vm = spec.v
-        cdef float w0 = spec._cache_w0
-        cdef float w1 = spec._cache_w1
-        cdef float st = start_time
-        cdef float t0, t1, t2, dflg, vx
+        cdef double v0 = self.curr_v
+        cdef double a = spec.a
+        cdef double d = spec.d
+        cdef double vm = spec.v
+        cdef double w0 = spec._cache_w0
+        cdef double w1 = spec._cache_w1
+        cdef double st = start_time
+        cdef double t0, t1, t2, dflg, vx
         cdef Motion m
 
         motions = []

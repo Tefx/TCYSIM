@@ -93,10 +93,10 @@ cdef extern from "path.h":
         int chunk_size;
         PathFrameChunk*chunks
         PathFrameChunk*last_chunk
-        float max, min;
+        double max, min;
 
     void pathtrace_init(PathTrace *pt, int chunk_size)
     void pathtrace_destroy(PathTrace *pt)
-    void pathtrace_append_frame(PathTrace *pt, Time time, float pos, void *other)
-    bool pathtrace_intersect_test_with_clearance(PathTrace *pt0, PathTrace *pt1, float clearance, float shift)
-    float pathtrace_boundary(PathTrace*pt, float*pmax, float*pmin)
+    void pathtrace_append_frame(PathTrace *pt, Time time, double pos, void *other)
+    bool pathtrace_intersect_test_with_clearance(PathTrace *pt0, PathTrace *pt1, double clearance, double shift)
+    double pathtrace_boundary(PathTrace*pt, double*pmax, double*pmin)

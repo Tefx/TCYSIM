@@ -1,4 +1,6 @@
+from pesim import Environment
 from .env import YardEnv
+from ..probe import ProbeManager
 from ..request import ReqType, Request
 from ..roles import Roles
 from ..callback import CallBackManager
@@ -9,7 +11,8 @@ class Yard:
     SpaceAllocator: SpaceAllocator.__class__ = SpaceAllocator
 
     def __init__(self):
-        self.env = YardEnv(self)
+        # self.env = YardEnv(self)
+        self.env = Environment()
         self.blocks = set()
         self.equipments = set()
 
@@ -18,6 +21,7 @@ class Yard:
 
         self.smgr = self.SpaceAllocator(self)
         self.cmgr = CallBackManager(self)
+        self.probe_mgr = ProbeManager(self)
 
         self.roles = Roles()
         self.movers = []
@@ -56,7 +60,6 @@ class Yard:
         return self.requests[handler]
 
     def submit_request(self, time, request, ready=True):
-        # print("submit_x", id(request), getattr(request, "box", None))
         if request.req_type == request.TYPE.RETRIEVE and request.box.state == request.box.STATE.RETRIEVED:
             raise Exception("here!")
         request.submit(time, ready)
@@ -87,8 +90,6 @@ class Yard:
         self.run_equipments(time)
 
     def run_equipments(self, time):
-        for mover in self.movers:
-            mover.run_until(time)
-        # for equipment in self.equipments:
-        #     equipment.run_until(time)
+        for equipment in self.equipments:
+            equipment.run_until(time)
 
