@@ -11,4 +11,5 @@ class Priority(IntEnum):
     TASK_ARRIVAL = auto()
     SCHEDULE = auto()
     LOG = auto()
+    PROBE = auto()
     FOREVER = PRIORITY_MAX

@@ -1,5 +1,6 @@
 from pesim import Environment
 from .env import YardEnv
+from ..probe import ProbeManager
 from ..request import ReqType, Request
 from ..roles import Roles
 from ..callback import CallBackManager
@@ -20,6 +21,7 @@ class Yard:
 
         self.smgr = self.SpaceAllocator(self)
         self.cmgr = CallBackManager(self)
+        self.probe_mgr = ProbeManager(self)
 
         self.roles = Roles()
         self.movers = []
