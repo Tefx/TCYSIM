@@ -142,7 +142,7 @@ from uuid import uuid4
 
 class SimpleBoxBomb(BoxBomb):
     def next_time(self, time):
-        return time + random.uniform(0.5, 2)
+        return time + random.uniform(8, 32)
 
     def store_time(self, alloc_time):
         return alloc_time + random.uniform(5, 10)
@@ -172,8 +172,8 @@ def make_dual_blocks(yard, start_offset, spec, el_len):
 
     offset_x = offset - block1.size.y - 10
     lanes = [
-        # Lane("e{}".format(i), V3(offset_x - TEU.WIDTH * 2 * i, 0, 0), length=el_len, width=TEU.WIDTH * 2, rotate=90)
-        # for i in range(num_end_lanes)
+        Lane("e{}".format(i), V3(offset_x - TEU.WIDTH * 2 * i, 0, 0), length=el_len, width=TEU.WIDTH * 2, rotate=90)
+        for i in range(num_end_lanes)
         ]
     lanes.extend([
         Lane("s", V3(offset_x - TEU.WIDTH * spec.y, el_len + 5, 0), length=TEU.LENGTH * spec.x, width=5, rotate=90)
@@ -187,7 +187,7 @@ def make_dual_blocks(yard, start_offset, spec, el_len):
 if __name__ == '__main__':
     yard = SimpleYard()
 
-    for i in range(80):
+    for i in range(5):
         make_dual_blocks(yard, -80 * i, V3(52, 10, 6), 20)
 
     # yard.roles.animation_logger = AnimationLogger(yard, start=3600 * 20, end=3600 * 21, fps=24, speedup=10)
@@ -196,7 +196,6 @@ if __name__ == '__main__':
 
     yard.start()
     yard.run_until(3600 * 24)
-
 
     if "animation_logger" in yard.roles:
         yard.roles.animation_logger.dump("log2")

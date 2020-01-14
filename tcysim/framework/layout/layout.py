@@ -8,7 +8,7 @@ class LayoutItem:
     def __init__(self,
                  offset: V3 = V3.zero(),
                  size: V3 = V3.one(),
-                 rotate: float = 0,
+                 rotate=0,
                  **kwargs
                  ):
         self.offset = copy(offset)

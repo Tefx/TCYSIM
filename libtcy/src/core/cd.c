@@ -7,31 +7,31 @@
 
 #include <math.h>
 
-static inline float cross_product(float x1, float y1, float x2, float y2) {
+static inline double cross_product(double x1, double y1, double x2, double y2) {
     return x1 * y2 - x2 * y1;
 }
 
-static inline bool cross_test(float xa, float ya, float xb, float yb, float xc, float yc, float xd, float yd) {
+static inline bool cross_test(double xa, double ya, double xb, double yb, double xc, double yc, double xd, double yd) {
     if (xa == xb || xc == xd)
         return ya == yc;
-    float p_ab_ac = cross_product(xb - xa, yb - ya, xc - xa, yc - ya);
-    float p_ab_ad = cross_product(xb - xa, yb - ya, xd - xa, yd - ya);
-    float p_cd_ca = cross_product(xd - xc, yd - yc, xa - xc, ya - yc);
-    float p_cd_cb = cross_product(xd - xc, yd - yc, xb - xc, yb - yc);
+    double p_ab_ac = cross_product(xb - xa, yb - ya, xc - xa, yc - ya);
+    double p_ab_ad = cross_product(xb - xa, yb - ya, xd - xa, yd - ya);
+    double p_cd_ca = cross_product(xd - xc, yd - yc, xa - xc, ya - yc);
+    double p_cd_cb = cross_product(xd - xc, yd - yc, xb - xc, yb - yc);
     return p_ab_ac * p_ab_ad <= 0 && p_cd_ca * p_cd_cb <= 0;
 }
 
-bool cross_test_with_clearance(float xa, float ya, float xb, float yb, float xc, float yc, float xd, float yd,
-                               float clearance) {
+bool cross_test_with_clearance(double xa, double ya, double xb, double yb, double xc, double yc, double xd, double yd,
+                               double clearance) {
     if (ya >= yc)
         return cross_test(xa, ya - clearance, xb, yb - clearance, xc, yc, xd, yd);
     else
         return cross_test(xa, ya + clearance, xb, yb + clearance, xc, yc, xd, yd);
 }
 
-static inline float min_shift(float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4) {
-    float d = fmaxf(x1, x2) - fminf(x3, x4);
-    float k, d1;
+static inline double min_shift(double x1, double y1, double x2, double y2, double x3, double y3, double x4, double y4) {
+    double d = fmaxf(x1, x2) - fminf(x3, x4);
+    double k, d1;
     if (y1 != y2) {
         k = (x1 - x2) / (y1 - y2);
         d1 = x1 - x3 + k * (-y1 + y3);
@@ -53,9 +53,9 @@ static inline float min_shift(float x1, float y1, float x2, float y2, float x3, 
     return d + 1;
 }
 
-float min_shift_with_clearance(float xa, float ya, float xb, float yb, float xc, float yc, float xd, float yd,
-                               float clearance) {
-    float res = 0;
+double min_shift_with_clearance(double xa, double ya, double xb, double yb, double xc, double yc, double xd, double yd,
+                               double clearance) {
+    double res = 0;
     res = fmaxf(res, min_shift(xa, ya + clearance, xb, yb + clearance, xc, yc, xd, yd));
     res = fmaxf(res, min_shift(xa, ya - clearance, xb, yb - clearance, xc, yc, xd, yd));
     res = fmaxf(res, min_shift(xa, ya + clearance, xa, ya - clearance, xc, yc, xd, yd));

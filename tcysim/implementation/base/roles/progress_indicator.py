@@ -1,6 +1,3 @@
-from pickle import dump
-
-from pesim import TIME_FOREVER
 from tcysim.framework.roles import Observer
 import pandas as pd
 

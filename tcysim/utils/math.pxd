@@ -1,3 +1,3 @@
-cdef float _EPSILON
-cpdef bint feq(float a, float b)
+cdef double _EPSILON
+cpdef bint feq(double a, double b)
 

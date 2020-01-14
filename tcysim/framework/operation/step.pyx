@@ -9,9 +9,9 @@ cimport cython
 @cython.freelist(512)
 cdef class StepBase:
     cdef StepBase pred
-    cdef readonly float start_time
-    cdef readonly float finish_time
-    cdef float next_time
+    cdef readonly double start_time
+    cdef readonly double finish_time
+    cdef double next_time
     cdef bint executed
     cdef bint committed
 
@@ -30,21 +30,21 @@ cdef class StepBase:
             if self.pred and self.pred.executed:
                 self.pred.reset()
 
-    cdef cal_start_time(StepBase self, op, float est):
+    cdef cal_start_time(StepBase self, op, double est):
         if not self.executed:
             self.start_time = est
             if self.pred and self.pred.next_time > est:
                 self.start_time = self.pred.next_time
         return self.start_time
 
-    cdef cal_pred(StepBase self, op, float est):
+    cdef cal_pred(StepBase self, op, double est):
         if self.pred:
             self.pred.execute(op, est)
 
-    def __call__(StepBase self, op, float est):
+    def __call__(StepBase self, op, double est):
         return self.execute(op, est)
 
-    cdef execute(StepBase self, op, float est):
+    cdef execute(StepBase self, op, double est):
         raise NotImplementedError
 
     def commit(StepBase self, yard):
@@ -84,15 +84,15 @@ cdef class StepBase:
 
 cdef class EmptyStep(StepBase):
     cdef Mover mover
-    cdef float time
+    cdef double time
     cdef Motion motion
 
-    def __init__(EmptyStep self, Mover mover, float time):
+    def __init__(EmptyStep self, Mover mover, double time):
         self.mover = mover
         self.time = time
         self.motion = None
 
-    cdef execute(EmptyStep self, op, float est):
+    cdef execute(EmptyStep self, op, double est):
         if not self.executed:
             self.cal_pred(op, est)
             self.cal_start_time(op, est)
@@ -114,7 +114,7 @@ cdef class CallBackStep(StepBase):
     def __init__(CallBackStep self, callback):
         self.callback = callback
 
-    cdef execute(CallBackStep self, op, float est):
+    cdef execute(CallBackStep self, op, double est):
         if not self.executed:
             self.cal_pred(op, est)
             self.cal_start_time(op, est)
@@ -130,13 +130,13 @@ cdef class CallBackStep(StepBase):
 
 cdef class MoverStep(StepBase):
     cdef Mover mover
-    cdef float src_loc
-    cdef float dst_loc
+    cdef double src_loc
+    cdef double dst_loc
     cdef list motions
     cdef object mode
     cdef bint allow_interruption
 
-    def __init__(Mover self, Mover mover, float src, float dst, bint allow_interruption=False, mode="default"):
+    def __init__(Mover self, Mover mover, double src, double dst, bint allow_interruption=False, mode="default"):
         self.mover = mover
         self.src_loc = src
         self.dst_loc = dst
@@ -144,11 +144,11 @@ cdef class MoverStep(StepBase):
         self.mode = mode
         self.allow_interruption = allow_interruption
 
-    cdef execute(MoverStep self, op, float est):
+    cdef execute(MoverStep self, op, double est):
         cdef Mover mover
         cdef Motion motion
-        cdef float loc
-        cdef float rt
+        cdef double loc
+        cdef double rt
 
         if not self.executed:
             self.cal_pred(op, est)
@@ -187,7 +187,7 @@ cdef class CompoundStep(StepBase):
         self.steps = list(steps)
 
 cdef class AndStep(CompoundStep):
-    cdef execute(AndStep self, op, float est):
+    cdef execute(AndStep self, op, double est):
         cdef StepBase step
 
         if not self.executed:
@@ -216,7 +216,7 @@ cdef class AndStep(CompoundStep):
         return "<{}>[{}]".format(self.__class__.__name__, " & ".join(repr(s) for s in self.steps))
 
 cdef class OrStep(CompoundStep):
-    cdef execute(OrStep self, op, float est):
+    cdef execute(OrStep self, op, double est):
         cdef StepBase step
 
         if not self.executed:
@@ -250,7 +250,7 @@ cdef class StepWorkflow:
     cdef list steps
     cdef list sorted_steps
     cdef StepBase last_step
-    cdef readonly float finish_time
+    cdef readonly double finish_time
 
     def __cinit__(self):
         self.steps = []
@@ -276,7 +276,7 @@ cdef class StepWorkflow:
         for step in self.steps:
             step.reset()
 
-    def __call__(self, op, float st):
+    def __call__(self, op, double st):
         cdef StepBase step
         self.sorted_steps = []
         self.finish_time = 0

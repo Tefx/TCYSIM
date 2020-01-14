@@ -26,6 +26,7 @@ class Request:
         self.ready_time = -1
         self.start_time = -1
         self.finish_time = -1
+        self.reject_time = -1
         self.signals = dict() if signals is None else signals
         self.state = ReqState.INIT
         self.box = box
@@ -91,6 +92,7 @@ class Request:
         self.state = ReqState.REJECTED
         self.start_time = -1
         self.finish_time = -1
+        self.reject_time = time
         self.reject_times += 1
         self.submit(time, ready=False)
 
