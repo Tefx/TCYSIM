@@ -2,11 +2,6 @@ import os
 import sys
 import random
 
-from tcysim.framework.exception.handling import RORUndefinedError
-from tcysim.framework.probe import ProbeProcessor, on_probe
-from tcysim.implementation.base.policy.req_handler import ReqHandler
-
-from tcysim.implementation.base.roles.animation_logger import AnimationLogger
 from tcysim.utils.dispatcher import Dispatcher
 
 sys.path.extend([
@@ -23,6 +18,11 @@ from tcysim.implementation.scenario.stackingblock.op_builder import OptimisedOpB
 from tcysim.implementation.scenario.stackingblock.block import StackingBlock
 from tcysim.implementation.scenario.stackingblock.crane import CraneForStackingBlock
 
+from tcysim.framework.exception.handling import RORUndefinedError
+from tcysim.framework.probe import ProbeProcessor, on_probe
+from tcysim.implementation.base.policy.req_handler import ReqHandler
+
+from tcysim.implementation.base.roles.animation_logger import AnimationLogger
 from tcysim.framework import Lane, Component, Spec, Yard, Box, ReqDispatcher, ReqState, ReqType, Request
 
 from tcysim.utils import V3, TEU
@@ -156,14 +156,15 @@ class SimpleBoxBomb(BoxBomb):
         return Box(str(uuid4())[:8].encode("utf-8"), size=random.choice((20, 40)))
 
 
-class SimpleProbeProcessor(ProbeProcessor):
-    @on_probe("request.finish")
-    def on_request_finish(self, request):
-        print("[{:.2f}]<Finish>{}".format(self.yard.env.current_time, request))
+from tcysim.implementation import probe
 
-    @on_probe("request.reject")
-    def on_request_reject(self, request):
-        print("[{:.2f}]<Reject>{}".format(self.yard.env.current_time, request))
+
+class SimpleProbeProcessor(ProbeProcessor):
+    on_op_start = on_probe("operation.start")(probe.operation.print_on_start)
+    on_op_finish = on_probe("operation.start")(probe.operation.print_on_finish_or_fail)
+    on_req_start = on_probe("request.start")(probe.request.print_status)
+    on_req_finish = on_probe("request.start")(probe.request.print_status)
+    on_req_fail = on_probe("request.start")(probe.request.print_status)
 
 
 if __name__ == '__main__':
@@ -185,7 +186,7 @@ if __name__ == '__main__':
     yard.roles.sim_driver = BoxGenerator(yard)
     yard.roles.sim_driver.install_or_add(SimpleBoxBomb(first_time=0))
 
-    yard.roles.probe1 = SimpleProbeProcessor(yard)
+    # yard.roles.probe1 = SimpleProbeProcessor(yard)
 
     yard.start()
     yard.run_until(3600 * 24 * 30)

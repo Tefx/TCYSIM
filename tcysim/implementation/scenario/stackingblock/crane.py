@@ -34,8 +34,7 @@ class CraneForStackingBlock(Equipment):
         for other in self.nearby_equipments():
             other_loc = other.current_coord(transform_to=self)
             if abs(self.current_coord().x - other_loc.x) < 32.5:
-                print(self.time, self.current_coord().x, other_loc.x)
-                print(self.state, other.state, op, other.current_op)
+                self.yard.probe_mgr.fire(self.time, "equipment.conflict", self, op, other)
                 raise Exception("cranes crash!")
             new_loc = other_loc
             other_loc = copy(new_loc)

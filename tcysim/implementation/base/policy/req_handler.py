@@ -52,9 +52,7 @@ class ReqHandler(ReqHandlerBase):
                 raise RORBoxHasUndoneRelocation(request)
             new_loc = self.equipment.yard.smgr.slot_for_relocation(above_box)
             if not new_loc:
-                # print(box, box.block.count(box.location.x, -1, -1))
-                # print(above_box, above_box.block.count(above_box.location.x, -1, -1))
-                # self.equipment.yard.smgr.slot_for_relocation(above_box, debug=True)
+                self.yard.fire_probe("allocator.fail.relocate", above_box)
                 raise RORUndefinedError("no slot for relocation")
             request.acquire_stack(time, above_box.location, new_loc)
             yield self.gen_relocate_op(time, above_box, new_loc, request)

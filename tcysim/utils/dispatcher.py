@@ -5,9 +5,7 @@ class DispatchFunc:
         self.method = method
 
     def __call__(self, *args, **kwargs):
-        # print("DF:", self.func.__name__, *args, **kwargs)
         res = self.func(*args, **kwargs)
-        # print("DFD:", self.func.__name__)
         return res
 
 

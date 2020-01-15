@@ -31,16 +31,17 @@ class JobScheduler(Process):
         self.activate(time, Priority.SCHEDULE)
 
     def on_schedule(self, time):
+        self.equipment.yard.probe_mgr.fire(self.time, 'scheduler.before')
         if self.pending:
             if self.equipment.ready_for_new_task():
                 avail_tasks = self.available_requests(time)
                 request = self.choose_task(time, avail_tasks)
                 if request is not None:
-                    # print("schedule", time, request, self.equipment.idx, id(request), getattr(request, "box", None))
                     request.equipment = self.equipment
                     request.block.req_dispatcher.pop_request(request)
                     setattr(request, "time", time)
                     self.equipment.submit_task(request)
+                    self.equipment.yard.probe_mgr.fire(self.time, 'scheduler.task_selected', request)
             self.pending = False
 
     def on_idle(self, time):

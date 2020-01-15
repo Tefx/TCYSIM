@@ -154,43 +154,34 @@ class Equipment(EquipmentRangeLayout, Process):
 
     def perform_op(self, time, op):
         op.commit(self.yard)
-        # if op.op_type == op.TYPE.RETRIEVE or op.op_type == op.TYPE.RELOCATE:
-        #     print("Equipment {}.{}".format(str(id(self.blocks[0]))[-4:], self.idx), self.gantry.pending_motions)
         with self.lock_state(self.STATE.WORKING):
             self.current_op = op
+            self.yard.fire_probe('operation.start', op)
             self.time = yield op.finish_time, Priority.OP_FINISH
+            self.yard.fire_probe('operation.finish', op)
             self.current_op = None
 
     def handle_request(self, request):
-        # print("[{:.2f}]<Request/Equipment {}.{}>".format(self.time,  str(id(request.block))[-4:], self.idx), request, self.current_coord(),
-        #       getattr(request, "box", None))
         request.start_or_resume(self.time)
         try:
+            self.yard.fire_probe('request.start', request)
             for op in request.gen_op(self.time):
-                # print("!![{:.2f}]<Operation/Start {}.{}>".format(self.time, str(id(self.blocks[0]))[-4:], self.idx), op,
-                #       self.current_coord())
                 if self.op_builder.build_and_check(self.time, op):
                     yield from self.perform_op(self.time, op)
                 else:
+                    self.yard.fire_probe('operation.conflict', op)
                     raise ROREquipmentConflictError(op)
-                # print("!![{:.2f}]<Operation/FinishOrFail {}.{}>".format(self.time, str(id(self.blocks[0]))[-4:],
-                #                                                           self.idx), op, self.current_coord())
-            self.yard.probe_mgr.fire(self.time, 'request.finish', request)
+            self.yard.fire_probe('request.succeed', request)
         except ReqOpRejectionError as e:
             self.req_handler.on_reject(self.time, e)
-            self.yard.probe_mgr.fire(self.time, 'request.reject', request)
+            self.yard.fire_probe('request.rejected', request)
         request.finish_or_fail(self.time)
-        # print("[{:.2f}]<Request/Equipment {}.{}>".format(self.time, str(id(request.block))[-4:], self.idx), request, self.current_coord(),
-        #       getattr(request, "box", None))
 
     def handle_operation(self, op):
-        # print("[{:.2f}]<Operation/Start {}.{}>".format(self.time,  str(id(self.blocks[0]))[-4:], self.idx), op, self.current_coord())
         if self.op_builder.build_and_check(self.time, op):
             yield from self.perform_op(self.time, op)
-        # print("[{:.2f}]<Operation/FinishOrFail {}.{}>".format(self.time,  str(id(self.blocks[0]))[-4:], self.idx), op, self.current_coord())
 
     def _process(self):
-        # self.run_until(self.time)
         op_or_req = self.next_task
         self.next_task = None
         if isinstance(op_or_req, Request):

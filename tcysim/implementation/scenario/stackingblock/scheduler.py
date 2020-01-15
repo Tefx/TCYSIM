@@ -14,10 +14,6 @@ class CooperativeTwinCraneJobScheduler(JobScheduler):
 
     def choose_task(self, time, tasks):
         task = min(filter(Request.is_ready, tasks), key=self.rank_task, default=None)
-        # if task and task.state == ReqState.RESUME_READY:
-        #     if time == task.reject_time:
-        #         print(time, task)
-        #     assert time != task.reject_time
         return task
 
     def on_idle(self, time):

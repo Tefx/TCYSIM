@@ -159,9 +159,7 @@ cdef class CBox:
             return
         while True:
             loc = self.location
-            # print("ABOVE", self.id, self.location)
             box = self.block.top_box(loc, axis)
-            # print("/ABOVE")
             if box is self:
                 break
             yield box
