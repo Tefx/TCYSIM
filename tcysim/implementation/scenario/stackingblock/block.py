@@ -69,7 +69,7 @@ class StackingBlock(Block):
         return self.stack_height(h_max)
 
     def bay_is_valid(self, box, i):
-        if box.position_is_valid(self, i, 0, 0):
+        if self.position_is_valid_for_size(V3(i, 0, 0), box.teu):
             max_num = self.rows * self.tiers - self.tiers
             return self.count(i, -1, -1) < max_num
         else:
@@ -83,9 +83,9 @@ class StackingBlock(Block):
                 bay_avail = self.bay_is_valid(box, i)
             if bay_avail:
                 for j in range(self.rows):
-                    k = self.count(i, j)
-                    if box.position_is_valid(self, i, j, k):
-                        yield V3i(i, j, k)
+                    loc = V3i(i, j, self.count(i, j))
+                    if box.position_is_valid(self, loc):
+                        yield loc
 
     def zone_from_coord(self, local_coord):
         """

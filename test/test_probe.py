@@ -161,10 +161,10 @@ from tcysim.implementation import probe
 
 class SimpleProbeProcessor(ProbeProcessor):
     on_op_start = on_probe("operation.start")(probe.operation.print_on_start)
-    on_op_finish = on_probe("operation.start")(probe.operation.print_on_finish_or_fail)
+    on_op_finish = on_probe("operation.finish")(probe.operation.print_on_finish_or_fail)
     on_req_start = on_probe("request.start")(probe.request.print_status)
-    on_req_finish = on_probe("request.start")(probe.request.print_status)
-    on_req_fail = on_probe("request.start")(probe.request.print_status)
+    on_req_finish = on_probe("request.succeed")(probe.request.print_status)
+    on_req_fail = on_probe("request.rejected")(probe.request.print_status)
 
 
 if __name__ == '__main__':
@@ -186,7 +186,7 @@ if __name__ == '__main__':
     yard.roles.sim_driver = BoxGenerator(yard)
     yard.roles.sim_driver.install_or_add(SimpleBoxBomb(first_time=0))
 
-    # yard.roles.probe1 = SimpleProbeProcessor(yard)
+    yard.roles.probe1 = SimpleProbeProcessor(yard)
 
     yard.start()
     yard.run_until(3600 * 24 * 30)

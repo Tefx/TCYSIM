@@ -18,8 +18,6 @@ DLLEXPORT int box_store(Box *box, Time time);
 
 DLLEXPORT int box_retrieve(Box *box, Time time);
 
-DLLEXPORT bool box_position_is_valid(Box *box, Block *blk, CellIdx *loc);
-
 DLLEXPORT void box_store_position(Box *box, CellIdx *idx, bool new_loc);
 
 DLLEXPORT int box_place_holder(Box *box, CellIdx *new_loc);

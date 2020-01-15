@@ -31,8 +31,8 @@
 #define TIME_INF 315360000
 
 typedef enum {
-    BOX_SIZE_TWENTY,
-    BOX_SIZE_FORTY,
+    BOX_SIZE_TWENTY = 0,
+    BOX_SIZE_FORTY = 1,
 } BoxSize;
 
 typedef enum {
@@ -47,13 +47,13 @@ typedef enum {
 } BoxState;
 
 typedef enum {
-    SLOT_USAGE_FREE,
-    SLOT_USAGE_TWENTY_ONLY,
-    SLOT_USAGE_FORTY_ONLY,
-    SLOT_USAGE_FORTY_ONLY_END,
+    SLOT_USAGE_FREE = 0,
+    SLOT_USAGE_TWENTY_ONLY = 1,
+    SLOT_USAGE_FORTY_ONLY = 2,
+    SLOT_USAGE_FORTY_ONLY_END = 3,
 } SlotUsage;
 
-typedef int64_t Time;
+typedef double Time;
 typedef int32_t CellIdx;
 typedef struct Block Block;
 

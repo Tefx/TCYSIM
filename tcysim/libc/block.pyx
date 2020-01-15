@@ -1,5 +1,4 @@
 from cpython cimport PyObject
-from ..utils.vector cimport V3
 
 
 cdef class CBlock:
@@ -47,6 +46,15 @@ cdef class CBlock:
         cdef CellIdx pos[3]
         loc.cpy2mem_i(pos)
         return block_column_state(&self.c, pos, axis)
+
+    cpdef position_is_valid_for_size(self, V3 loc, teu):
+        cdef CellIdx pos[3]
+        loc.cpy2mem_i(pos)
+        if teu == 1:
+            res = block_position_is_valid_for_size(&self.c, pos, BOX_SIZE_TWENTY)
+        else:
+            res = block_position_is_valid_for_size(&self.c, pos, BOX_SIZE_FORTY)
+        return res
 
     def lock(self, V3 loc):
         cdef CellIdx pos[3]

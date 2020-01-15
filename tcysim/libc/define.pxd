@@ -10,8 +10,8 @@ cdef extern from "define.h":
     ctypedef int bool
 
     ctypedef enum BoxSize:
-        BOX_SIZE_TWENTY
-        BOX_SIZE_FORTY
+        BOX_SIZE_TWENTY = 0
+        BOX_SIZE_FORTY = 1
 
     ctypedef enum BoxState:
         BOX_STATE_INITIAL = 0
@@ -24,12 +24,12 @@ cdef extern from "define.h":
         BOX_STATE_PLACEHOLDER = 7
 
     ctypedef enum SlotUsage:
-        SLOT_USAGE_FREE
-        SLOT_USAGE_TWENTY_ONLY
-        SLOT_USAGE_FORTY_ONLY
-        SLOT_USAGE_FORTY_ONLY_END
+        SLOT_USAGE_FREE = 0
+        SLOT_USAGE_TWENTY_ONLY = 1
+        SLOT_USAGE_FORTY_ONLY = 2
+        SLOT_USAGE_FORTY_ONLY_END = 3
 
-    ctypedef int64_t Time
+    ctypedef double Time
     ctypedef int32_t CellIdx
     ctypedef struct Block
 
@@ -64,7 +64,7 @@ cdef extern from "box.h":
     int box_alloc(Box *box, Time time)
     int box_store(Box *box, Time time)
     int box_retrieve(Box *box, Time time)
-    bool box_position_is_valid(Box *box, Block *blk, CellIdx *loc)
+    # bool box_position_is_valid(Box *box, Block *blk, CellIdx *loc)
     void box_store_position(Box *box, CellIdx *id, bool new_locx)
     int box_place_holder(Box *box, CellIdx *new_loc)
     int box_remove_holder(Box *box)
@@ -86,6 +86,7 @@ cdef extern from "block.h":
     void block_unlock(Block *blk, const CellIdx*idx)
     bool block_is_locked(Block *blk, const CellIdx*idx)
     int block_column_state(Block *blk, const CellIdx *idx, int axis)
+    bool block_position_is_valid_for_size(Block *blk, CellIdx *loc, BoxSize box_size)
 
 cdef extern from "path.h":
     ctypedef struct PathFrameChunk

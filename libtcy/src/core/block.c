@@ -2,6 +2,7 @@
 // Created by tefx on 10/21/19.
 //
 
+#include "define.h"
 #include "block.h"
 #include "error.h"
 #include "box.h"
@@ -175,21 +176,57 @@ CellIdx blk_stack_hash(Block *blk, const CellIdx *idx) {
     return map_idx;
 }
 
-int block_column_state(Block *blk, const CellIdx* idx, int axis){
+int block_column_state(Block *blk, const CellIdx *idx, int axis) {
     return blk->column_use_type[axis][_blk_clmn_idx(blk, idx, axis)];
 }
 
-void block_lock(Block *blk, const CellIdx* idx) {
+void block_lock(Block *blk, const CellIdx *idx) {
     CellIdx map_idx = blk_stack_hash(blk, idx);
     blk->lock_map[map_idx] = TRUE;
 }
 
-void block_unlock(Block *blk, const CellIdx* idx) {
+void block_unlock(Block *blk, const CellIdx *idx) {
     CellIdx map_idx = blk_stack_hash(blk, idx);
     blk->lock_map[map_idx] = FALSE;
 }
 
-bool block_is_locked(Block *blk, const CellIdx* idx){
+bool block_is_locked(Block *blk, const CellIdx *idx) {
     CellIdx map_idx = blk_stack_hash(blk, idx);
     return blk->lock_map[map_idx];
 }
+
+static inline bool _compare_usage(BoxSize box_size, SlotUsage usage, SlotUsage usage2) {
+    if (usage == SLOT_USAGE_FREE)
+        if (box_size == BOX_SIZE_FORTY)
+            return usage2 == SLOT_USAGE_FREE;
+        else
+            return TRUE;
+    else if (usage == SLOT_USAGE_TWENTY_ONLY)
+        return box_size == BOX_SIZE_TWENTY;
+    else if (usage == SLOT_USAGE_FORTY_ONLY)
+        return box_size == BOX_SIZE_FORTY;
+    else
+        return FALSE;
+}
+
+bool block_position_is_valid_for_size(Block *blk, CellIdx *loc, BoxSize box_size) {
+    SlotUsage column_use_type, column_use_type2 = SLOT_USAGE_FREE;
+    if (box_size == BOX_SIZE_FORTY && loc[blk->box_orientation] > blk->spec[blk->box_orientation] - 2)
+        return FALSE;
+    for (int i = 0; i < 3; ++i) {
+        if (loc[i] >= blk->spec[i])
+            return FALSE;
+        if (blk->column_use_type[i] && blk->column_sync[i]) {
+            column_use_type = blk->column_use_type[i][_blk_clmn_idx(blk, loc, i)];
+            if (box_size == BOX_SIZE_FORTY) {
+                loc[blk->box_orientation]++;
+                column_use_type2 = blk->column_use_type[i][_blk_clmn_idx(blk, loc, i)];
+                loc[blk->box_orientation]--;
+            }
+            if (!_compare_usage(box_size, column_use_type, column_use_type2))
+                return FALSE;
+        }
+    }
+    return TRUE;
+}
+

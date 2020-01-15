@@ -44,4 +44,6 @@ DLLEXPORT bool block_is_locked(Block *blk, const CellIdx *idx);
 
 DLLEXPORT int block_column_state(Block *blk, const CellIdx *idx, int axis);
 
+DLLEXPORT bool block_position_is_valid_for_size(Block *blk, CellIdx *loc, BoxSize box_size);
+
 #endif //LIBTCY_BLOCK_H

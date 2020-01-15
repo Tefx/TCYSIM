@@ -164,12 +164,8 @@ cdef class CBox:
                 break
             yield box
 
-    def position_is_valid(self, CBlock block, CellIdx x, CellIdx y, CellIdx z):
-        cdef CellIdx loc[3]
-        loc[0] = x
-        loc[1] = y
-        loc[2] = z
-        return box_position_is_valid(&self.c, &block.c, loc)
+    def position_is_valid(self, CBlock block, V3 loc):
+        return block.position_is_valid_for_size(loc, self.teu)
 
     def store_coord(self, V3 loc=None, transform_to=None):
         cdef V3i idx = self.store_position(loc)

@@ -10,20 +10,6 @@
 #include "define.h"
 #include "error.h"
 
-static inline bool _box_match_usage(Box *box, SlotUsage usage, SlotUsage usage2) {
-    if (usage == SLOT_USAGE_FREE)
-        if (box->size == BOX_SIZE_FORTY)
-            return usage2 == SLOT_USAGE_FREE;
-        else
-            return TRUE;
-    else if (usage == SLOT_USAGE_TWENTY_ONLY)
-        return box->size == BOX_SIZE_TWENTY;
-    else if (usage == SLOT_USAGE_FORTY_ONLY)
-        return box->size == BOX_SIZE_FORTY;
-    else
-        return FALSE;
-}
-
 static inline void _box_mark_usage(Block *blk, Box *box, int delta) {
     for (int i = 0; i < 3; ++i) {
         if (blk->column_use_type[i]) {
@@ -160,27 +146,6 @@ void box_init(Box *box, char *box_id, BoxSize size) {
 
 void box_destroy(Box *box) {}
 
-bool box_position_is_valid(Box *box, Block *blk, CellIdx *loc) {
-    SlotUsage column_use_type, column_use_type2 = SLOT_USAGE_FREE;
-    if (box->size == BOX_SIZE_FORTY && loc[blk->box_orientation] > blk->spec[blk->box_orientation] - 2)
-        return FALSE;
-    for (int i = 0; i < 3; ++i) {
-        if (loc[i] >= blk->spec[i])
-            return FALSE;
-        if (blk->column_use_type[i] && blk->column_sync[i]) {
-            column_use_type = blk->column_use_type[i][_blk_clmn_idx(blk, loc, i)];
-            if (box->size == BOX_SIZE_FORTY) {
-                loc[blk->box_orientation]++;
-                column_use_type2 = blk->column_use_type[i][_blk_clmn_idx(blk, loc, i)];
-                loc[blk->box_orientation]--;
-            }
-            if (!_box_match_usage(box, column_use_type, column_use_type2))
-                return FALSE;
-        }
-    }
-    return TRUE;
-}
-
 int box_alloc(Box *box, Time time) {
     struct Block *blk = box->block;
     CellIdx *loc = box->loc;
@@ -192,11 +157,11 @@ int box_alloc(Box *box, Time time) {
         loc[blk->stacking_axis] = BLK_USAGE_OCCUPIED(blk, loc, blk->stacking_axis);
     }
 
-    if (loc[0] < 0 || loc[1] < 0 || loc[2] < 0)
-        return ERROR_ALLOC_CELL_MISSING_LOCATION_INFO;
+    assert(!(loc[0] < 0 || loc[1] < 0 || loc[2] < 0));
+//        return ERROR_ALLOC_CELL_MISSING_LOCATION_INFO;
 
-    if (!box_position_is_valid(box, blk, loc))
-        return ERROR_INVALID_LOCATION;
+    assert(block_position_is_valid_for_size(blk, loc, box->size));
+//        return ERROR_INVALID_LOCATION;
 
     _blk_link_cell(blk, box);
     _box_adjust_and_mark_usage(blk, box, 1, TRUE);
