@@ -52,7 +52,7 @@ void block_destroy(Block *blk) {
     }
 }
 
-inline CellIdx _blk_clmn_idx(Block *blk, const CellIdx *loc, int along) {
+CellIdx _blk_clmn_idx(Block *blk, const CellIdx *loc, int along) {
     if (along == 2) {
         return loc[1] + loc[0] * blk->spec[1];
     } else if (along == 1) {

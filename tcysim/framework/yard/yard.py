@@ -57,7 +57,7 @@ class Yard:
             return request.id
 
     def fire_probe(self, probe_name, *args, **kwargs):
-        self.probe_mgr.fire(self.env.current_time, probe_name, *args, **kwargs)
+        return self.probe_mgr.fire(self.env.current_time, probe_name, *args, **kwargs)
 
     def get_request(self, handler):
         return self.requests[handler]
@@ -66,7 +66,7 @@ class Yard:
         if request.req_type == request.TYPE.RETRIEVE and request.box.state == request.box.STATE.RETRIEVED:
             raise Exception("here!")
         request.submit(time, ready)
-        return self.add_request(request)
+        # return self.add_request(request)
 
     def query_request_state(self, time, handler):
         request = self.get_request(handler)

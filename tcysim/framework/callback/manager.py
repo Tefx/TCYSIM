@@ -29,6 +29,6 @@ class CallBackManager(Process):
 
     def _process(self):
         callback = heappop(self.queue)
-        self.yard.probe_mgr.fire(self.time, "callback.before", callback)
+        self.yard.fire_probe(self.time, "callback.before", callback)
         callback(self.time)
-        self.yard.probe_mgr.fire(self.time, "callback.after", callback)
+        self.yard.fire_probe(self.time, "callback.after", callback)

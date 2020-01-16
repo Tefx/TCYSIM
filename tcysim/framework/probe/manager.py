@@ -12,4 +12,5 @@ class ProbeManager:
         if prob_name in self._set:
             for action in self._set[prob_name]:
                 action.activate(time, args, kwargs)
+            return True
 

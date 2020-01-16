@@ -68,6 +68,9 @@ class StackingBlock(Block):
         h_max = max((self.count(*idx, include_occupied=False) for idx in product(*rs)), default=0)
         return self.stack_height(h_max)
 
+    def bay_state(self, i):
+        return self.column_state(V3i(i,0,0), 1)
+
     def bay_is_valid(self, box, i):
         if self.position_is_valid_for_size(V3(i, 0, 0), box.teu):
             max_num = self.rows * self.tiers - self.tiers
@@ -75,12 +78,15 @@ class StackingBlock(Block):
         else:
             return False
 
-    def available_cells(self, box):
+    def available_cells(self, box, allow_new_bay=True):
         for i in range(self.bays):
             if box.state == box.STATE.STORED and box.location.x == i:
                 bay_avail = True
             else:
-                bay_avail = self.bay_is_valid(box, i)
+                if not allow_new_bay and self.bay_state(i) == self.COLUMN_USAGE.FREE:
+                    bay_avail = False
+                else:
+                    bay_avail = self.bay_is_valid(box, i)
             if bay_avail:
                 for j in range(self.rows):
                     loc = V3i(i, j, self.count(i, j))

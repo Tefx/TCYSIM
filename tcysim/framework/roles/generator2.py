@@ -17,7 +17,10 @@ class GeneratorEvent:
         self.kwargs = kwargs
 
     def __lt__(self, other):
-        return (self.time, self.type.value) < (other.time, other.type.value)
+        if self.time == other.time:
+            return self.type.value < other.type.value
+        else:
+            return self.time < other.time
 
 
 class EventHandler(Dispatcher):

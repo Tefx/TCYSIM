@@ -90,7 +90,7 @@ void pathtrace_append_frame(PathTrace *pt, Time time, double coord, void *other)
     Time last_time = -1;
 
     pathtrace_last_frame_values(pt, &last_time, NULL, NULL);
-    if (time != last_time) {
+    if (fne(time, last_time)) {
         if (chunk->num == pt->chunk_size)
             chunk = pathtrace_append_chunk(pt);
         frame = chunk->frames + (chunk->num++);
@@ -120,7 +120,8 @@ bool pathtrace_intersect_test_with_clearance(PathTrace *pt0, PathTrace *pt1, dou
 
         pathframechunk_frame_values(pfc1, i, &x1, &y1, NULL);
         if (pathtrace_is_last_frame(pt1, pfc1, i)) {
-            x2 = et0 > et1 ? et0 : et1;
+//            x2 = et0 > et1 ? et0 : et1;
+            x2 = flt(et1, et0) ? et0 : et1;
             y2 = y1;
         } else {
             pathframechunk_frame_values(pfc1, i + 1, &x2, &y2, NULL);
@@ -128,7 +129,8 @@ bool pathtrace_intersect_test_with_clearance(PathTrace *pt0, PathTrace *pt1, dou
 
         pathframechunk_frame_values(pfc0, j, &x3, &y3, NULL);
         if (pathtrace_is_last_frame(pt0, pfc0, j)) {
-            x4 = et0 > et1 ? et0 : et1;
+//            x4 = et0 > et1 ? et0 : et1;
+            x4 = flt(et1, et0) ? et0 : et1;
             y4 = y3;
         } else {
             pathframechunk_frame_values(pfc0, j + 1, &x4, &y4, NULL);
@@ -138,13 +140,12 @@ bool pathtrace_intersect_test_with_clearance(PathTrace *pt0, PathTrace *pt1, dou
         y4 += shift;
 
 //            printf("(%f,%f), (%f, %f), (%f,%f), (%f,%f)\n", (float)x3, y3, (float)x4, y4, (float)x1, y1, (float)x2, y2);
-        if (x2 < x3) i++;
-        else if (x4 < x1) j++;
-        else if (cross_test_with_clearance((float) x1, y1, (float) x2, y2, (float) x3, y3, (float) x4, y4,
-                                           clearance)) {
+        if (flt(x2, x3)) i++;
+        else if (flt(x4, x1)) j++;
+        else if (cross_test_with_clearance(x1, y1, x2, y2, x3, y3, x4, y4, clearance)) {
             return TRUE;
         }
-        else if (x2 < x4) i++;
+        else if (flt(x2,x4)) i++;
         else j++;
     }
     return FALSE;

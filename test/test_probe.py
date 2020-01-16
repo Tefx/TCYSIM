@@ -144,7 +144,7 @@ from uuid import uuid4
 
 class SimpleBoxBomb(BoxBomb):
     def next_time(self, time):
-        return time + random.uniform(300, 600)
+        return time + random.uniform(30, 60)
 
     def store_time(self, alloc_time):
         return alloc_time + random.uniform(5, 10)
@@ -171,12 +171,12 @@ if __name__ == '__main__':
     yard = SimpleYard()
 
     lanes = [
-        Lane(i, V3(0, i * TEU.WIDTH * 2, 0), length=20, width=TEU.WIDTH * 2, rotate=0)
-        for i in range(4)
+        # Lane(i, V3(0, i * TEU.WIDTH * 2, 0), length=20, width=TEU.WIDTH * 2, rotate=0)
+        # for i in range(4)
         ]
     lanes.append(Lane(5, V3(25, -TEU.WIDTH * 2, 0), length=TEU.LENGTH * 50, width=TEU.WIDTH * 2, rotate=0))
     lanes.append(Lane(6, V3(25, TEU.WIDTH * 10, 0), length=TEU.LENGTH * 50, width=TEU.WIDTH * 2, rotate=0))
-    block = Block(yard, V3(25, 0, 0), V3(16, 10, 6), rotate=0, lanes=lanes)
+    block = Block(yard, V3(25, 0, 0), V3(52, 10, 6), rotate=0, lanes=lanes)
 
     rmg1 = RMG(yard, block, 0, idx=0)
     rmg2 = RMG(yard, block, -1, idx=1)

@@ -88,4 +88,4 @@ class Operation:
         self.__interruption_flag = False
 
     def __repr__(self):
-        return "<OP/{}>{}".format(self.op_type.name, str(hash(self))[:4])
+        return "<OP/{}>{}".format(self.op_type.name, str(hash(self))[-4:0])

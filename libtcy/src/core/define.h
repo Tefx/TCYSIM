@@ -84,4 +84,9 @@ typedef struct Block {
     void* _self;
 } Block;
 
+
+int flt(double x, double y);
+int feq(double x, double y);
+int fne(double x, double y);
+
 #endif //LIBTCY_DEFINE_H

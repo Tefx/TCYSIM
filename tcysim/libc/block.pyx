@@ -1,5 +1,10 @@
 from cpython cimport PyObject
 
+cdef class BlockColumnUsage:
+    FREE = SLOT_USAGE_FREE
+    TWENTY_ONLY = SLOT_USAGE_TWENTY_ONLY
+    FORTY_ONLY = SLOT_USAGE_FORTY_ONLY
+    FORTY_ONLY_END = SLOT_USAGE_FORTY_ONLY_END
 
 cdef class CBlock:
     def __init__(self, V3 spec, int stacking_axis=2, tuple sync_axes=(0, 2)):
@@ -12,6 +17,10 @@ cdef class CBlock:
 
     def __destroy__(self):
         block_destroy(&self.c)
+
+    @property
+    def COLUMN_USAGE(self):
+        return BlockColumnUsage
 
     @property
     def stacking_axis(self):
