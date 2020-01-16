@@ -157,7 +157,9 @@ class Equipment(EquipmentRangeLayout, Process):
         with self.lock_state(self.STATE.WORKING):
             self.current_op = op
             self.yard.fire_probe('operation.start', op)
+            op.state = op.STATE.RUNNING
             self.time = yield op.finish_time, Priority.OP_FINISH
+            op.state = op.STATE.FINISHED
             self.yard.fire_probe('operation.finish', op)
             self.current_op = None
 
@@ -169,6 +171,7 @@ class Equipment(EquipmentRangeLayout, Process):
                 if self.op_builder.build_and_check(self.time, op):
                     yield from self.perform_op(self.time, op)
                 else:
+                    op.state = op.STATE.CANCELLED
                     self.yard.fire_probe('operation.conflict', op)
                     raise ROREquipmentConflictError(op)
             self.yard.fire_probe('request.succeed', request)
@@ -180,6 +183,8 @@ class Equipment(EquipmentRangeLayout, Process):
     def handle_operation(self, op):
         if self.op_builder.build_and_check(self.time, op):
             yield from self.perform_op(self.time, op)
+        else:
+            op.state = op.STATE.CANCELLED
 
     def _process(self):
         op_or_req = self.next_task

@@ -54,7 +54,7 @@ class Request:
             self.state = ReqState.RESUME_READY
         else:
             self.state = ReqState.READY
-        self.ready_time = time
+            self.ready_time = time
 
     def is_ready(self):
         if self.state == ReqState.READY or self.state == ReqState.RESUME_READY:
@@ -81,7 +81,7 @@ class Request:
 
     def gen_op(self, time):
         for op in self.equipment.req_handler.handle(time, self):
-            # self.ops.append(op)
+            self.ops.append(op)
             yield op
 
     @property

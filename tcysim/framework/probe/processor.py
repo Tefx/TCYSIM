@@ -2,7 +2,7 @@ import heapq
 
 from pesim import Process, TIME_FOREVER
 from tcysim.framework.priority import Priority
-from tcysim.framework.probe.action import ProbeAction
+from tcysim.framework.probe.action import ProbeActionTemplate
 
 
 class ProbeProcessor(Process):
@@ -13,8 +13,8 @@ class ProbeProcessor(Process):
         self.actions = []
         for name in dir(self):
             item = getattr(self, name)
-            if isinstance(item, ProbeAction):
-                self.probe_mgr.register(item.prob_name, item)
+            if isinstance(item, ProbeActionTemplate):
+                self.probe_mgr.register(item)
                 item.set_processor(self)
 
     def _wait(self, priority=Priority.PROBE):

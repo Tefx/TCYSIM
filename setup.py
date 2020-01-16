@@ -42,6 +42,11 @@ extensions = [
         extra_compile_args=extra_compile_args,
         ),
     Extension(
+        name="tcysim.framework.probe.*",
+        sources=["tcysim/framework/probe/*.pyx"],
+        extra_compile_args=extra_compile_args,
+        ),
+    Extension(
         name="tcysim.utils.*",
         sources=["tcysim/utils/*.pyx"],
         extra_compile_args=extra_compile_args,

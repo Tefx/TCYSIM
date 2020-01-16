@@ -1,4 +1,5 @@
 from contextlib import contextmanager
+from enum import auto, IntEnum
 
 from .step import CallBackStep, EmptyStep, MoverStep, AndStep, StepWorkflow
 from ..request import Request
@@ -8,9 +9,19 @@ from tcysim.utils import Paths, V3
 import heapq
 
 
+class OpState(IntEnum):
+    INIT = auto()
+    RUNNING = auto()
+    FINISHED = auto()
+    CANCELLED = auto()
+
+
 class Operation:
+    STATE = OpState
+
     def __init__(self, type, request_or_equipment, locking_pos=(), **attrs):
         self.op_type = type
+        self.state = OpState.INIT
         self.start_time = -1
         self.finish_time = -1
         if isinstance(request_or_equipment, Request):
@@ -19,13 +30,12 @@ class Operation:
         else:
             self.request = None
             self.equipment = request_or_equipment
-        self.last_step = None
-        self.paths = {}
-        self.__interruption_flag = False
-        self.locking_positions = list(locking_pos)
-        self.__dict__.update(attrs)
         self._pps = {}
         self.workflow = StepWorkflow()
+        self.paths = {}
+        self.interruption_flag = False
+        self.locking_positions = list(locking_pos)
+        self.__dict__.update(attrs)
 
     def add_lock(self, pos):
         self.locking_positions.append(pos)
@@ -76,16 +86,16 @@ class Operation:
             src_loc = src_loc[component.axis]
         if isinstance(dst_loc, V3):
             dst_loc = dst_loc[component.axis]
-        return MoverStep(component, src_loc, dst_loc, self.__interruption_flag, mode=mode)
+        return MoverStep(component, src_loc, dst_loc, self.interruption_flag, mode=mode)
 
     @contextmanager
     def allow_interruption(self, equipment, query_task_before_perform=True):
-        self.__interruption_flag = True
+        self.interruption_flag = True
         if query_task_before_perform:
             cbs = CallBackStep(self.workflow, CallBack(equipment.query_new_task))
             self.workflow.add(cbs)
         yield
-        self.__interruption_flag = False
+        self.interruption_flag = False
 
     def __repr__(self):
         return "<OP/{}>{}".format(self.op_type.name, str(hash(self))[-4:0])
