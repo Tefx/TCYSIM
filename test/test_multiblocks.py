@@ -90,7 +90,7 @@ class CooperativeTwinCraneReqHandler(ReqHandler):
     def on_relocate_putdown(self, time, box, original_request=None):
         super(CooperativeTwinCraneReqHandler, self).on_relocate_putdown(time, box)
         if original_request:
-            if original_request.req_type == ReqType.RETRIEVE and getattr(original_request, "ph2", True):
+            if original_request.req_type == ReqType.RETRIEVE and getattr(original_request, "coop_flag", False):
                 req2 = Request(self.ReqType.RETRIEVE, time, box, lane=original_request.lane, coop_flag=True)
                 self.yard.submit_request(time, req2)
 

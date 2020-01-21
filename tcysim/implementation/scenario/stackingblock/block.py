@@ -78,19 +78,24 @@ class StackingBlock(Block):
         else:
             return False
 
-    def available_cells(self, box, allow_new_bay=True):
-        for i in range(self.bays):
-            if box.state == box.STATE.STORED and box.location.x == i:
+    def available_cells(self, box, start=-1, finish=-1, allow_new_bay=True, for_relocation=False):
+        start = 0 if start < 0 else start
+        finish = self.bays if finish < 0 else finish
+        max_num = self.rows * self.tiers - self.tiers
+        for i in range(start, finish):
+            if for_relocation and box.location[0] == i:
                 bay_avail = True
             else:
                 if not allow_new_bay and self.bay_state(i) == self.COLUMN_USAGE.FREE:
                     bay_avail = False
+                elif self.position_is_valid_for_size(V3(i, 0, 0), box.teu):
+                    bay_avail = self.count(i, -1, -1) < max_num
                 else:
-                    bay_avail = self.bay_is_valid(box, i)
+                    bay_avail = False
             if bay_avail:
                 for j in range(self.rows):
                     loc = V3i(i, j, self.count(i, j))
-                    if box.position_is_valid(self, loc):
+                    if self.position_is_valid_for_size(loc, box.teu):
                         yield loc
 
     def zone_from_coord(self, local_coord):

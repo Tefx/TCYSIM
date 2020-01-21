@@ -27,6 +27,7 @@ class Request:
         self.start_time = -1
         self.finish_time = -1
         self.reject_time = -1
+        self.sync_time = -1
         self.signals = dict() if signals is None else signals
         self.state = ReqState.INIT
         self.box = box
@@ -98,6 +99,7 @@ class Request:
 
     def sync(self, time):
         self.state = ReqState.SYNCED
+        self.sync_time = time
 
     def finish_or_fail(self, time):
         if self.state != ReqState.REJECTED:
@@ -123,7 +125,7 @@ class Request:
 
     def clean(self):
         self.signals = None
-        self.ops = None
+        # self.ops = None
 
     def __repr__(self):
         return "[{}/{}]({}/AT:{:.2f})".format(self.req_type, self.state.name, self.equipment, self.arrival_time)

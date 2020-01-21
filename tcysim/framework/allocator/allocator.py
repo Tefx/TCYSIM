@@ -2,6 +2,10 @@ class SpaceAllocator:
     def __init__(self, yard):
         self.yard = yard
 
+    @property
+    def time(self):
+        return self.yard.env.current_time
+
     def register_block(self, block):
         pass
 
