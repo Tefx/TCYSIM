@@ -8,7 +8,7 @@
 #include "define.h"
 
 typedef struct {
-    Time time;
+    Time_TCY time;
     double coord;
     void* other;
 } PathKeyFrame;
@@ -28,7 +28,7 @@ typedef struct{
 
 DLLEXPORT void pathtrace_init(PathTrace *pt, int chunk_size);
 DLLEXPORT void pathtrace_destroy(PathTrace *pt);
-DLLEXPORT void pathtrace_append_frame(PathTrace *pt, Time time, double coord, void *other);
+DLLEXPORT void pathtrace_append_frame(PathTrace *pt, Time_TCY time, double coord, void *other);
 DLLEXPORT bool pathtrace_intersect_test_with_clearance(PathTrace *pt0, PathTrace *pt1, double clearance, double shift);
 DLLEXPORT void pathtrace_boundary(PathTrace* pt, double* pmax, double* pmin);
 

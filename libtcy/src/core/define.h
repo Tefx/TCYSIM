@@ -33,7 +33,7 @@
 typedef enum {
     BOX_SIZE_TWENTY = 0,
     BOX_SIZE_FORTY = 1,
-} BoxSize;
+} BoxSize_TCY;
 
 typedef enum {
     BOX_STATE_INITIAL = 0,
@@ -44,45 +44,45 @@ typedef enum {
     BOX_STATE_RETRIEVING = 5,
     BOX_STATE_RETRIEVED = 6,
     BOX_STATE_PLACEHOLDER = 7,
-} BoxState;
+} BoxState_TCY;
 
 typedef enum {
     SLOT_USAGE_FREE = 0,
     SLOT_USAGE_TWENTY_ONLY = 1,
     SLOT_USAGE_FORTY_ONLY = 2,
     SLOT_USAGE_FORTY_ONLY_END = 3,
-} SlotUsage;
+} SlotUsage_TCY;
 
-typedef double Time;
-typedef int32_t CellIdx;
-typedef struct Block Block;
+typedef double Time_TCY;
+typedef int32_t CellIdx_TCY;
+typedef struct Block_TCY Block_TCY;
 
-typedef struct Box {
+typedef struct Box_TCY {
     char id[BOX_ID_LEN_LIMIT];
-    BoxSize size;
-    BoxState state;
-    Time alloc_time, store_time, retrieval_time;
-    CellIdx loc[3];
-    Block *block;
+    BoxSize_TCY size;
+    BoxState_TCY state;
+    Time_TCY alloc_time, store_time, retrieval_time;
+    CellIdx_TCY loc[3];
+    Block_TCY *block;
     void* _self;
-    struct Box* _holder_or_origin;
-} Box;
+    struct Box_TCY* _holder_or_origin;
+} Box_TCY;
 
-typedef Box *Cell;
+typedef Box_TCY *Cell_TCY;
 
-typedef struct Block {
-    CellIdx spec[3];
+typedef struct Block_TCY {
+    CellIdx_TCY spec[3];
     bool column_sync[3];
-    SlotUsage *column_use_type[3];
-    CellIdx *column_usage[3];
-    CellIdx *column_usage_occupied[3];
-    CellIdx cell_num;
-    Cell *cells;
+    SlotUsage_TCY *column_use_type[3];
+    CellIdx_TCY *column_usage[3];
+    CellIdx_TCY *column_usage_occupied[3];
+    CellIdx_TCY cell_num;
+    Cell_TCY *cells;
     int stacking_axis;
     int box_orientation;
     bool *lock_map;
     void* _self;
-} Block;
+} Block_TCY;
 
 
 int flt(double x, double y);

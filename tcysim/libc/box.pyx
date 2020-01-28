@@ -13,11 +13,11 @@ cdef class CBoxState:
     RETRIEVED = BOX_STATE_RETRIEVED
 
 cdef class CBox:
-    cdef Box c
+    cdef Box_TCY c
     cdef public object equipment
 
-    def __cinit__(self, bytes box_id, int size=20, *args, **kwargs):
-        cdef BoxSize c_size
+    def __init__(self, bytes box_id, int size=20, *args, **kwargs):
+        cdef BoxSize_TCY c_size
         if size == 20:
             c_size = BOX_SIZE_TWENTY
         elif size == 40:
@@ -31,8 +31,8 @@ cdef class CBox:
     def __destroy__(self):
         box_destroy(&self.c)
 
-    def alloc(self, Time time, block, V3 loc):
-        cdef CellIdx new_loc[3];
+    def alloc(self, Time_TCY time, block, V3 loc):
+        cdef CellIdx_TCY new_loc[3];
         if self.c.state == BOX_STATE_INITIAL:
             self.set_location(block, loc.x, loc.y, loc.z)
             box_alloc(&self.c, time)
@@ -49,7 +49,7 @@ cdef class CBox:
         else:
             raise NotImplementedError
 
-    def store(self, Time time):
+    def store(self, Time_TCY time):
         if self.c.state == BOX_STATE_STORING:
             box_store(&self.c, time)
         elif self.c.state == BOX_STATE_RELOCATING:
@@ -58,7 +58,7 @@ cdef class CBox:
     def has_undone_relocation(self):
         return self.c._holder_or_origin is not NULL
 
-    def retrieve(self, Time time):
+    def retrieve(self, Time_TCY time):
         if self.c._holder_or_origin:
             box_relocate_retrieve(&self.c, time)
             assert self.c.state == BOX_STATE_RELOCATING
@@ -130,14 +130,14 @@ cdef class CBox:
     def block(self, CBlock block):
         self.c.block = &block.c
 
-    def set_location(self, CBlock block, CellIdx x, CellIdx y, CellIdx z):
+    def set_location(self, CBlock block, CellIdx_TCY x, CellIdx_TCY y, CellIdx_TCY z):
         self.c.block = &block.c
         self.c.loc[0] = x
         self.c.loc[1] = y
         self.c.loc[2] = z
 
     cpdef V3i store_position(self, V3 new_loc=None):
-        cdef CellIdx loc[3]
+        cdef CellIdx_TCY loc[3]
         if new_loc:
             new_loc.cpy2mem_i(loc)
             box_store_position(&self.c, loc, True)
@@ -148,24 +148,34 @@ cdef class CBox:
         return V3i(loc[0], loc[1], loc[2])
 
     def relocate_position(self, V3 new_loc):
-        cdef CellIdx loc[3]
+        cdef CellIdx_TCY loc[3]
         new_loc.cpy2mem_i(loc)
         box_relocate_position(&self.c, loc)
         return V3(loc[0], loc[1], loc[2])
 
     def box_above(self):
-        axis = self.block.stacking_axis
+        cdef CBlock block = self.block
+        cdef int axis = block.stacking_axis
+        cdef CBox boc
+        cdef V3 loc
+
         if axis < 0:
             return
         while True:
             loc = self.location
-            box = self.block.top_box(loc, axis)
+            box = block.top_box(loc, axis)
             if box is self:
                 break
             yield box
 
+    cpdef CBox top_box_above(self):
+        cdef CBlock block = self.block
+        cdef int axis = self.block.stacking_axis
+        if axis >= 0:
+            return block.top_box(self.location, axis)
+
     def position_is_valid(self, CBlock block, V3 loc):
-        return block.position_is_valid_for_size(loc, self.teu)
+        return block.position_is_valid_for_size(loc[0], loc[1], loc[2], self.teu)
 
     def store_coord(self, V3 loc=None, transform_to=None):
         cdef V3i idx = self.store_position(loc)

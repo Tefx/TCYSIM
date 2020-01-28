@@ -62,6 +62,5 @@ class Block(BlockLayout, CBlock):
 
     def available_cells(self, box):
         for i, j, k in product(*self.shape):
-            loc = V3(i, j, k)
-            if self.position_is_valid_for_size(loc, box.teu):
+            if self.position_is_valid_for_size(i, j, k, box.teu):
                 return loc

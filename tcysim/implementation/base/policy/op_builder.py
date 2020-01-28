@@ -54,6 +54,8 @@ class OpBuilder(OpBuilderBase):
         src_ready_loc = self.equipment.prepare_coord_for_op_coord(op.src_loc)
         dst_ready_loc = self.equipment.prepare_coord_for_op_coord(op.dst_loc)
 
+        # print("[OP/RLCT]", self.equipment.time, op.box.block.id, self.equipment.idx, op.box)
+
         yield op.emit_signal("rlct_start_or_resume")
         yield from self.move_steps(op, self.equipment.current_coord(), src_ready_loc)
         yield from self.move_steps(op, src_ready_loc, op.src_loc)

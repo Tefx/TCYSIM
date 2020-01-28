@@ -9,11 +9,11 @@ TIME_INF = _TIME_INF
 cdef extern from "define.h":
     ctypedef int bool
 
-    ctypedef enum BoxSize:
+    ctypedef enum BoxSize_TCY:
         BOX_SIZE_TWENTY = 0
         BOX_SIZE_FORTY = 1
 
-    ctypedef enum BoxState:
+    ctypedef enum BoxState_TCY:
         BOX_STATE_INITIAL = 0
         BOX_STATE_ALLOCATED = 1
         BOX_STATE_STORING = 2
@@ -23,70 +23,70 @@ cdef extern from "define.h":
         BOX_STATE_RETRIEVED = 6
         BOX_STATE_PLACEHOLDER = 7
 
-    ctypedef enum SlotUsage:
+    ctypedef enum SlotUsage_TCY:
         SLOT_USAGE_FREE = 0
         SLOT_USAGE_TWENTY_ONLY = 1
         SLOT_USAGE_FORTY_ONLY = 2
         SLOT_USAGE_FORTY_ONLY_END = 3
 
-    ctypedef double Time
-    ctypedef int32_t CellIdx
-    ctypedef struct Block
+    ctypedef double Time_TCY
+    ctypedef int32_t CellIdx_TCY
+    ctypedef struct Block_TCY
 
-    ctypedef struct Box:
+    ctypedef struct Box_TCY:
         char id[_BOX_ID_LEN_LIMIT]
-        BoxSize size
-        BoxState state
-        Time alloc_time, store_time, retrieval_time
-        CellIdx loc[3]
-        Block *block
+        BoxSize_TCY size
+        BoxState_TCY state
+        Time_TCY alloc_time, store_time, retrieval_time
+        CellIdx_TCY loc[3]
+        Block_TCY *block
         void*_self
-        Box*_holder_or_origin
+        Box_TCY*_holder_or_origin
 
-    ctypedef Box *Cell
+    ctypedef Box_TCY *Cell_TCY
 
-    ctypedef struct Block:
-        CellIdx shape[3]
+    ctypedef struct Block_TCY:
+        CellIdx_TCY shape[3]
         bool column_sync[3]
-        SlotUsage *column_use_type[3]
-        CellIdx *column_usage[3]
-        CellIdx *column_usage_occupied[3]
-        CellIdx cell_num
-        Cell *cells
+        SlotUsage_TCY *column_use_type[3]
+        CellIdx_TCY *column_usage[3]
+        CellIdx_TCY *column_usage_occupied[3]
+        CellIdx_TCY cell_num
+        Cell_TCY *cells
         int stacking_axis
         int box_orientation
         bool *lock_map
         void*_self
 
 cdef extern from "box.h":
-    void box_init(Box *box, char *box_id, BoxSize size)
-    void box_destroy(Box *box)
-    int box_alloc(Box *box, Time time)
-    int box_store(Box *box, Time time)
-    int box_retrieve(Box *box, Time time)
+    void box_init(Box_TCY *box, char *box_id, BoxSize_TCY size)
+    void box_destroy(Box_TCY *box)
+    int box_alloc(Box_TCY *box, Time_TCY time)
+    int box_store(Box_TCY *box, Time_TCY time)
+    int box_retrieve(Box_TCY *box, Time_TCY time)
     # bool box_position_is_valid(Box *box, Block *blk, CellIdx *loc)
-    void box_store_position(Box *box, CellIdx *id, bool new_locx)
-    int box_place_holder(Box *box, CellIdx *new_loc)
-    int box_remove_holder(Box *box)
-    int box_realloc(Box *box, Time time, CellIdx *new_loc)
-    void box_relocate_position(Box *box, CellIdx *loc)
-    int box_relocate_alloc(Box *box, Time time, CellIdx *new_loc)
-    int box_relocate_retrieve(Box *box, Time time)
-    int box_relocate_store(Box *box, Time time)
+    void box_store_position(Box_TCY *box, CellIdx_TCY *id, bool new_locx)
+    int box_place_holder(Box_TCY *box, CellIdx_TCY *new_loc)
+    int box_remove_holder(Box_TCY *box)
+    int box_realloc(Box_TCY *box, Time_TCY time, CellIdx_TCY *new_loc)
+    void box_relocate_position(Box_TCY *box, CellIdx_TCY *loc)
+    int box_relocate_alloc(Box_TCY *box, Time_TCY time, CellIdx_TCY *new_loc)
+    int box_relocate_retrieve(Box_TCY *box, Time_TCY time)
+    int box_relocate_store(Box_TCY *box, Time_TCY time)
 
 cdef extern from "block.h":
-    void block_init(Block *blk, const CellIdx *shape, int box_orientation, int stacking_axis, const int *axis_need_sync)
-    void block_destroy(Block *blk)
-    int block_usage(Block *blk, const CellIdx *loc, bool include_occupied)
-    Box*block_box_at(Block*blk, const CellIdx*idx)
-    Box*block_top_box(Block*blk, const CellIdx*idx, int along)
+    void block_init(Block_TCY *blk, const CellIdx_TCY *shape, int box_orientation, int stacking_axis, const int *axis_need_sync)
+    void block_destroy(Block_TCY *blk)
+    int block_usage(Block_TCY *blk, const CellIdx_TCY *loc, bool include_occupied)
+    Box_TCY*block_box_at(Block_TCY*blk, const CellIdx_TCY*idx)
+    Box_TCY*block_top_box(Block_TCY*blk, const CellIdx_TCY*idx, int along)
 
-    CellIdx blk_stack_hash(Block *blk, const CellIdx *idx)
-    void block_lock(Block *blk, const CellIdx*idx)
-    void block_unlock(Block *blk, const CellIdx*idx)
-    bool block_is_locked(Block *blk, const CellIdx*idx)
-    int block_column_state(Block *blk, const CellIdx *idx, int axis)
-    bool block_position_is_valid_for_size(Block *blk, CellIdx *loc, BoxSize box_size)
+    CellIdx_TCY blk_stack_hash(Block_TCY *blk, const CellIdx_TCY *idx)
+    void block_lock(Block_TCY *blk, const CellIdx_TCY*idx)
+    void block_unlock(Block_TCY *blk, const CellIdx_TCY*idx)
+    bool block_is_locked(Block_TCY *blk, const CellIdx_TCY*idx)
+    SlotUsage_TCY block_column_state(Block_TCY *blk, const CellIdx_TCY *idx, int axis)
+    bool block_position_is_valid_for_size(Block_TCY *blk, CellIdx_TCY *loc, BoxSize_TCY box_size)
 
 cdef extern from "path.h":
     ctypedef struct PathFrameChunk
@@ -98,6 +98,6 @@ cdef extern from "path.h":
 
     void pathtrace_init(PathTrace *pt, int chunk_size)
     void pathtrace_destroy(PathTrace *pt)
-    void pathtrace_append_frame(PathTrace *pt, Time time, double pos, void *other)
+    void pathtrace_append_frame(PathTrace *pt, Time_TCY time, double pos, void *other)
     bool pathtrace_intersect_test_with_clearance(PathTrace *pt0, PathTrace *pt1, double clearance, double shift)
     double pathtrace_boundary(PathTrace*pt, double*pmax, double*pmin)

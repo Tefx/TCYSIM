@@ -34,8 +34,15 @@ class ReqHandler(ReqHandlerBase):
     def on_request_relocate(self, time, request):
         yield from self.reshuffle_operations(time, request)
         box = request.box
-        request.acquire_stack(time, box.location, request.new_loc)
-        yield self.gen_relocate_op(time, box, request.new_loc, request)
+        new_loc = getattr(request, "new_loc", False)
+        if not new_loc:
+            new_loc = self.equipment.yard.smgr.slot_for_relocation(box)
+            # print("[REQ/RLCT]", time, box.block.id, request.equipment.idx, new_loc)
+            if not new_loc:
+                self.yard.fire_probe("allocator.fail.relocate", above_box)
+                raise RORUndefinedError("no slot for relocation")
+        request.acquire_stack(time, box.location, new_loc)
+        yield self.gen_relocate_op(time, box, new_loc, request)
 
     def gen_relocate_op(self, time, box, new_loc, request):
         request.link_signal("rlct_start_or_resume", self.on_relocate_start, box=box, dst_loc=new_loc)
@@ -110,6 +117,7 @@ class ReqHandler(ReqHandlerBase):
         pass
 
     def on_relocate_start(self, time, box, dst_loc):
+        # print(["RALC", time, box, dst_loc])
         box.alloc(time, None, dst_loc)
 
     def on_relocate_finish_or_fail(self, time, box):

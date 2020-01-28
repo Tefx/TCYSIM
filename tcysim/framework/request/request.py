@@ -19,7 +19,13 @@ class ReqState(IntEnum):
 class Request:
     STATE = ReqState
 
-    def __init__(self, req_type, time, box=None, equipment=None, signals=None, block=None, **attrs):
+    def __init__(self, req_type, time,
+                 box=None,
+                 equipment=None,
+                 signals=None,
+                 block=None,
+                 one_time_only=False,
+                 **attrs):
         self.req_type = req_type
         self.id = -1
         self.arrival_time = time
@@ -41,6 +47,7 @@ class Request:
         else:
             self.block = None
         self.access_point = None
+        self.one_time_only = one_time_only
         self.reject_times = 0
         self.acquire_fails = set()
         self.acquired_positions = []
@@ -95,7 +102,8 @@ class Request:
         self.finish_time = -1
         self.reject_time = time
         self.reject_times += 1
-        self.submit(time, ready=False)
+        if not self.one_time_only:
+            self.submit(time, ready=False)
 
     def sync(self, time):
         self.state = ReqState.SYNCED

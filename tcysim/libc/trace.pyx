@@ -8,7 +8,7 @@ cdef class Paths:
     def __destroy__(self):
         pathtrace_destroy(&self.c)
 
-    def append(self, Time time, double pos):
+    def append(self, Time_TCY time, double pos):
         pathtrace_append_frame(&self.c, time, pos, NULL)
 
     def intersect_test(self, Paths other, double clearance, double shift):

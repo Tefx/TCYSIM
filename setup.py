@@ -53,15 +53,23 @@ extensions = [
         ),
     ]
 
-setup(ext_modules=cythonize(
-    extensions,
-    compiler_directives={
-        "profile":          False,
-        "linetrace":        False,
-        "cdivision":        True,
-        "boundscheck":      False,
-        "wraparound":       False,
-        "initializedcheck": False,
-        "language_level":   3,
-        }
-    ))
+setup(ext_modules=cythonize(extensions,
+                            compiler_directives={
+                                "profile":          True,
+                                "linetrace":        False,
+                                "cdivision":        True,
+                                "boundscheck":      False,
+                                "wraparound":       False,
+                                "initializedcheck": False,
+                                "language_level":   3,
+                                },
+                            annotate=True,
+                            ),
+      package_data={
+          "tcysim.libc.*":                ["tcysim/libc/*.pyx"],
+          "tcysim.framework.motion.*":    ["tcysim/framework/motion/*.pyx"],
+          "tcysim.framework.operation.*": ["tcysim/framework/operation/*.pyx"],
+          "tcysim.framework.probe.*":     ["tcysim/framework/probe/*.pyx"],
+          "tcysim.utils.*":               ["tcysim/utils/*.pyx"],
+          }
+      )

@@ -10,7 +10,7 @@
 #include "define.h"
 #include "error.h"
 
-static inline void _box_mark_usage(Block *blk, Box *box, int delta) {
+static inline void _box_mark_usage(Block_TCY *blk, Box_TCY *box, int delta) {
     for (int i = 0; i < 3; ++i) {
         if (blk->column_use_type[i]) {
             if (delta > 0 && BLK_USAGE_OCCUPIED(blk, box->loc, i) == 1) {
@@ -34,7 +34,7 @@ static inline void _box_mark_usage(Block *blk, Box *box, int delta) {
     }
 }
 
-static inline void _box_adjust_usage(Block *blk, Box *box, int delta, bool occupied) {
+static inline void _box_adjust_usage(Block_TCY *blk, Box_TCY *box, int delta, bool occupied) {
     if (occupied) {
         for (int i = 0; i < 3; ++i) {
             BLK_USAGE_OCCUPIED(blk, box->loc, i) += delta;
@@ -56,7 +56,7 @@ static inline void _box_adjust_usage(Block *blk, Box *box, int delta, bool occup
     }
 }
 
-static inline void _box_adjust_and_mark_usage(Block *blk, Box *box, int delta, bool occupied) {
+static inline void _box_adjust_and_mark_usage(Block_TCY *blk, Box_TCY *box, int delta, bool occupied) {
     _box_adjust_usage(blk, box, delta, occupied);
     if (box->size == BOX_SIZE_FORTY) {
         box->loc[blk->box_orientation]++;
@@ -67,9 +67,9 @@ static inline void _box_adjust_and_mark_usage(Block *blk, Box *box, int delta, b
         _box_mark_usage(blk, box, delta);
 }
 
-int _box_swap(Box *box, int along, bool sink) {
-    Block *blk = box->block;
-    Box *box2 = _blk_neighbor_box(blk, box, along, TRUE);
+int _box_swap(Box_TCY *box, int along, bool sink) {
+    Block_TCY *blk = box->block;
+    Box_TCY *box2 = _blk_neighbor_box(blk, box, along, TRUE);
 
     _blk_unlink_cell(blk, box);
     _box_adjust_and_mark_usage(blk, box, -1, TRUE);
@@ -106,11 +106,11 @@ int _box_swap(Box *box, int along, bool sink) {
     return SUCCEED;
 }
 
-static inline int _box_sink(Box *box) {
-    Block *blk = box->block;
+static inline int _box_sink(Box_TCY *box) {
+    Block_TCY *blk = box->block;
     if (blk->stacking_axis < 0) return ERROR_CANNOT_FIND_STACKING_AXIS;
     int32_t along = blk->stacking_axis;
-    Box *box2;
+    Box_TCY *box2;
     while (box->loc[along] > 0) {
         box2 = _blk_neighbor_box(blk, box, along, FALSE);
         if (box2->state != BOX_STATE_STORED)
@@ -121,11 +121,11 @@ static inline int _box_sink(Box *box) {
     return SUCCEED;
 }
 
-static inline int _box_float(Box *box) {
-    Block *blk = box->block;
+static inline int _box_float(Box_TCY *box) {
+    Block_TCY *blk = box->block;
     if (blk->stacking_axis < 0) return ERROR_CANNOT_FIND_STACKING_AXIS;
     int32_t along = blk->stacking_axis;
-    Box *box2;
+    Box_TCY *box2;
     while (box->loc[along] < blk->spec[along]) {
         box2 = _blk_neighbor_box(blk, box, along, TRUE);
         if (box2 && box2->state != BOX_STATE_STORED)
@@ -136,7 +136,7 @@ static inline int _box_float(Box *box) {
     return SUCCEED;
 }
 
-void box_init(Box *box, char *box_id, BoxSize size) {
+void box_init(Box_TCY *box, char *box_id, BoxSize_TCY size) {
     strcpy(box->id, box_id);
     box->size = size;
     box->state = BOX_STATE_INITIAL;
@@ -144,11 +144,11 @@ void box_init(Box *box, char *box_id, BoxSize size) {
     box->_holder_or_origin = NULL;
 }
 
-void box_destroy(Box *box) {}
+void box_destroy(Box_TCY *box) {}
 
-int box_alloc(Box *box, Time time) {
-    struct Block *blk = box->block;
-    CellIdx *loc = box->loc;
+int box_alloc(Box_TCY *box, Time_TCY time) {
+    struct Block_TCY *blk = box->block;
+    CellIdx_TCY *loc = box->loc;
 
     if (time >= 0)
         box->alloc_time = time;
@@ -172,15 +172,15 @@ int box_alloc(Box *box, Time time) {
     return SUCCEED;
 }
 
-void box_store_position(Box *box, CellIdx *idx, bool new_loc) {
-    Block *blk = box->block;
+void box_store_position(Box_TCY *box, CellIdx_TCY *idx, bool new_loc) {
+    Block_TCY *blk = box->block;
     if (!new_loc)
-        memcpy(idx, box->loc, sizeof(CellIdx) * 3);
+        memcpy(idx, box->loc, sizeof(CellIdx_TCY) * 3);
     _blk_top_of_stack(blk, idx);
 }
 
-int box_store(Box *box, Time time) {
-    Block *blk = box->block;
+int box_store(Box_TCY *box, Time_TCY time) {
+    Block_TCY *blk = box->block;
 
     if (time >= 0 && box->state != BOX_STATE_RELOCATING)
         box->store_time = time;
@@ -194,8 +194,8 @@ int box_store(Box *box, Time time) {
     return SUCCEED;
 }
 
-int box_retrieve(Box *box, Time time) {
-    Block *blk = box->block;
+int box_retrieve(Box_TCY *box, Time_TCY time) {
+    Block_TCY *blk = box->block;
 
     if (time >= 0)
         box->retrieval_time = time;
@@ -213,15 +213,15 @@ int box_retrieve(Box *box, Time time) {
     return SUCCEED;
 }
 
-int box_place_holder(Box *box, CellIdx *new_loc) {
-    Box *holder = (Box *) malloc(sizeof(Box));
-    memcpy(holder, box, sizeof(Box));
+int box_place_holder(Box_TCY *box, CellIdx_TCY *new_loc) {
+    Box_TCY *holder = (Box_TCY *) malloc(sizeof(Box_TCY));
+    memcpy(holder, box, sizeof(Box_TCY));
     holder->state = BOX_STATE_PLACEHOLDER;
     holder->_holder_or_origin = box;
 
     int res;
     if (new_loc) {
-        memcpy(holder->loc, new_loc, sizeof(CellIdx) * 3);
+        memcpy(holder->loc, new_loc, sizeof(CellIdx_TCY) * 3);
         if ((res = box_alloc(holder, -1)) != SUCCEED)
             return res;
     } else {
@@ -233,8 +233,8 @@ int box_place_holder(Box *box, CellIdx *new_loc) {
     return SUCCEED;
 }
 
-int box_remove_holder(Box *box) {
-    Box *holder = box->_holder_or_origin;
+int box_remove_holder(Box_TCY *box) {
+    Box_TCY *holder = box->_holder_or_origin;
     int res;
 
     if ((res = box_retrieve(holder, -1)) != SUCCEED)
@@ -247,23 +247,23 @@ int box_remove_holder(Box *box) {
     return SUCCEED;
 }
 
-int box_realloc(Box *box, Time time, CellIdx *new_loc) {
+int box_realloc(Box_TCY *box, Time_TCY time, CellIdx_TCY *new_loc) {
     box_place_holder(box, NULL);
 
-    memcpy(box->loc, new_loc, sizeof(CellIdx) * 3);
+    memcpy(box->loc, new_loc, sizeof(CellIdx_TCY) * 3);
     int res = box_alloc(box, -1);
     return res;
 }
 
-void box_relocate_position(Box *box, CellIdx *loc) {
+void box_relocate_position(Box_TCY *box, CellIdx_TCY *loc) {
     return box_store_position(box->_holder_or_origin, loc, 0);
 }
 
-int box_relocate_alloc(Box *box, Time time, CellIdx *new_loc) {
+int box_relocate_alloc(Box_TCY *box, Time_TCY time, CellIdx_TCY *new_loc) {
     return box_place_holder(box, new_loc);
 }
 
-int box_relocate_retrieve(Box *box, Time time) {
+int box_relocate_retrieve(Box_TCY *box, Time_TCY time) {
     int res;
     if ((res = box_retrieve(box, -1)) != SUCCEED) {
         assert(res == SUCCEED);
@@ -274,9 +274,9 @@ int box_relocate_retrieve(Box *box, Time time) {
     return SUCCEED;
 }
 
-int box_relocate_store(Box *box, Time time) {
+int box_relocate_store(Box_TCY *box, Time_TCY time) {
     assert(box->_holder_or_origin);
-    memcpy(box->loc, box->_holder_or_origin->loc, sizeof(CellIdx) * 3);
+    memcpy(box->loc, box->_holder_or_origin->loc, sizeof(CellIdx_TCY) * 3);
     box_remove_holder(box);
     box_alloc(box, -1);
     return box_store(box, -1);

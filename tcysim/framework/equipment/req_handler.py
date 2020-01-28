@@ -34,12 +34,13 @@ class ReqHandler(Dispatcher):
         if isinstance(e, ROREquipmentConflictError):
             op = e.args[0]
             op.request.on_reject(time)
-            req2 = Request(self.ReqType.ADJUST, time,
-                           equipment=op.itf_other,
-                           src_loc=op.itf_other.current_coord(),
-                           new_loc=op.itf_loc,
-                           blocking_request=op.request)
-            self.yard.submit_request(time, req2, ready=True)
+            if not op.request.one_time_only:
+                req2 = Request(self.ReqType.ADJUST, time,
+                               equipment=op.itf_other,
+                               src_loc=op.itf_other.current_coord(),
+                               new_loc=op.itf_loc,
+                               blocking_request=op.request)
+                self.yard.submit_request(time, req2, ready=True)
         elif isinstance(e, RORAcquireFail):
             request = e.args[0]
             request.on_reject(time)
@@ -49,7 +50,7 @@ class ReqHandler(Dispatcher):
         elif isinstance(e, RORBoxHasUndoneRelocation):
             request = e.args[0]
             request.on_reject(time)
-            self.yard.cmgr.add_callback(time + 60, request.ready)
+            if not request.one_time_only:
+                self.yard.cmgr.add_callback(time + 60, request.ready)
         else:
             raise NotImplementedError(e)
-

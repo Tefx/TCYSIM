@@ -8,31 +8,31 @@
 #include "define.h"
 #include "block.h"
 
-DLLEXPORT void box_init(Box *box, char *box_id, BoxSize size);
+DLLEXPORT void box_init(Box_TCY *box, char *box_id, BoxSize_TCY size);
 
-DLLEXPORT void box_destroy(Box *box);
+DLLEXPORT void box_destroy(Box_TCY *box);
 
-DLLEXPORT int box_alloc(Box *box, Time time);
+DLLEXPORT int box_alloc(Box_TCY *box, Time_TCY time);
 
-DLLEXPORT int box_store(Box *box, Time time);
+DLLEXPORT int box_store(Box_TCY *box, Time_TCY time);
 
-DLLEXPORT int box_retrieve(Box *box, Time time);
+DLLEXPORT int box_retrieve(Box_TCY *box, Time_TCY time);
 
-DLLEXPORT void box_store_position(Box *box, CellIdx *idx, bool new_loc);
+DLLEXPORT void box_store_position(Box_TCY *box, CellIdx_TCY *idx, bool new_loc);
 
-DLLEXPORT int box_place_holder(Box *box, CellIdx *new_loc);
+DLLEXPORT int box_place_holder(Box_TCY *box, CellIdx_TCY *new_loc);
 
-DLLEXPORT int box_remove_holder(Box *box);
+DLLEXPORT int box_remove_holder(Box_TCY *box);
 
-DLLEXPORT int box_realloc(Box *box, Time time, CellIdx *new_loc);
+DLLEXPORT int box_realloc(Box_TCY *box, Time_TCY time, CellIdx_TCY *new_loc);
 
-DLLEXPORT void box_relocate_position(Box *box, CellIdx *loc);
+DLLEXPORT void box_relocate_position(Box_TCY *box, CellIdx_TCY *loc);
 
-DLLEXPORT int box_relocate_alloc(Box *box, Time time, CellIdx *new_loc);
+DLLEXPORT int box_relocate_alloc(Box_TCY *box, Time_TCY time, CellIdx_TCY *new_loc);
 
-DLLEXPORT int box_relocate_retrieve(Box *box, Time time);
+DLLEXPORT int box_relocate_retrieve(Box_TCY *box, Time_TCY time);
 
-DLLEXPORT int box_relocate_store(Box *box, Time time);
+DLLEXPORT int box_relocate_store(Box_TCY *box, Time_TCY time);
 
 
 #endif //LIBTCY_BOX_H

@@ -127,15 +127,16 @@ class Equipment(EquipmentRangeLayout, Process):
         else:
             return self.state != self.STATE.BLOCKING
 
-    def submit_task(self, request):
-        if isinstance(request, Request):
-            request.equipment = self
-        self.next_task = request
-        if self.state == self.STATE.WORKING:
-            if self.allow_interruption():
-                self.interrupt()
-        elif self.state != self.STATE.BLOCKING:
-            self.wake(priority=Priority.TASK_ARRIVAL)
+    def submit_task(self, task, from_self=False):
+        if isinstance(task, Request):
+            task.equipment = self
+        self.next_task = task
+        if not from_self:
+            if self.state == self.STATE.WORKING:
+                if self.allow_interruption():
+                    self.interrupt()
+            elif self.state != self.STATE.BLOCKING:
+                self.wake(priority=Priority.TASK_ARRIVAL)
 
     def query_new_task(self, time):
         if self.next_task is None:
@@ -143,9 +144,9 @@ class Equipment(EquipmentRangeLayout, Process):
 
     def _wait(self, priority=Priority.FOREVER):
         if not self.next_task:
-            op = self.job_scheduler.on_idle(self.time)
-            if op is not None:
-                self.next_task = op
+            op_or_req = self.job_scheduler.on_idle(self.time)
+            if op_or_req is not None:
+                self.submit_task(op_or_req, from_self=True)
                 return self.time, priority
             else:
                 return TIME_FOREVER, priority
@@ -187,13 +188,14 @@ class Equipment(EquipmentRangeLayout, Process):
             op.state = op.STATE.CANCELLED
 
     def _process(self):
-        op_or_req = self.next_task
-        self.next_task = None
-        if isinstance(op_or_req, Request):
-            yield from self.handle_request(op_or_req)
-        elif isinstance(op_or_req, Operation):
-            yield from self.handle_operation(op_or_req)
-        self.query_new_task(self.time)
+        if self.next_task:
+            op_or_req = self.next_task
+            self.next_task = None
+            if isinstance(op_or_req, Request):
+                yield from self.handle_request(op_or_req)
+            elif isinstance(op_or_req, Operation):
+                yield from self.handle_operation(op_or_req)
+            self.query_new_task(self.time)
         self.time = yield self.time, Priority.FOREVER
 
     def __getattr__(self, item):

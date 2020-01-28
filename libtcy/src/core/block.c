@@ -10,32 +10,32 @@
 #include <string.h>
 #include <assert.h>
 
-void block_init(Block *blk, const CellIdx *spec, int box_orientation, int stacking_axis, const bool *axis_need_sync) {
+void block_init(Block_TCY *blk, const CellIdx_TCY *spec, int box_orientation, int stacking_axis, const bool *axis_need_sync) {
     blk->cell_num = spec[0] * spec[1] * spec[2];
-    blk->cells = (Cell *) malloc(sizeof(Cell) * blk->cell_num);
+    blk->cells = (Cell_TCY *) malloc(sizeof(Cell_TCY) * blk->cell_num);
     blk->box_orientation = box_orientation;
     blk->stacking_axis = stacking_axis;
 
-    memset(blk->cells, 0, sizeof(Cell) * blk->cell_num);
-    memcpy(blk->spec, spec, sizeof(CellIdx) * 3);
+    memset(blk->cells, 0, sizeof(Cell_TCY) * blk->cell_num);
+    memcpy(blk->spec, spec, sizeof(CellIdx_TCY) * 3);
     memcpy(blk->column_sync, axis_need_sync, sizeof(bool) * 3);
 
     for (int i = 0; i < 3; ++i) {
-        CellIdx num = blk->cell_num / spec[i];
+        CellIdx_TCY num = blk->cell_num / spec[i];
         if (axis_need_sync[i]) {
-            blk->column_use_type[i] = (SlotUsage *) malloc(sizeof(SlotUsage) * num);
+            blk->column_use_type[i] = (SlotUsage_TCY *) malloc(sizeof(SlotUsage_TCY) * num);
             for (int j = 0; j < num; ++j)
                 blk->column_use_type[i][j] = SLOT_USAGE_FREE;
         } else {
             blk->column_use_type[i] = NULL;
         }
-        blk->column_usage[i] = (CellIdx *) malloc(sizeof(CellIdx) * num);
-        blk->column_usage_occupied[i] = (CellIdx *) malloc(sizeof(CellIdx) * num);
-        memset(blk->column_usage[i], 0, sizeof(CellIdx) * num);
-        memset(blk->column_usage_occupied[i], 0, sizeof(CellIdx) * num);
+        blk->column_usage[i] = (CellIdx_TCY *) malloc(sizeof(CellIdx_TCY) * num);
+        blk->column_usage_occupied[i] = (CellIdx_TCY *) malloc(sizeof(CellIdx_TCY) * num);
+        memset(blk->column_usage[i], 0, sizeof(CellIdx_TCY) * num);
+        memset(blk->column_usage_occupied[i], 0, sizeof(CellIdx_TCY) * num);
     }
 
-    CellIdx stack_num = 1;
+    CellIdx_TCY stack_num = 1;
     for (int i = 0; i < 3; ++i)
         if (i != stacking_axis)
             stack_num *= spec[i];
@@ -43,7 +43,7 @@ void block_init(Block *blk, const CellIdx *spec, int box_orientation, int stacki
     memset(blk->lock_map, 0, sizeof(bool) * stack_num);
 }
 
-void block_destroy(Block *blk) {
+void block_destroy(Block_TCY *blk) {
     free(blk->cells);
     for (int i = 0; i < 3; ++i) {
         if (blk->column_use_type[i]) free(blk->column_use_type[i]);
@@ -52,7 +52,7 @@ void block_destroy(Block *blk) {
     }
 }
 
-CellIdx _blk_clmn_idx(Block *blk, const CellIdx *loc, int along) {
+CellIdx_TCY _blk_clmn_idx(Block_TCY *blk, const CellIdx_TCY *loc, int along) {
     if (along == 2) {
         return loc[1] + loc[0] * blk->spec[1];
     } else if (along == 1) {
@@ -64,11 +64,11 @@ CellIdx _blk_clmn_idx(Block *blk, const CellIdx *loc, int along) {
     }
 }
 
-inline CellIdx _blk_cell_idx(Block *blk, const CellIdx *loc) {
+inline CellIdx_TCY _blk_cell_idx(Block_TCY *blk, const CellIdx_TCY *loc) {
     return (loc[0] * blk->spec[1] + loc[1]) * blk->spec[2] + loc[2];
 }
 
-void _blk_link_cell(Block *blk, Box *box) {
+void _blk_link_cell(Block_TCY *blk, Box_TCY *box) {
     blk->cells[_blk_cell_idx(blk, box->loc)] = box;
     if (box->size == BOX_SIZE_FORTY) {
         box->loc[blk->box_orientation]++;
@@ -77,7 +77,7 @@ void _blk_link_cell(Block *blk, Box *box) {
     }
 }
 
-void _blk_unlink_cell(Block *blk, Box *box) {
+void _blk_unlink_cell(Block_TCY *blk, Box_TCY *box) {
     blk->cells[_blk_cell_idx(blk, box->loc)] = NULL;
     if (box->size == BOX_SIZE_FORTY) {
         box->loc[blk->box_orientation]++;
@@ -86,8 +86,8 @@ void _blk_unlink_cell(Block *blk, Box *box) {
     }
 }
 
-Box *_blk_neighbor_box(Block *blk, Box *box, int along, bool inc) {
-    CellIdx loc2[3];
+Box_TCY *_blk_neighbor_box(Block_TCY *blk, Box_TCY *box, int along, bool inc) {
+    CellIdx_TCY loc2[3];
     for (int i = 0; i < 3; i++) loc2[i] = box->loc[i];
 
     if (inc && along == blk->box_orientation && box->size == BOX_SIZE_FORTY)
@@ -103,11 +103,11 @@ Box *_blk_neighbor_box(Block *blk, Box *box, int along, bool inc) {
     }
 }
 
-int block_usage(Block *blk, const CellIdx *loc, bool include_occupied) {
+int block_usage(Block_TCY *blk, const CellIdx_TCY *loc, bool include_occupied) {
     int dimension = 3;
     int count = 0;
-    CellIdx tmp_loc[3];
-    CellIdx **usages;
+    CellIdx_TCY tmp_loc[3];
+    CellIdx_TCY **usages;
 
     for (int i = 0; i < 3; i++) tmp_loc[i] = loc[i];
 
@@ -145,13 +145,13 @@ int block_usage(Block *blk, const CellIdx *loc, bool include_occupied) {
     return count;
 }
 
-inline Box *block_box_at(Block *blk, const CellIdx *idx) {
-    Box *res = blk->cells[_blk_cell_idx(blk, idx)];
+inline Box_TCY *block_box_at(Block_TCY *blk, const CellIdx_TCY *idx) {
+    Box_TCY *res = blk->cells[_blk_cell_idx(blk, idx)];
     return res;
 }
 
-Box *block_top_box(Block *blk, const CellIdx *idx, int along) {
-    CellIdx tmp_idx[3];
+Box_TCY *block_top_box(Block_TCY *blk, const CellIdx_TCY *idx, int along) {
+    CellIdx_TCY tmp_idx[3];
 
     for (int i = 0; i < 3; i++) tmp_idx[i] = idx[i];
 
@@ -159,15 +159,15 @@ Box *block_top_box(Block *blk, const CellIdx *idx, int along) {
     return block_box_at(blk, tmp_idx);
 }
 
-void _blk_top_of_stack(Block *blk, CellIdx *idx) {
+void _blk_top_of_stack(Block_TCY *blk, CellIdx_TCY *idx) {
     int along = blk->stacking_axis;
     if (along >= 0)
         idx[along] = blk->column_usage[along][_blk_clmn_idx(blk, idx, along)];
 }
 
-CellIdx blk_stack_hash(Block *blk, const CellIdx *idx) {
-    CellIdx map_idx = 0;
-    CellIdx k = 1;
+CellIdx_TCY blk_stack_hash(Block_TCY *blk, const CellIdx_TCY *idx) {
+    CellIdx_TCY map_idx = 0;
+    CellIdx_TCY k = 1;
     for (int i = 2; i >= 0; --i)
         if (i != blk->stacking_axis) {
             map_idx = idx[i] * k;
@@ -176,26 +176,26 @@ CellIdx blk_stack_hash(Block *blk, const CellIdx *idx) {
     return map_idx;
 }
 
-int block_column_state(Block *blk, const CellIdx *idx, int axis) {
+SlotUsage_TCY block_column_state(Block_TCY *blk, const CellIdx_TCY *idx, int axis) {
     return blk->column_use_type[axis][_blk_clmn_idx(blk, idx, axis)];
 }
 
-void block_lock(Block *blk, const CellIdx *idx) {
-    CellIdx map_idx = blk_stack_hash(blk, idx);
+void block_lock(Block_TCY *blk, const CellIdx_TCY *idx) {
+    CellIdx_TCY map_idx = blk_stack_hash(blk, idx);
     blk->lock_map[map_idx] = TRUE;
 }
 
-void block_unlock(Block *blk, const CellIdx *idx) {
-    CellIdx map_idx = blk_stack_hash(blk, idx);
+void block_unlock(Block_TCY *blk, const CellIdx_TCY *idx) {
+    CellIdx_TCY map_idx = blk_stack_hash(blk, idx);
     blk->lock_map[map_idx] = FALSE;
 }
 
-bool block_is_locked(Block *blk, const CellIdx *idx) {
-    CellIdx map_idx = blk_stack_hash(blk, idx);
+bool block_is_locked(Block_TCY *blk, const CellIdx_TCY *idx) {
+    CellIdx_TCY map_idx = blk_stack_hash(blk, idx);
     return blk->lock_map[map_idx];
 }
 
-static inline bool _compare_usage(BoxSize box_size, SlotUsage usage, SlotUsage usage2) {
+static inline bool _compare_usage(BoxSize_TCY box_size, SlotUsage_TCY usage, SlotUsage_TCY usage2) {
     if (usage == SLOT_USAGE_FREE)
         if (box_size == BOX_SIZE_FORTY)
             return usage2 == SLOT_USAGE_FREE;
@@ -209,8 +209,8 @@ static inline bool _compare_usage(BoxSize box_size, SlotUsage usage, SlotUsage u
         return FALSE;
 }
 
-bool block_position_is_valid_for_size(Block *blk, CellIdx *loc, BoxSize box_size) {
-    SlotUsage column_use_type, column_use_type2 = SLOT_USAGE_FREE;
+bool block_position_is_valid_for_size(Block_TCY *blk, CellIdx_TCY *loc, BoxSize_TCY box_size) {
+    SlotUsage_TCY column_use_type, column_use_type2 = SLOT_USAGE_FREE;
     if (box_size == BOX_SIZE_FORTY && loc[blk->box_orientation] > blk->spec[blk->box_orientation] - 2)
         return FALSE;
     for (int i = 0; i < 3; ++i) {
@@ -230,3 +230,10 @@ bool block_position_is_valid_for_size(Block *blk, CellIdx *loc, BoxSize box_size
     return TRUE;
 }
 
+void block_avail_map(Block_TCY *blk, BoxSize_TCY box_size, CellIdx_TCY **avail_index, CellIdx_TCY *avail_map) {
+    for (int i = 0; i < 3; ++i) {
+       if (blk->column_use_type[i] && blk->column_sync[i]){
+
+       }
+    }
+}
