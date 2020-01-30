@@ -20,8 +20,8 @@ cdef class Mover:
     cdef double time
     cdef dict specs
 
-    cdef perform_motion(self, Motion m)
+    cdef void perform_motion(self, Motion m)
     cdef bint idle(self)
     cpdef bint allow_interruption(self)
-    cpdef commit_motions(self, motions)
-    cdef create_motions(self, double start_time, double displacement, bint allow_interruption=?, mode=?)
+    cpdef void commit_motions(self, motions)
+    cdef tuple create_motions(self, double start_time, double displacement, bint allow_interruption=?, mode=?)

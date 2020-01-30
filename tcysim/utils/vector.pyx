@@ -125,7 +125,7 @@ cdef class V3:
     def __repr__(V3 self):
         return "V({})".format(", ".join(map("{:.2f}".format, self)))
 
-    cpdef iadd1(V3 self, axis, double value):
+    cpdef V3 iadd1(V3 self, axis, double value):
         cdef int axis_idx = _axis_idx(axis)
         if axis_idx == 0:
             self.x += value
@@ -137,7 +137,7 @@ cdef class V3:
             raise NotImplementedError
         return self
 
-    cpdef isub1(V3 self, axis, double value):
+    cpdef V3 isub1(V3 self, axis, double value):
         cdef int axis_idx = _axis_idx(axis)
         if axis_idx == 0:
             self.x -= value
@@ -149,7 +149,7 @@ cdef class V3:
             raise NotImplementedError
         return self
 
-    cpdef imul1(V3 self, axis, double value):
+    cpdef V3 imul1(V3 self, axis, double value):
         cdef int axis_idx = _axis_idx(axis)
         if axis_idx == 0:
             self.x *= value
@@ -161,7 +161,7 @@ cdef class V3:
             raise NotImplementedError
         return self
 
-    cpdef iset1(V3 self, axis, double value):
+    cpdef V3 iset1(V3 self, axis, double value):
         cdef int axis_idx = _axis_idx(axis)
         if axis_idx == 0:
             self.x = value
@@ -206,7 +206,7 @@ cdef class V3:
     def to_tuple(self):
         return self.x, self.y, self.z
 
-    cpdef rotate(V3 self, RotateOperator rtt_op, V3 ref=None):
+    cpdef V3 rotate(V3 self, RotateOperator rtt_op, V3 ref=None):
         cdef double x, y
 
         if ref:
@@ -222,12 +222,12 @@ cdef class V3:
     cpdef double dot_product(V3 self, V3 other):
         return self.x * other.x + self.y * other.y + self.z * other.z
 
-    cdef cpy2mem_f(self, double* ptr):
+    cdef void cpy2mem_f(self, double* ptr):
         ptr[0] = <double>self.x
         ptr[1] = <double>self.y
         ptr[2] = <double>self.z
 
-    cdef cpy2mem_i(V3 self, int32_t* ptr):
+    cdef void cpy2mem_i(V3 self, int32_t* ptr):
         ptr[0] = <int32_t>self.x
         ptr[1] = <int32_t>self.y
         ptr[2] = <int32_t>self.z

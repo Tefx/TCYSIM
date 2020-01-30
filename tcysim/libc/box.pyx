@@ -13,9 +13,6 @@ cdef class CBoxState:
     RETRIEVED = BOX_STATE_RETRIEVED
 
 cdef class CBox:
-    cdef Box_TCY c
-    cdef public object equipment
-
     def __init__(self, bytes box_id, int size=20, *args, **kwargs):
         cdef BoxSize_TCY c_size
         if size == 20:

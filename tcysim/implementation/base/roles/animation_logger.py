@@ -12,11 +12,17 @@ class AnimationLogger(Observer):
         self.box_last_positions = {}
         self.crane_last_position = {}
 
+    def filter_eqipments(self, equipments):
+        return equipments
+
+    def filter_boxes(self, boxes):
+        return boxes
+
     def on_observe(self):
         equ_coords = {}
         box_coords = {}
 
-        for i, equipment in enumerate(self.yard.equipments):
+        for i, equipment in enumerate(self.filter_eqipments(self.yard.equipments)):
             # if equipment.state == equipment.STATE.WORKING or i not in self.crane_last_position:
             coord = equipment.current_coord(transform_to="g")
             if i not in self.crane_last_position or coord != self.crane_last_position[i]:
@@ -24,7 +30,7 @@ class AnimationLogger(Observer):
                 equ_coords[i] = coord.to_tuple()
 
         current_box_location = {}
-        for box in self.yard.boxes:
+        for box in self.filter_boxes(self.yard.boxes):
             # if box.state != box.STATE.STORED or box.id not in self.box_last_positions:
             coord = box.current_coord(transform_to="g")
             if coord:

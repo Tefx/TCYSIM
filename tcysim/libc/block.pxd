@@ -6,5 +6,5 @@ cdef class CBlock:
     cpdef int count(self, int x=*, int y=*, int z=*, bint include_occupied=*)
     cpdef bint position_is_valid_for_size(self, int x, int y, int z, int teu)
     cpdef SlotUsage_TCY column_state(self, int x, int y, int z, int axis)
-    cpdef top_box(self, V3 loc, int along)
+    cpdef object top_box(self, V3 loc, int along)
 

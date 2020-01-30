@@ -10,4 +10,4 @@ cdef class Motion:
     cdef readonly double finish_time
 
     cdef Motion split(self, double time)
-    cdef update(self)
+    cdef void update(self)

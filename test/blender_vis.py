@@ -1,11 +1,11 @@
 import bpy, pickle, os, random
 
-log_path = "D:\\Dropbox\\Projects\\TCYSIM\\test\\log2"
+log_path = "D:\\Dropbox\\Projects\\NGP2\\log"
 #log_path = "/home/tefx/Dropbox/Projects/TCYSIM/test/.log"
 
 fps = 24
-speedup = 30
-start_time = 3600 * 20
+speedup = 10
+start_time = 3672000
 
 sample_box = {1:None, 2:None}
 sample_yc = None
@@ -67,6 +67,7 @@ with open(log_path, "rb") as f:
     log = pickle.load(f)
     
 for time, ycs, boxes in log:
+    print(time)
     time -= start_time
     for k, (x, y, z) in ycs.items():
         yc = get_yc(k)

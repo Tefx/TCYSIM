@@ -30,21 +30,21 @@ cdef class StepBase:
             if self.pred and self.pred.executed:
                 self.pred.reset()
 
-    cdef cal_start_time(StepBase self, op, double est):
+    cdef double cal_start_time(StepBase self, op, double est):
         if not self.executed:
             self.start_time = est
             if self.pred and self.pred.next_time > est:
                 self.start_time = self.pred.next_time
         return self.start_time
 
-    cdef cal_pred(StepBase self, op, double est):
+    cdef void cal_pred(StepBase self, op, double est):
         if self.pred:
             self.pred.execute(op, est)
 
     def __call__(StepBase self, op, double est):
         return self.execute(op, est)
 
-    cdef execute(StepBase self, op, double est):
+    cdef void execute(StepBase self, op, double est):
         raise NotImplementedError
 
     def commit(StepBase self, yard):
@@ -66,7 +66,7 @@ cdef class StepBase:
         else:
             return OrStep(self, other)
 
-    cdef add_pred(StepBase self, StepBase other):
+    cdef void add_pred(StepBase self, StepBase other):
         if self.pred:
             self.pred = self.pred & other
         else:
@@ -92,7 +92,7 @@ cdef class EmptyStep(StepBase):
         self.time = time
         self.motion = None
 
-    cdef execute(EmptyStep self, op, double est):
+    cdef void execute(EmptyStep self, op, double est):
         if not self.executed:
             self.cal_pred(op, est)
             self.cal_start_time(op, est)
@@ -114,7 +114,7 @@ cdef class CallBackStep(StepBase):
     def __init__(CallBackStep self, callback):
         self.callback = callback
 
-    cdef execute(CallBackStep self, op, double est):
+    cdef void execute(CallBackStep self, op, double est):
         if not self.executed:
             self.cal_pred(op, est)
             self.cal_start_time(op, est)
@@ -144,7 +144,7 @@ cdef class MoverStep(StepBase):
         self.mode = mode
         self.allow_interruption = allow_interruption
 
-    cdef execute(MoverStep self, op, double est):
+    cdef void execute(MoverStep self, op, double est):
         cdef Mover mover
         cdef Motion motion
         cdef double loc
@@ -187,7 +187,7 @@ cdef class CompoundStep(StepBase):
         self.steps = list(steps)
 
 cdef class AndStep(CompoundStep):
-    cdef execute(AndStep self, op, double est):
+    cdef void execute(AndStep self, op, double est):
         cdef StepBase step
 
         if not self.executed:
@@ -216,7 +216,7 @@ cdef class AndStep(CompoundStep):
         return "<{}>[{}]".format(self.__class__.__name__, " & ".join(repr(s) for s in self.steps))
 
 cdef class OrStep(CompoundStep):
-    cdef execute(OrStep self, op, double est):
+    cdef void execute(OrStep self, op, double est):
         cdef StepBase step
 
         if not self.executed:

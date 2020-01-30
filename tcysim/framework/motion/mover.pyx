@@ -37,7 +37,7 @@ cdef class Mover:
         self.curr_v = self._state_curr_v
         self.curr_a = self._state_curr_a
 
-    cdef perform_motion(self, Motion m):
+    cdef void perform_motion(self, Motion m):
         self.loc += m.displacement
         self.time = m.finish_time
         self.curr_v = m.finish_velocity
@@ -86,7 +86,7 @@ cdef class Mover:
             time += m.timespan
         return time
 
-    cdef create_motions(self, double start_time, double displacement, bint allow_interruption=False, mode="default"):
+    cdef tuple create_motions(self, double start_time, double displacement, bint allow_interruption=False, mode="default"):
         cdef Spec spec = self.specs[mode]
         cdef double v0 = self.curr_v
         cdef double a = spec.a
@@ -156,5 +156,5 @@ cdef class Mover:
 
         return st - start_time, motions
 
-    cpdef commit_motions(self, motions):
+    cpdef void commit_motions(self, motions):
         self.pending_motions.extend(motions)

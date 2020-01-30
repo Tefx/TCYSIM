@@ -20,7 +20,7 @@ cdef class Motion:
         self.update()
         return m
 
-    cdef update(self):
+    cdef void update(self):
         self.displacement = self.start_v * self.timespan + 0.5 * self.a * self.timespan * self.timespan
         self.finish_velocity = self.start_v + self.a * self.timespan
         self.finish_time = self.start_time + self.timespan

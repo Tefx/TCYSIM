@@ -44,6 +44,10 @@ class Operation:
     def TYPE(self):
         return self.equipment.op_builder.OpType
 
+    @property
+    def operation_time(self):
+        return self.finish_time - self.start_time
+
     def mark_loc(self, component, time, loc):
         if component in self.paths:
             heapq.heappush(self._pps[component], (time, loc))

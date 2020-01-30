@@ -161,8 +161,9 @@ class Equipment(EquipmentRangeLayout, Process):
             op.state = op.STATE.RUNNING
             self.time = yield op.finish_time, Priority.OP_FINISH
             op.state = op.STATE.FINISHED
-            self.yard.fire_probe('operation.finish', op)
+            op.finish_time = self.time
             self.current_op = None
+            self.yard.fire_probe('operation.finish', op)
 
     def handle_request(self, request):
         request.start_or_resume(self.time)
