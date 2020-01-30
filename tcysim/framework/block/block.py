@@ -10,7 +10,8 @@ from ..scheduler import ReqDispatcher
 class Block(BlockLayout, CBlock):
     ReqDispatcher = ReqDispatcher
 
-    def __init__(self, yard, offset, shape: V3, rotate, stacking_axis, sync_axes, lanes=()):
+    def __init__(self, yard, bid, offset, shape: V3, rotate, stacking_axis, sync_axes, lanes=()):
+        self.id = bid
         sync_axes = tuple(V3.axis_idx(x) for x in sync_axes)
         stacking_axis = V3.axis_idx(stacking_axis)
         self.equipments = []

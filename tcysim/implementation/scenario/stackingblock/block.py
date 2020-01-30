@@ -7,8 +7,8 @@ from tcysim.utils.vector import V3i
 
 
 class StackingBlock(Block):
-    def __init__(self, yard, offset, shape: V3, stacking_area_size: V3 = None, rotate=0, lanes=()):
-        super(StackingBlock, self).__init__(yard, offset, shape, rotate, stacking_axis="z", sync_axes=("y", "z"),
+    def __init__(self, yard, bid, offset, shape: V3, stacking_area_size: V3 = None, rotate=0, lanes=()):
+        super(StackingBlock, self).__init__(yard, bid, offset, shape, rotate, stacking_axis="z", sync_axes=("y", "z"),
                                             lanes=lanes)
         self.unit_base_size = TEU.one()
         size = TEU(*shape) if stacking_area_size is None else stacking_area_size
