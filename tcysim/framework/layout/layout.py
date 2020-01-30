@@ -84,6 +84,12 @@ class BlockLayout(LayoutItem):
         i, j, k = cell_idx
         return self._cells[i, j, k]
 
+    def cells(self):
+        for i in range(self.shape[0]):
+            for j in range(self.shape[1]):
+                for k in range(self.shape[2]):
+                    yield self._cells[i, j, k]
+
     def lane(self, name):
         return self.lanes[name]
 
