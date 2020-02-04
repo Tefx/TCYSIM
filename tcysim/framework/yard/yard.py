@@ -26,14 +26,9 @@ class Yard:
         self.roles = Roles()
         self.movers = []
 
-    def add_role(self, name, role):
-        self.roles[name] = role
-
     def deploy(self, block, equipments):
         self.blocks.add(block)
         block.deploy(equipments)
-
-        self.smgr.register_block(block)
 
         for equipment in equipments:
             self.equipments.add(equipment)
@@ -73,12 +68,11 @@ class Yard:
         time = self.env.run_until(time, proc_next=request.equipment)
         return request.state, time
 
-    def alloc(self, time, box):
-        block, loc = self.smgr.alloc_space(box, self.smgr.available_blocks(box))
-        if not loc:
-            return False
+    def choose_location(self, box):
+        return self.smgr.alloc_space(box, self.smgr.available_blocks(box))
+
+    def alloc(self, time, box, block, loc):
         box.alloc(time, block, loc)
-        return True
 
     def store(self, time, box, lane):
         request = Request(ReqType.STORE, time, box, lane=lane)

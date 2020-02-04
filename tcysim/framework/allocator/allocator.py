@@ -6,9 +6,6 @@ class SpaceAllocator:
     def time(self):
         return self.yard.env.current_time
 
-    def register_block(self, block):
-        pass
-
     def available_blocks(self, box):
         return self.yard.blocks
 

@@ -90,10 +90,19 @@ class PlotSet:
             if not isinstance(data, dict) and hasattr(data, "to_dict"):
                 data = data.to_dict()
             zs = np.zeros((len(self.xs) - 1, len(self.ys) - 1), np.float)
+            zmin = np.inf
+            zmax = -np.inf
             for idx, value in data.items():
+                zmin = min(zmin, value)
+                zmax = max(zmax, value)
                 self.items[idx].assign_value(zs, value)
             color_scale = kwargs.get("colorscale", "Reds")
-            fig.add_trace(go.Heatmap(z=zs.T, x=self.xs, y=self.ys, colorscale=color_scale, **kwargs))
+            zmin = kwargs.get("zmin", zmin)
+            zmax = kwargs.get("zmax", zmax)
+            fig.add_trace(go.Heatmap(z=zs.T, x=self.xs, y=self.ys,
+                                     colorscale=color_scale,
+                                     zmin=zmin, zmax=zmax, zauto=False,
+                                     **kwargs))
         else:
             all_frame = True
 
