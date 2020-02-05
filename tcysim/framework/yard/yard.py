@@ -45,6 +45,9 @@ class Yard:
 
         self.env.start()
 
+    def finish(self):
+        self.roles.finish()
+
     def add_request(self, request):
         if request.id == -1:
             request.id = len(self.requests)
