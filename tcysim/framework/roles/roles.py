@@ -5,3 +5,8 @@ class Roles(dict):
     def setup(self):
         for role in self.values():
             role.setup()
+
+    def finish(self):
+        for role in self.values():
+            if hasattr(role, "finish"):
+                role.finish()
