@@ -1,11 +1,11 @@
-cimport cython
+from cython cimport freelist
 
-@cython.freelist(512)
+@freelist(512)
 cdef class Paths:
-    def __init__(self, int chunk_size):
+    def __cinit__(self, int chunk_size):
         pathtrace_init(&self.c, chunk_size)
 
-    def __destroy__(self):
+    def __dealloc__(self):
         pathtrace_destroy(&self.c)
 
     def append(self, Time_TCY time, double pos):

@@ -10,11 +10,12 @@ class EventHandlingFail(Exception):
 
 
 class GeneratorEvent:
-    def __init__(self, time, type=None, *args, **kwargs):
+    __slots__ = ["time", "type", "args", "kwargs"]
+
+    def __init__(self, time, type=None, *args):
         self.time = time
         self.type = type
         self.args = args
-        self.kwargs = kwargs
 
     def __lt__(self, other):
         if self.time == other.time:
@@ -30,7 +31,7 @@ class EventHandler(Dispatcher):
         self.yard = generator.yard
 
     def handle(self, time, ev):
-        return self.dispatch(ev.type, "_", time, *ev.args, **ev.kwargs)
+        return self.dispatch(ev.type, "_", time, *ev.args)
 
     def on_fail(self, ev):
         raise ev from ev
@@ -39,8 +40,8 @@ class EventHandler(Dispatcher):
 class EventGenerator(Process):
     EventHandler = EventHandler
 
-    def __init__(self, yard, stop_time=TIME_FOREVER):
-        super(EventGenerator, self).__init__(yard.env)
+    def __init__(self, yard, stop_time=TIME_FOREVER, env=None):
+        super(EventGenerator, self).__init__(env or yard.env)
         self.queue = []
         self.yard = yard
         self.stop_time = stop_time

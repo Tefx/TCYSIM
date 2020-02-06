@@ -15,7 +15,7 @@ cdef class CBlock:
         block_init(&self.c, c_spec, 0, stacking_axis, c_sync)
         self.c._self = <PyObject*> self
 
-    def __destroy__(self):
+    def __dealloc__(self):
         block_destroy(&self.c)
 
     @property

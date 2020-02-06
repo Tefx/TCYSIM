@@ -4,9 +4,9 @@ from math import inf
 from ..motion.motion cimport Motion
 from ..motion.mover cimport Mover
 
-cimport cython
+from cython cimport freelist
 
-@cython.freelist(512)
+@freelist(512)
 cdef class StepBase:
     cdef StepBase pred
     cdef readonly double start_time

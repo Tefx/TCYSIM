@@ -67,7 +67,7 @@ static inline void _box_adjust_and_mark_usage(Block_TCY *blk, Box_TCY *box, int 
         _box_mark_usage(blk, box, delta);
 }
 
-int _box_swap(Box_TCY *box, int along, bool sink) {
+int _box_swap(Box_TCY *box, int along) {
     Block_TCY *blk = box->block;
     Box_TCY *box2 = _blk_neighbor_box(blk, box, along, TRUE);
 
@@ -114,7 +114,7 @@ static inline int _box_sink(Box_TCY *box) {
     while (box->loc[along] > 0) {
         box2 = _blk_neighbor_box(blk, box, along, FALSE);
         if (box2->state != BOX_STATE_STORED)
-            _box_swap(box2, along, TRUE);
+            _box_swap(box2, along);
         else
             break;
     }
@@ -129,7 +129,7 @@ static inline int _box_float(Box_TCY *box) {
     while (box->loc[along] < blk->spec[along]) {
         box2 = _blk_neighbor_box(blk, box, along, TRUE);
         if (box2 && box2->state != BOX_STATE_STORED)
-            _box_swap(box, along, FALSE);
+            _box_swap(box, along);
         else
             break;
     }

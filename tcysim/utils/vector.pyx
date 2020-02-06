@@ -1,6 +1,6 @@
 from libc.math cimport sin, cos, pi, sqrt
 from .math import feq
-cimport cython
+from cython cimport freelist
 
 cdef int _axis_idx(name):
     if name == "x":
@@ -12,7 +12,7 @@ cdef int _axis_idx(name):
     else:
         return name
 
-@cython.freelist(512)
+@freelist(512)
 cdef class V3:
 
     @staticmethod

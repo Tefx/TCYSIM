@@ -3,8 +3,8 @@ from ..priority import Priority
 
 
 class Observer(Process):
-    def __init__(self, yard, start=0, end=TIME_FOREVER, interval=1):
-        super(Observer, self).__init__(yard.env)
+    def __init__(self, yard, start=0, end=TIME_FOREVER, interval=1, env=None):
+        super(Observer, self).__init__(env or yard.env)
         self.yard = yard
         self.interval = interval
         self.start = start

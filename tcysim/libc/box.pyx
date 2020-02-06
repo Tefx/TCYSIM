@@ -25,7 +25,7 @@ cdef class CBox:
         self.c._self = <PyObject*> self
         self.equipment = None
 
-    def __destroy__(self):
+    def __dealloc__(self):
         box_destroy(&self.c)
 
     def alloc(self, Time_TCY time, block, V3 loc):

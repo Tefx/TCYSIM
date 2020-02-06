@@ -37,6 +37,12 @@ class Operation:
         self.locking_positions = list(locking_pos)
         self.__dict__.update(attrs)
 
+    def clean(self):
+        self._pps = None
+        self.workflow = None
+        self.paths = None
+        self.locking_positions = None
+
     def add_lock(self, pos):
         self.locking_positions.append(pos)
 

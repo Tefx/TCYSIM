@@ -1,7 +1,7 @@
-cimport cython
+from cython cimport freelist
 
 
-@cython.freelist(512)
+@freelist(512)
 cdef class Motion:
     def __cinit__(self, double start_time, double timespan, double v, double a, bint allow_interruption=False):
         self.start_v = v

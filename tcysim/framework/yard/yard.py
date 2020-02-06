@@ -17,7 +17,7 @@ class Yard:
         self.equipments = set()
 
         self.boxes = set()
-        self.requests = []
+        # self.requests = []
 
         self.smgr = self.SpaceAllocator(self)
         self.cmgr = CallBackManager(self)
@@ -48,23 +48,22 @@ class Yard:
     def finish(self):
         self.roles.finish()
 
-    def add_request(self, request):
-        if request.id == -1:
-            request.id = len(self.requests)
-            self.requests.append(request)
-            return request.id
+    # def add_request(self, request):
+    #     if request.id == -1:
+    #         request.id = len(self.requests)
+    #         self.requests.append(request)
+    #         return request.id
 
     def fire_probe(self, probe_name, *args, **kwargs):
         return self.probe_mgr.fire(self.env.current_time, probe_name, *args, **kwargs)
 
-    def get_request(self, handler):
-        return self.requests[handler]
+    # def get_request(self, handler):
+    #     return self.requests[handler]
 
     def submit_request(self, time, request, ready=True):
         if request.req_type == request.TYPE.RETRIEVE and request.box.state == request.box.STATE.RETRIEVED:
             raise Exception("here!")
         request.submit(time, ready)
-        # return self.add_request(request)
 
     def query_request_state(self, time, handler):
         request = self.get_request(handler)
@@ -79,11 +78,13 @@ class Yard:
 
     def store(self, time, box, lane):
         request = Request(ReqType.STORE, time, box, lane=lane)
-        return self.submit_request(time, request)
+        self.submit_request(time, request)
+        return request
 
     def retrieve(self, time, box, lane):
         request = Request(ReqType.RETRIEVE, time, box, lane=lane)
-        return self.submit_request(time, request)
+        self.submit_request(time, request)
+        return request
 
     def run_until(self, time):
         self.env.run_until(time)

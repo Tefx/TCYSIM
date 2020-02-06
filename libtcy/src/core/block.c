@@ -230,10 +230,3 @@ bool block_position_is_valid_for_size(Block_TCY *blk, CellIdx_TCY *loc, BoxSize_
     return TRUE;
 }
 
-void block_avail_map(Block_TCY *blk, BoxSize_TCY box_size, CellIdx_TCY **avail_index, CellIdx_TCY *avail_map) {
-    for (int i = 0; i < 3; ++i) {
-       if (blk->column_use_type[i] && blk->column_sync[i]){
-
-       }
-    }
-}

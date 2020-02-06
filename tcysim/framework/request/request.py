@@ -10,8 +10,8 @@ class ReqState(IntEnum):
     READY = auto()
     STARTED = auto()
     REJECTED = auto()
-    RESUMED = auto()
     RESUME_READY = auto()
+    RESUMED = auto()
     SYNCED = auto()
     FINISHED = auto()
 
@@ -53,6 +53,15 @@ class Request:
         self.acquired_positions = []
         self.ops = []
         self.__dict__.update(attrs)
+
+    def clean(self):
+        self.signals = None
+        self.acquire_fails = None
+        self.acquired_positions = []
+        for op in self.ops:
+            op.clean()
+        # self.ops = None
+
 
     def link_signal(self, name, callback, *args, **kwargs):
         self.signals[name] = CallBack(callback, *args, **kwargs)
@@ -130,10 +139,6 @@ class Request:
         self.acquire_fails.remove(pos_hash)
         if not self.acquire_fails:
             self.ready(time)
-
-    def clean(self):
-        self.signals = None
-        # self.ops = None
 
     def __repr__(self):
         return "[{}/{}]({}/AT:{:.2f})".format(self.req_type, self.state.name, self.equipment, self.arrival_time)

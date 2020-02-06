@@ -1,4 +1,4 @@
-cimport cython
+from cython cimport freelist
 
 
 cdef class ProbeActionTemplate:
@@ -22,7 +22,7 @@ cdef class ProbeActionTemplate:
         self.func(self.processor, *args, **kwargs)
 
 
-@cython.freelist(1024)
+@freelist(1024)
 cdef class ProbeAction:
     cdef readonly double time
     cdef ProbeActionTemplate template
