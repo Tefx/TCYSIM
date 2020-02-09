@@ -37,10 +37,8 @@ class Yard:
 
     def start(self):
         self.cmgr.setup()
-
         for equipment in self.equipments:
             equipment.setup()
-
         self.roles.setup()
 
         self.env.start()
@@ -48,17 +46,8 @@ class Yard:
     def finish(self):
         self.roles.finish()
 
-    # def add_request(self, request):
-    #     if request.id == -1:
-    #         request.id = len(self.requests)
-    #         self.requests.append(request)
-    #         return request.id
-
     def fire_probe(self, probe_name, *args, **kwargs):
         return self.probe_mgr.fire(self.env.current_time, probe_name, *args, **kwargs)
-
-    # def get_request(self, handler):
-    #     return self.requests[handler]
 
     def submit_request(self, time, request, ready=True):
         if request.req_type == request.TYPE.RETRIEVE and request.box.state == request.box.STATE.RETRIEVED:

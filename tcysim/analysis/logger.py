@@ -9,6 +9,7 @@ class _LoggerForLMPManager:
     def init(self):
         if isinstance(self.fp, str):
             self.fp = open(self.fp, "wb")
+        pack(self.columns, self.fp)
 
     def finish(self):
         if hasattr(self.fp, "close"):
@@ -47,6 +48,7 @@ class SingleProcessLogger(SingleLMP):
     def run(self) -> None:
         if isinstance(self.fp, str):
             self.fp = open(self.fp, "wb")
+        pack(self.columns, self.fp)
         super(SingleProcessLogger, self).run()
         if hasattr(self.fp, "close"):
             self.fp.close()
