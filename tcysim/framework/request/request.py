@@ -3,6 +3,7 @@ from enum import IntEnum, auto
 from .type import ReqType
 from ..callback import CallBack
 from ..exception.handling import RORAcquireFail
+from ...utils.idx_obj import IndexObject
 
 
 class ReqState(IntEnum):
@@ -16,7 +17,7 @@ class ReqState(IntEnum):
     FINISHED = auto()
 
 
-class Request:
+class Request(IndexObject):
     STATE = ReqState
 
     def __init__(self, req_type, time,
@@ -26,6 +27,7 @@ class Request:
                  block=None,
                  one_time_only=False,
                  **attrs):
+        super(Request, self).__init__()
         self.req_type = req_type
         self.id = -1
         self.arrival_time = time
@@ -61,7 +63,6 @@ class Request:
         for op in self.ops:
             op.clean()
         # self.ops = None
-
 
     def link_signal(self, name, callback, *args, **kwargs):
         self.signals[name] = CallBack(callback, *args, **kwargs)

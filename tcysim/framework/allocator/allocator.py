@@ -7,7 +7,7 @@ class SpaceAllocator:
         return self.yard.env.current_time
 
     def available_blocks(self, box):
-        return self.yard.blocks
+        return self.yard.blocks.values()
 
     def alloc_space(self, box, blocks, *args, **kwargs):
         raise NotImplementedError

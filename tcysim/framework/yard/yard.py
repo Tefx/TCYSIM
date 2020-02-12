@@ -13,8 +13,8 @@ class Yard:
     def __init__(self):
         # self.env = YardEnv(self)
         self.env = Environment()
-        self.blocks = set()
-        self.equipments = set()
+        self.blocks = {}
+        self.equipments = []
 
         self.boxes = set()
         # self.requests = []
@@ -26,14 +26,19 @@ class Yard:
         self.roles = Roles()
         self.movers = []
 
+    @property
+    def time(self):
+        return self.env.current_time
+
     def deploy(self, block, equipments):
-        self.blocks.add(block)
+        self.blocks[block.id] = block
         block.deploy(equipments)
 
         for equipment in equipments:
-            self.equipments.add(equipment)
-            for component in equipment.components:
-                self.movers.append(component)
+            if equipment not in self.equipments:
+                self.equipments.append(equipment)
+                for component in equipment.components:
+                    self.movers.append(component)
 
     def start(self):
         self.cmgr.setup()
@@ -54,11 +59,6 @@ class Yard:
             raise Exception("here!")
         request.submit(time, ready)
 
-    def query_request_state(self, time, handler):
-        request = self.get_request(handler)
-        time = self.env.run_until(time, proc_next=request.equipment)
-        return request.state, time
-
     def choose_location(self, box):
         return self.smgr.alloc_space(box, self.smgr.available_blocks(box))
 
@@ -77,7 +77,7 @@ class Yard:
 
     def run_until(self, time):
         self.env.run_until(time)
-        self.run_equipments(time)
+        # self.run_equipments(time)
 
     def run_equipments(self, time):
         for equipment in self.equipments:
