@@ -16,7 +16,7 @@ class Yard:
         self.blocks = {}
         self.equipments = []
 
-        self.boxes = set()
+        # self.boxes = set()
         # self.requests = []
 
         self.smgr = self.SpaceAllocator(self)

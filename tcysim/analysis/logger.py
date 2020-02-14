@@ -1,3 +1,5 @@
+import os
+
 from LMP.single import SingleLMP
 import umsgpack
 
@@ -41,17 +43,21 @@ class LoggingManagerBase(SingleLMP):
 
 
 class SingleProcessLogger(SingleLMP):
-    remote_names = ["log"]
-
-    def __init__(self, fp, columns):
+    def __init__(self, fp, columns=None, start=False):
         super(SingleProcessLogger, self).__init__()
         self.fp = fp
         self.columns = columns
+        if start:
+            self.start()
 
     def run(self) -> None:
         if isinstance(self.fp, str):
+            dir_path = os.path.split(os.path.abspath(self.fp))[0]
+            if not os.path.exists(dir_path):
+                os.makedirs(dir_path)
             self.fp = open(self.fp, "wb")
-        pack(self.columns, self.fp)
+        if self.columns:
+            pack(self.columns, self.fp)
         super(SingleProcessLogger, self).run()
         if hasattr(self.fp, "close"):
             self.fp.close()

@@ -21,6 +21,7 @@ class Block(BlockLayout, CBlock):
         self.req_dispatcher = self.ReqDispatcher(self)
         self.lock_waiting_requests = {}
         self.num_equipments= 0
+        self.boxes = set()
 
     def deploy(self, equipments):
         for equipment in equipments:

@@ -71,8 +71,7 @@ class ReqHandler(ReqHandlerBase):
         yield self.equipment.OpBuilder.AdjustOp(request)
 
     def on_store_start(self, time, request):
-        self.yard.boxes.add(request.box)
-        pass
+        request.block.boxes.add(request.box)
 
     def on_store_finish_or_fail(self, time, request):
         pass
@@ -93,8 +92,7 @@ class ReqHandler(ReqHandlerBase):
         pass
 
     def on_retrieve_finish_or_fail(self, time, request):
-        self.yard.boxes.remove(request.box)
-        pass
+        request.block.boxes.remove(request.box)
 
     def on_retrieve_leaving_block(self, time, request):
         box = request.box
