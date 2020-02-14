@@ -203,4 +203,5 @@ class Equipment(EquipmentRangeLayout, Process):
         return self.attrs.get(item, None)
 
     def __repr__(self):
-        return "<{}>{}.{} at {}".format(self.__class__.__name__, str(id(self.blocks[0]))[-4:], str(hash(self))[-4:], self.current_coord())
+        return "<{}>{}.{} at {}".format(self.__class__.__name__, str(id(self.blocks[0]))[-4:], str(hash(self))[-4:],
+                                        self.current_coord())

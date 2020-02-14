@@ -1,5 +1,8 @@
 from LMP.single import SingleLMP
-from umsgpack import pack
+import umsgpack
+
+pack = umsgpack.pack
+
 
 class _LoggerForLMPManager:
     def __init__(self, fp, columns):

@@ -1,5 +1,9 @@
 from multiprocessing import SimpleQueue as Queue, Process
-from umsgpack import pack
+import umsgpack
+# msgpack.compatibility = True
+
+pack = umsgpack.pack
+
 
 class LogStream(Process):
     def __init__(self, fp, columns):

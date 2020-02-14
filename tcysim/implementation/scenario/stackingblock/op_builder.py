@@ -38,7 +38,7 @@ class OptimisedOpBuilder(OpBuilder):
             yield gantry_move, trolley_move, hoist_move
             return
 
-        max_height = block.max_height_within(src_local_in_block, dst_local_in_block) + equipment.height_clearance
+        max_height = block.max_height_within(src_local_in_block, dst_local_in_block) + equipment.clearance_above_box
         if max_height < dst_loc.z:
             max_height = dst_loc.z
         if load:
@@ -75,7 +75,7 @@ class OptimisedOpBuilder(OpBuilder):
         block = op.request.block
         max_height = block.max_height_within(
             equipment.transform_to(src_loc, block),
-            equipment.transform_to(dst_loc, block)) + op.equipment.height_clearance
+            equipment.transform_to(dst_loc, block)) + op.equipment.clearance_above_box
         dst_loc.z = max(src_loc.z, max_height)
         yield from self.move_steps(op, src_loc, dst_loc, load=False)
 
