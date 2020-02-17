@@ -7,10 +7,14 @@ from platform import system
 
 if system() == "Windows":
     extra_compile_args = [
-        "-fp:fast",
-        "/arch:AVX2",
+        "/fp:fast",
+        "/arch:AVX512",
         "/favor:INTEL64",
-        "/Ox", "/Ob2", "/Oi", "/Ot", "/Oy", "/GL", "/GT",
+        "/O2", "/Ob2", "/GL",
+        ]
+    extra_link_args = [
+        "/MACHINE:X64",
+        "/LTCG",
         ]
     library_dir = "libtcy/msvc/Release"
 else:
@@ -24,6 +28,7 @@ else:
         '-fprefetch-loop-arrays',
         "-flto",
         ]
+    extra_link_args = []
     library_dir = "libtcy/cmake-build-debug"
 
 extensions = [
@@ -31,6 +36,7 @@ extensions = [
         name="tcysim.libc.*",
         sources=["tcysim/libc/*.pyx"],
         extra_compile_args=extra_compile_args,
+        extra_link_args=extra_link_args,
         libraries=["tcy"],
         library_dirs=[os.path.abspath(library_dir)],
         include_dirs=[os.path.abspath("libtcy/src/core")]
@@ -39,21 +45,25 @@ extensions = [
         name="tcysim.framework.motion.*",
         sources=["tcysim/framework/motion/*.pyx"],
         extra_compile_args=extra_compile_args,
+        extra_link_args=extra_link_args,
         ),
     Extension(
         name="tcysim.framework.operation.*",
         sources=["tcysim/framework/operation/*.pyx"],
         extra_compile_args=extra_compile_args,
+        extra_link_args=extra_link_args,
         ),
     Extension(
         name="tcysim.framework.probe.*",
         sources=["tcysim/framework/probe/*.pyx"],
         extra_compile_args=extra_compile_args,
+        extra_link_args=extra_link_args,
         ),
     Extension(
         name="tcysim.utils.*",
         sources=["tcysim/utils/*.pyx"],
         extra_compile_args=extra_compile_args,
+        extra_link_args=extra_link_args,
         ),
     ]
 

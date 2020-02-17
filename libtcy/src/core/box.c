@@ -256,7 +256,7 @@ int box_realloc(Box_TCY *box, Time_TCY time, CellIdx_TCY *new_loc) {
 }
 
 void box_relocate_position(Box_TCY *box, CellIdx_TCY *loc) {
-    return box_store_position(box->_holder_or_origin, loc, 0);
+    box_store_position(box->_holder_or_origin, loc, 0);
 }
 
 int box_relocate_alloc(Box_TCY *box, Time_TCY time, CellIdx_TCY *new_loc) {
