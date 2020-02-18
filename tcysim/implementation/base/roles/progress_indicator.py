@@ -3,9 +3,9 @@ import pandas as pd
 
 
 class ProgressIndicator(Observer):
-    def __init__(self, ds, yard, interval, env=None):
+    def __init__(self, ds, yard, interval, end=None, env=None):
         start = (pd.to_datetime(ds.FIRST_BOX_TIME) - pd.to_datetime(ds.TIME_ZERO)).total_seconds()
-        end = (pd.to_datetime(ds.END_TIME) - pd.to_datetime(ds.TIME_ZERO)).total_seconds()
+        end = end or (pd.to_datetime(ds.END_TIME) - pd.to_datetime(ds.TIME_ZERO)).total_seconds()
         self.ds = ds
         self.start = start
         self.total = end - start
