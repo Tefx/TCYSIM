@@ -24,4 +24,4 @@ cdef class Mover:
     cdef bint idle(self)
     cpdef bint allow_interruption(self)
     cpdef void commit_motions(self, motions)
-    cdef tuple create_motions(self, double start_time, double displacement, bint allow_interruption=?, mode=?)
+    cdef tuple create_motions(self, double start_time, double displacement, bint allow_interruption, mode=?)

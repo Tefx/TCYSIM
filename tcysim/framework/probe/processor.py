@@ -1,6 +1,4 @@
-import heapq
-
-from pesim import Process, TIME_FOREVER
+from pesim import Process, TIME_FOREVER, MinPairingHeap
 from tcysim.framework.priority import Priority
 from tcysim.framework.probe.action import ProbeActionTemplate
 
@@ -10,7 +8,7 @@ class ProbeProcessor(Process):
         super(ProbeProcessor, self).__init__(yard.env)
         self.yard = yard
         self.probe_mgr = self.yard.probe_mgr
-        self.actions = []
+        self.actions = MinPairingHeap()
         for name in dir(self):
             item = getattr(self, name)
             if isinstance(item, ProbeActionTemplate):
@@ -18,14 +16,15 @@ class ProbeProcessor(Process):
                 item.set_processor(self)
 
     def _wait(self, priority=Priority.PROBE):
-        if self.actions:
-            return self.actions[0].time, priority
+        action = self.actions.first()
+        if action:
+            return action.time, priority
         else:
             return TIME_FOREVER, priority
 
     def _process(self):
-        heapq.heappop(self.actions)()
+        self.actions.pop()()
 
     def add_action(self, action):
-        heapq.heappush(self.actions, action)
+        self.actions.push(action)
         self.activate(action.time, Priority.PROBE)

@@ -1,5 +1,4 @@
-import heapq
-from pesim import Process, TIME_FOREVER
+from pesim import Process, TIME_FOREVER, MinPairingHeap, MinPairingHeapNode
 
 from ..priority import Priority
 from tcysim.utils.dispatcher import Dispatcher
@@ -9,15 +8,15 @@ class EventHandlingFail(Exception):
     pass
 
 
-class GeneratorEvent:
-    __slots__ = ["time", "type", "args", "kwargs"]
+class GeneratorEvent(MinPairingHeapNode):
+    __slots__ = ["time", "type", "args"]
 
     def __init__(self, time, type=None, *args):
         self.time = time
         self.type = type
         self.args = args
 
-    def __lt__(self, other):
+    def cmp(self, other):
         if self.time == other.time:
             return self.type.value < other.type.value
         else:
@@ -42,22 +41,23 @@ class EventGenerator(Process):
 
     def __init__(self, yard, stop_time=TIME_FOREVER, env=None):
         super(EventGenerator, self).__init__(env or yard.env)
-        self.queue = []
+        self.queue = None
         self.yard = yard
         self.stop_time = stop_time
         self.handler = self.EventHandler(self)
 
     def install_or_add(self, event):
-        heapq.heappush(self.queue, event)
+        self.queue.push(event)
 
     def initial_events(self):
         yield from []
 
     def _wait(self, priority=Priority.REQUEST):
-        if not self.queue:
-            return TIME_FOREVER, Priority.FOREVER
+        ev = self.queue.first()
+        if ev:
+            return ev.time, Priority.REQUEST
         else:
-            return self.queue[0].time, Priority.REQUEST
+            return TIME_FOREVER, Priority.FOREVER
 
     def on_event(self, ev: GeneratorEvent):
         try:
@@ -66,12 +66,11 @@ class EventGenerator(Process):
             yield from self.handler.on_fail(e)
 
     def _process(self):
-        ev = heapq.heappop(self.queue)
+        ev = self.queue.pop()
         for ev2 in self.on_event(ev):
             if ev2.time < self.stop_time:
                 self.install_or_add(ev2)
 
     def setup(self):
-        self.queue = list(self.initial_events())
-        heapq.heapify(self.queue)
+        self.queue = MinPairingHeap(self.initial_events())
         super(EventGenerator, self).setup()

@@ -1,9 +1,10 @@
-from pesim import TIME_FOREVER
+from pesim import TIME_FOREVER, MinPairingHeapNode
 from tcysim.utils.idx_obj import IncreaseIndexObject
 
 
-class CallBack(IncreaseIndexObject):
-    __slots__ = ["time", "func", "args", "kwargs"]
+class CallBack(MinPairingHeapNode):
+    __slots__ = ["time", "func", "args", "kwargs", "id"]
+    __id = 0
 
     def __init__(self, func, *args, **kwargs):
         super(CallBack, self).__init__()
@@ -11,12 +12,14 @@ class CallBack(IncreaseIndexObject):
         self.func = func
         self.args = args
         self.kwargs = kwargs
+        self.id = self.__class__.__id
+        self.__class__.__id += 1
 
-    def __lt__(self, other):
+    def cmp(self, other):
         if self.time < other.time:
             return True
         elif self.time == other.time:
-            return hash(self) < hash(other)
+            return self.id < other.id
         else:
             return False
 

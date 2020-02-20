@@ -1,6 +1,8 @@
 from collections import deque
 from libc.math cimport sqrt, fabs
+from libc.stdint cimport int64_t
 
+from tcysim.utils.math cimport feq
 from .motion cimport Motion
 
 cdef class Spec:
@@ -28,6 +30,8 @@ cdef class Mover:
             self.specs = specs
         else:
             self.specs = {"default": specs}
+
+        self._cache = {k: dict() for k in self.specs}
 
     def save_state(self):
         self._state_curr_v = self.curr_v
@@ -86,7 +90,7 @@ cdef class Mover:
             time += m.timespan
         return time
 
-    cdef tuple create_motions(self, double start_time, double displacement, bint allow_interruption=False, mode="default"):
+    cdef tuple create_motions(self, double start_time, double displacement, bint allow_interruption, mode="default"):
         cdef Spec spec = self.specs[mode]
         cdef double v0 = self.curr_v
         cdef double a = spec.a
@@ -98,11 +102,24 @@ cdef class Mover:
         cdef double t0, t1, t2, dflg, vx
         cdef Motion m
 
+        # cdef bint _do_cache = feq(v0,0)
+        # cdef dict _cache = self._cache[mode]
+        # cdef double cd, ct, cv, ca
+        # cdef int _cache_key = <int>(displacement * 100)
+
+        # if _do_cache:
+        #     print(_cache)
+
         motions = []
+        # if _do_cache and _cache_key in _cache:
+        #     _do_cache = False
+        #     for cd, ct, cv, ca in _cache[_cache_key]:
+        #         motions.append(Motion.__new__(Motion, start_time + cd, ct, cv, ca, allow_interruption))
+        # else:
         if v0 > 0 and displacement < v0 * v0 / (2 * d):
             t0 = v0 / d
             s0 = v0 * t0 - 0.5 * d * t0 * t0
-            m = Motion(st, t0, v0, -d, allow_interruption=allow_interruption)
+            m = Motion.__new__(Motion, st, t0, v0, -d, allow_interruption)
             motions.append(m)
             displacement -= s0
             v0 = 0
@@ -110,7 +127,7 @@ cdef class Mover:
         elif v0 < 0 and displacement > -v0 * v0 / (2 * d):
             t0 = -v0 / d
             s0 = -v0 * t0 + 0.5 * d * t0 * t0
-            m = Motion(st, t0, v0, d, allow_interruption=allow_interruption)
+            m = Motion.__new__(Motion, st, t0, v0, d, allow_interruption)
             motions.append(m)
             displacement += s0
             v0 = 0
@@ -118,22 +135,25 @@ cdef class Mover:
 
         v0 = fabs(v0)
         distance = fabs(displacement)
-        dflg = 1 if displacement >= 0 else -1
+        if displacement >= 0:
+            dflg = 1
+        else:
+            dflg = -1
 
         if distance >= w0 - v0 * v0 / (2 * a):
             t0 = (vm - v0) / a
             t1 = distance / vm - vm / w1 + v0 * v0 / (2 * a * vm)
             t2 = vm / d
             if t0 > 0:
-                m = Motion(st, t0, v0 * dflg, a * dflg, allow_interruption=allow_interruption)
+                m = Motion.__new__(Motion, st, t0, v0 * dflg, a * dflg, allow_interruption)
                 motions.append(m)
                 st += t0
             if t1 > 0:
-                m = Motion(st, t1, vm * dflg, 0, allow_interruption=allow_interruption)
+                m = Motion.__new__(Motion, st, t1, vm * dflg, 0, allow_interruption)
                 motions.append(m)
                 st += t1
             if t2 > 0:
-                m = Motion(st, t2, vm * dflg, -d * dflg, allow_interruption=allow_interruption)
+                m = Motion.__new__(Motion, st, t2, vm * dflg, -d * dflg, allow_interruption)
                 motions.append(m)
                 st += t2
         elif distance >= v0 * v0 / (2 * d):
@@ -141,11 +161,11 @@ cdef class Mover:
             t0 = (vx - v0) / a
             t1 = vx / d
             if t0 > 0:
-                m = Motion(st, t0, v0 * dflg, a * dflg, allow_interruption=allow_interruption)
+                m = Motion.__new__(Motion, st, t0, v0 * dflg, a * dflg, allow_interruption)
                 motions.append(m)
                 st += t0
             if t1 > 0:
-                m = Motion(st, t1, vx * dflg, -d * dflg, allow_interruption=allow_interruption)
+                m = Motion.__new__(Motion, st, t1, vx * dflg, -d * dflg, allow_interruption)
                 motions.append(m)
                 st += t1
 
@@ -153,6 +173,10 @@ cdef class Mover:
             m = motions[len(motions) - 1]
             self.curr_v = m.finish_velocity
             self.curr_a = m.a
+            st = m.finish_time
+
+            # if _do_cache:
+            #     _cache[_cache_key] = [(m.start_time - start_time, m.timespan, m.start_v, m.a) for m in motions]
 
         return st - start_time, motions
 

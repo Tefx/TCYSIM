@@ -1,4 +1,5 @@
 from cython cimport freelist
+from pesim.pairing_heap_c cimport MinPairingHeapNode
 
 
 cdef class ProbeActionTemplate:
@@ -22,8 +23,7 @@ cdef class ProbeActionTemplate:
         self.func(self.processor, *args, **kwargs)
 
 
-@freelist(1024)
-cdef class ProbeAction:
+cdef class ProbeAction(MinPairingHeapNode):
     cdef readonly double time
     cdef ProbeActionTemplate template
     cdef tuple args
@@ -38,5 +38,5 @@ cdef class ProbeAction:
     def __call__(self):
         self.template.call(self.args, self.kwargs)
 
-    def __lt__(self, ProbeAction other):
-        return self.time < other.time
+    cpdef bint cmp(self, MinPairingHeapNode other):
+        return self.time < (<ProbeAction>other).time

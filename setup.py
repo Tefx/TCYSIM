@@ -1,9 +1,13 @@
 from distutils.core import setup
 from distutils.extension import Extension
 from Cython.Build import cythonize
-import numpy
 import os
 from platform import system
+import sys
+
+sys.path.extend([
+    "../pesim",
+    ])
 
 if system() == "Windows":
     extra_compile_args = [
@@ -55,7 +59,8 @@ extensions = [
         ),
     Extension(
         name="tcysim.framework.probe.*",
-        sources=["tcysim/framework/probe/*.pyx"],
+        sources=["tcysim/framework/probe/*.pyx",
+                 ],
         extra_compile_args=extra_compile_args,
         extra_link_args=extra_link_args,
         ),

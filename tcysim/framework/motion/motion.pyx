@@ -1,9 +1,9 @@
 from cython cimport freelist
 
 
-@freelist(512)
+@freelist(1024)
 cdef class Motion:
-    def __cinit__(self, double start_time, double timespan, double v, double a, bint allow_interruption=False):
+    def __cinit__(self, double start_time, double timespan, double v, double a, bint allow_interruption):
         self.start_v = v
         self.a = a
         self.start_time = start_time
@@ -13,7 +13,7 @@ cdef class Motion:
 
     cdef Motion split(self, double time):
         cdef double t = time - self.start_time
-        cdef Motion m = Motion(self.start_time, t, self.start_v, self.a, allow_interruption=self.allow_interruption)
+        cdef Motion m = Motion.__new__(Motion, self.start_time, t, self.start_v, self.a, self.allow_interruption)
         self.start_v += self.a * t
         self.timespan -= t
         self.start_time = time
