@@ -1,12 +1,12 @@
 class DispatchFunc:
+    __slots__ = ["func", "category", "method"]
     def __init__(self, func, category, method):
         self.func = func
         self.category = category.name
         self.method = method
 
     def __call__(self, *args, **kwargs):
-        res = self.func(*args, **kwargs)
-        return res
+        return self.func(*args, **kwargs)
 
 
 class Dispatcher:

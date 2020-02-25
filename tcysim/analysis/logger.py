@@ -1,6 +1,6 @@
 import os
 
-from LMP.single import SingleLMP
+from tcysim.utils.lmp import SingleLMP
 import umsgpack
 
 pack = umsgpack.pack
