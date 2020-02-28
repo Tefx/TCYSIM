@@ -46,4 +46,12 @@ DLLEXPORT SlotUsage_TCY block_column_state(Block_TCY *blk, const CellIdx_TCY *id
 
 DLLEXPORT bool block_position_is_valid_for_size(Block_TCY *blk, CellIdx_TCY *loc, BoxSize_TCY box_size);
 
+DLLEXPORT int block_all_column_usages(Block_TCY *blk, int axis, bool include_occupied, const int* avail, int *results);
+
+DLLEXPORT int block_all_slot_usages(Block_TCY *blk, int norm_axis, bool include_occupied, const int* avail, int *results);
+
+DLLEXPORT int block_all_slot_states(Block_TCY *blk, int norm_axis, int *results);
+
+DLLEXPORT int block_validate_all_slots_for_size(Block_TCY *blk, int norm_axis, BoxSize_TCY box_size, bool *results);
+
 #endif //LIBTCY_BLOCK_H

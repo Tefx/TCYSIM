@@ -98,6 +98,18 @@ class StackingBlock(Block):
                     if self.position_is_valid_for_size(i, j, k, box.teu):
                         yield V3i(i, j, k)
 
+    def all_stack_usages(self, include_occupied=True, avail=None, res=None):
+        return self.all_column_usage(-1, include_occupied, avail, res)
+
+    def all_bay_usages(self, include_occupied=True, avail=None, res=None):
+        return self.all_slot_usage(0, include_occupied, avail, res)
+
+    def all_bay_states(self, res=None):
+        return self.all_slot_states(0, res)
+
+    def validate_all_bays(self, teu, res=None):
+        return self.validate_all_slots(0, teu, res)
+
     def zone_from_coord(self, local_coord):
         """
           (2,0) *    (2,1)    * (2,2)

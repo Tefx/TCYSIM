@@ -43,7 +43,7 @@ cdef class CBlock:
     cpdef object top_box(self, V3 loc, int along):
         cdef CellIdx_TCY pos[3]
         loc.cpy2mem_i(pos)
-        cdef Box_TCY* box = block_top_box(&self.c, pos, along)
+        cdef Box_TCY*box = block_top_box(&self.c, pos, along)
         return <object> box._self
 
     def stack_hash(self, V3 loc):
@@ -71,6 +71,73 @@ cdef class CBlock:
         else:
             res = block_position_is_valid_for_size(&self.c, pos, BOX_SIZE_FORTY)
         return res
+
+    cpdef array.array all_column_usage(self, int axis=-1, bint include_occupied=True, array.array avail=None,
+                                       array.array res=None):
+        cdef CellIdx_TCY size
+
+        if axis < 0:
+            axis = self.stacking_axis
+
+        cdef array.array results
+        if res is None:
+            results = array.array("i")
+
+            size = 1
+            for i in range(3):
+                if i != axis:
+                    size *= self.c.spec[i]
+
+            array.resize(results, size)
+        else:
+            results = res
+
+        if avail is None:
+            block_all_column_usages(&self.c, axis, include_occupied, NULL, results.data.as_ints)
+        else:
+            block_all_column_usages(&self.c, axis, include_occupied, avail.data.as_ints, results.data.as_ints)
+
+        return results
+
+    cpdef array.array all_slot_usage(self, int norm_axis, bint include_occupied=True, array.array avail=None,
+                                     array.array res=None):
+
+        cdef array.array results
+        if res is None:
+            results = array.array("i")
+            array.resize(results, self.c.spec[norm_axis])
+        else:
+            results = res
+
+        if avail is None:
+            block_all_slot_usages(&self.c, norm_axis, include_occupied, NULL, results.data.as_ints)
+        else:
+            block_all_slot_usages(&self.c, norm_axis, include_occupied, avail.data.as_ints, results.data.as_ints)
+        return results
+
+    cpdef array.array all_slot_states(self, int norm_axis, array.array res=None):
+        cdef array.array results
+        if res is None:
+            results= array.array("i")
+            array.resize(results, self.c.spec[norm_axis])
+        else:
+            results = res
+        block_all_slot_states(&self.c, norm_axis, results.data.as_ints)
+        return results
+
+    cpdef array.array validate_all_slots(self, int norm_axis, int teu, array.array res=None):
+        cdef array.array results
+        if res is None:
+            results = array.array("i")
+            array.resize(results, self.c.spec[norm_axis])
+        else:
+            results = res
+
+        if teu == 1:
+            block_validate_all_slots_for_size(&self.c, norm_axis, BOX_SIZE_TWENTY, results.data.as_ints)
+        else:
+            block_validate_all_slots_for_size(&self.c, norm_axis, BOX_SIZE_FORTY, results.data.as_ints)
+        return results
 
     def lock(self, V3 loc):
         cdef CellIdx_TCY pos[3]

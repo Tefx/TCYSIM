@@ -10,7 +10,8 @@
 #include <string.h>
 #include <assert.h>
 
-void block_init(Block_TCY *blk, const CellIdx_TCY *spec, int box_orientation, int stacking_axis, const bool *axis_need_sync) {
+void block_init(Block_TCY *blk, const CellIdx_TCY *spec, int box_orientation, int stacking_axis,
+                const bool *axis_need_sync) {
     blk->cell_num = spec[0] * spec[1] * spec[2];
     blk->cells = (Cell_TCY *) malloc(sizeof(Cell_TCY) * blk->cell_num);
     blk->box_orientation = box_orientation;
@@ -210,23 +211,160 @@ static inline bool _compare_usage(BoxSize_TCY box_size, SlotUsage_TCY usage, Slo
 }
 
 bool block_position_is_valid_for_size(Block_TCY *blk, CellIdx_TCY *loc, BoxSize_TCY box_size) {
-    SlotUsage_TCY column_use_type, column_use_type2 = SLOT_USAGE_FREE;
+    SlotUsage_TCY clmn_ut, clmn_ut2 = SLOT_USAGE_FREE;
     if (box_size == BOX_SIZE_FORTY && loc[blk->box_orientation] > blk->spec[blk->box_orientation] - 2)
         return FALSE;
     for (int i = 0; i < 3; ++i) {
         if (loc[i] >= blk->spec[i])
             return FALSE;
         if (blk->column_use_type[i] && blk->column_sync[i]) {
-            column_use_type = blk->column_use_type[i][_blk_clmn_idx(blk, loc, i)];
+            clmn_ut = blk->column_use_type[i][_blk_clmn_idx(blk, loc, i)];
             if (box_size == BOX_SIZE_FORTY) {
                 loc[blk->box_orientation]++;
-                column_use_type2 = blk->column_use_type[i][_blk_clmn_idx(blk, loc, i)];
+                clmn_ut2 = blk->column_use_type[i][_blk_clmn_idx(blk, loc, i)];
                 loc[blk->box_orientation]--;
             }
-            if (!_compare_usage(box_size, column_use_type, column_use_type2))
+            if (!_compare_usage(box_size, clmn_ut, clmn_ut2))
                 return FALSE;
         }
     }
     return TRUE;
 }
 
+static inline int _other_axes(int axis, int *a0, int *a1) {
+    if (axis == 0) {
+        *a0 = 1, *a1 = 2;
+    } else if (axis == 1) {
+        *a0 = 0, *a1 = 2;
+    } else if (axis == 2) {
+        *a0 = 0, *a1 = 1;
+    } else {
+        return 1;
+    }
+    return 0;
+}
+
+int block_all_column_usages(Block_TCY *blk, int axis, bool include_occupied, const int* avail, int *results) {
+    CellIdx_TCY tmp_loc[3], clmn_idx;
+    CellIdx_TCY a0, a1;
+    CellIdx_TCY **usages;
+
+    if (include_occupied)
+        usages = blk->column_usage_occupied;
+    else
+        usages = blk->column_usage;
+
+    if (_other_axes(axis, &a0, &a1)) return -1;
+
+    for (int i = 0; i < blk->spec[a0]; ++i) {
+        if ((!avail) || avail[i]) {
+            tmp_loc[a0] = i;
+            for (int j = 0; j < blk->spec[a1]; ++j) {
+                tmp_loc[a1] = j;
+                clmn_idx = _blk_clmn_idx(blk, tmp_loc, axis);
+                results[clmn_idx] = usages[axis][clmn_idx];
+            }
+        }
+    }
+
+    return 0;
+}
+
+int block_all_slot_usages(Block_TCY *blk, int norm_axis, bool include_occupied, const int* avail, int *results) {
+    CellIdx_TCY tmp_loc[3];
+    CellIdx_TCY a0, a1;
+    CellIdx_TCY **usages;
+
+    if (include_occupied)
+        usages = blk->column_usage_occupied;
+    else
+        usages = blk->column_usage;
+
+    if (_other_axes(norm_axis, &a0, &a1)) return -1;
+
+    memset(results, 0, sizeof(int) * blk->spec[norm_axis]);
+
+    for (int i = 0; i < blk->spec[norm_axis]; ++i) {
+        if (avail == NULL || avail[i]) {
+            tmp_loc[norm_axis] = i;
+            for (int j = 0; j < blk->spec[a0]; ++j) {
+                tmp_loc[a0] = j;
+                results[i] += usages[a1][_blk_clmn_idx(blk, tmp_loc, a1)];
+            }
+        }
+    }
+
+    return 0;
+}
+
+int block_all_slot_states(Block_TCY *blk, int norm_axis, int*results) {
+    CellIdx_TCY tmp_idx[3];
+    CellIdx_TCY a0, a1;
+
+    if (_other_axes(norm_axis, &a0, &a1)) return -1;
+
+    for (int i = 0; i < blk->spec[norm_axis]; ++i) {
+        tmp_idx[norm_axis] = i;
+        tmp_idx[a0] = tmp_idx[a1] = 0;
+        if (blk->column_use_type[a0]) {
+            tmp_idx[a1] = 0;
+            results[i] = (int)blk->column_use_type[a0][_blk_clmn_idx(blk, tmp_idx, a0)];
+        } else if (blk->column_use_type[a1]) {
+            tmp_idx[a0] = 0;
+            results[i] = (int)blk->column_use_type[a1][_blk_clmn_idx(blk, tmp_idx, a1)];
+        } else
+            return -2;
+    }
+
+    return 0;
+}
+
+int block_validate_all_slots_for_size(Block_TCY *blk, int norm_axis, BoxSize_TCY box_size, bool *results) {
+    SlotUsage_TCY clmn_ut, clmn_ut2 = SLOT_USAGE_FREE;
+    CellIdx_TCY tmp_idx[3];
+    CellIdx_TCY as[2];
+
+    if (_other_axes(norm_axis, as, as+1)) return -1;
+
+    memset(results, 1, sizeof(int) * blk->spec[norm_axis]);
+
+    for (int i = 0; i < blk->spec[norm_axis]; ++i) {
+        tmp_idx[norm_axis] = i;
+        for (int k = 0; k<2; k++){
+            if (blk->column_use_type[as[k]]){
+                tmp_idx[as[1-k]] = 0;
+                clmn_ut = blk->column_use_type[as[k]][_blk_clmn_idx(blk, tmp_idx, as[k])];
+                if (box_size == BOX_SIZE_FORTY) {
+                    tmp_idx[blk->box_orientation]++;
+                    if (tmp_idx[blk->box_orientation] >= blk->spec[blk->box_orientation]){
+                        results[i] = FALSE;
+                    } else {
+                        clmn_ut2 = blk->column_use_type[as[k]][_blk_clmn_idx(blk, tmp_idx, as[k])];
+                    }
+                    tmp_idx[blk->box_orientation]--;
+                }
+                results[i] = results[i] && _compare_usage(box_size, clmn_ut, clmn_ut2);
+            }
+        }
+//        if (blk->column_use_type[a0]) {
+//            tmp_idx[a1] = 0;
+//            clmn_ut = blk->column_use_type[a0][_blk_clmn_idx(blk, tmp_idx, a0)];
+//            if (box_size == BOX_SIZE_FORTY) {
+//                tmp_idx_2[a1] = 0;
+//                clmn_ut2 = blk->column_use_type[a0][_blk_clmn_idx(blk, tmp_idx_2, a0)];
+//            }
+//            results[i] = _compare_usage(box_size, clmn_ut, clmn_ut2);
+//        }
+//
+//        if (blk->column_use_type[a1]) {
+//            tmp_idx[a0] = 0;
+//            clmn_ut = blk->column_use_type[a1][_blk_clmn_idx(blk, tmp_idx, a1)];
+//            if (box_size == BOX_SIZE_FORTY) {
+//                tmp_idx_2[a0] = 0;
+//                clmn_ut2 = blk->column_use_type[a1][_blk_clmn_idx(blk, tmp_idx_2, a1)];
+//            }
+//            results[i] = results[i] && _compare_usage(box_size, clmn_ut, clmn_ut2);
+//        }
+    }
+    return 0;
+}

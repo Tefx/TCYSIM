@@ -46,7 +46,7 @@ cdef extern from "define.h":
     ctypedef Box_TCY *Cell_TCY
 
     ctypedef struct Block_TCY:
-        CellIdx_TCY shape[3]
+        CellIdx_TCY spec[3]
         bool column_sync[3]
         SlotUsage_TCY *column_use_type[3]
         CellIdx_TCY *column_usage[3]
@@ -75,7 +75,8 @@ cdef extern from "box.h":
     int box_relocate_store(Box_TCY *box, Time_TCY time)
 
 cdef extern from "block.h":
-    void block_init(Block_TCY *blk, const CellIdx_TCY *shape, int box_orientation, int stacking_axis, const int *axis_need_sync)
+    void block_init(Block_TCY *blk, const CellIdx_TCY *shape, int box_orientation, int stacking_axis,
+                    const int *axis_need_sync)
     void block_destroy(Block_TCY *blk)
     int block_usage(Block_TCY *blk, const CellIdx_TCY *loc, bool include_occupied)
     Box_TCY*block_box_at(Block_TCY*blk, const CellIdx_TCY*idx)
@@ -87,6 +88,10 @@ cdef extern from "block.h":
     bool block_is_locked(Block_TCY *blk, const CellIdx_TCY*idx)
     SlotUsage_TCY block_column_state(Block_TCY *blk, const CellIdx_TCY *idx, int axis)
     bool block_position_is_valid_for_size(Block_TCY *blk, CellIdx_TCY *loc, BoxSize_TCY box_size)
+    int block_all_column_usages(Block_TCY *blk, int axis, bool include_occupied, const int *avail, int *results)
+    int block_all_slot_usages(Block_TCY *blk, int norm_axis, bool include_occupied, const int *avail, int *results)
+    int block_all_slot_states(Block_TCY *blk, int norm_axis, int*results)
+    int block_validate_all_slots_for_size(Block_TCY *blk, int norm_axis, BoxSize_TCY box_size, bool *results)
 
 cdef extern from "path.h":
     ctypedef struct PathFrameChunk

@@ -115,7 +115,6 @@ class ReqHandler(ReqHandlerBase):
         pass
 
     def on_relocate_start(self, time, box, dst_loc):
-        # print(["RALC", time, box, dst_loc])
         box.alloc(time, None, dst_loc)
 
     def on_relocate_finish_or_fail(self, time, box):
