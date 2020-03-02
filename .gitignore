@@ -69,9 +69,11 @@ libtcy/cmake-build-debug/
 tcysim/*/*.c
 tcysim/*/*.so
 tcysim/*/*.html
+tcysim/*/*.pyd
 
 tcysim/*/*/*.c
 tcysim/*/*/*.so
 tcysim/*/*/*.html
+tcysim/*/*/*.pyd
 
 test/log2
