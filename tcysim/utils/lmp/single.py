@@ -1,7 +1,21 @@
-from functools import wraps
 from multiprocessing import Process, Value, Array, Semaphore
 from inspect import signature
 import ctypes
+
+
+class SharedBytes:
+    def __init__(self, *args, **kwargs):
+        self.array = Array(ctypes.c_char, *args, **kwargs)
+        self.len = Value(ctypes.c_int64, lock=False)
+
+    @property
+    def value(self):
+        return self.array.raw[:self.len.value]
+
+    @value.setter
+    def value(self, v):
+        self.len.value = len(v)
+        self.array.raw = v
 
 
 class Method_LMP:
@@ -28,13 +42,19 @@ class Method_LMP:
         elif a is float:
             return Value(ctypes.c_double, lock=False)
         elif a is bytes:
-            return Array(ctypes.c_char, 1024, lock=False)
+            return SharedBytes(1024, lock=False)
         elif a is str:
             return Array(ctypes.c_wchar, 1024, lock=False)
+        elif isinstance(a, str):
+            if a.startswith("str"):
+                return Array(ctypes.c_wchar, int(a[4:-1]), lock=False)
+            elif a.startswith("bytes"):
+                return SharedBytes(int(a[6:-1]), lock=False)
         elif isinstance(a, tuple):
             return tuple(cls.create_shared_value_by_pytype(x) for x in a)
         elif a is None:
             return None
+        raise NotImplementedError("Unknown type: {}".format(a))
 
     def build(self):
         self.params = []

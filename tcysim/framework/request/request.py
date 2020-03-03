@@ -62,7 +62,7 @@ class Request(IndexObject):
         self.acquired_positions = []
         for op in self.ops:
             op.clean()
-        # self.ops = None
+        self.ops = None
 
     def link_signal(self, name, callback, *args, **kwargs):
         self.signals[name] = CallBack(callback, *args, **kwargs)
@@ -127,8 +127,8 @@ class Request(IndexObject):
             for pos in self.acquired_positions:
                 self.block.release_stack(time, pos)
             self.acquired_positions = []
-        if self.state == ReqState.FINISHED:
-            self.clean()
+        # if self.state == ReqState.FINISHED:
+        #     self.clean()
 
     def on_acquire_fail(self, time, pos_hash):
         self.acquire_fails.add(pos_hash)

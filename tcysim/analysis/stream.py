@@ -1,8 +1,8 @@
 from multiprocessing import SimpleQueue as Queue, Process
-import umsgpack
+import msgpack
 # msgpack.compatibility = True
 
-pack = umsgpack.pack
+pack = msgpack.pack
 
 
 class LogStream(Process):

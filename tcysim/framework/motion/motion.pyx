@@ -29,3 +29,4 @@ cdef class Motion:
         return "[MTN]({:.3f}/{:.3f}/{:.3f}/{:.3f}[{}])".format(
             self.start_time, self.timespan,
             self.start_v, self.a, self.allow_interruption)
+

@@ -78,7 +78,7 @@ class Operation:
                 self._pps[component] = []
         self.start_time = start_time
         with equipment.save_state():
-            self.finish_time = self.workflow(self, self.start_time)
+            self.finish_time = self.workflow.dry_run(self, self.start_time)
             self.record_path_points()
 
     def extend(self, steps):
@@ -109,3 +109,4 @@ class Operation:
 
     def __repr__(self):
         return "<OP/{}>{}".format(self.op_type.name, str(hash(self))[-4:0])
+

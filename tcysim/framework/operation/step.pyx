@@ -53,14 +53,14 @@ cdef class StepBase:
 
     cdef StepBase and_c(StepBase self, StepBase other):
         if isinstance(other, AndStep):
-            (<AndStep>other)._and(self)
+            (<AndStep> other)._and(self)
             return other
         else:
             return AndStep(self, other)
 
     cdef StepBase or_c(StepBase self, StepBase other):
         if isinstance(other, OrStep):
-            (<OrStep>other)._or(self)
+            (<OrStep> other)._or(self)
             return other
         else:
             return OrStep(self, other)
@@ -131,15 +131,18 @@ cdef class CallBackStep(StepBase):
             yard.cmgr.add((<CallBackStep> self).callback)
         self.committed = True
 
+cdef class listm(list):
+    pass
+
 cdef class MoverStep(StepBase):
     cdef Mover mover
     cdef double src_loc
     cdef double dst_loc
     cdef list motions
-    cdef object mode
+    cdef str mode
     cdef bint allow_interruption
 
-    def __init__(Mover self, Mover mover, double src, double dst, bint allow_interruption=False, mode="default"):
+    def __init__(Mover self, Mover mover, double src, double dst, bint allow_interruption=False, str mode="default"):
         self.mover = mover
         self.src_loc = src
         self.dst_loc = dst
@@ -178,6 +181,22 @@ cdef class MoverStep(StepBase):
         if not self.committed and self.start_time != self.finish_time:
             self.mover.commit_motions(self.motions)
         self.committed = True
+
+    # cdef tuple reduce(self):
+    #     cdef Motion m
+    #     cdef list seq = list()
+    #     for m in self.motions:
+    #         seq.append((<int>(m.a * 1000), <int>(m.timespan * 1000)))
+    #     return self.mover.axis, self.mode, self.start_time, seq
+
+    cdef list reduce(self):
+        cdef Motion m
+        cdef list seq = [self.mover.axis, self.mode, self.start_time]
+        for m in self.motions:
+            seq.append(<int>(m.a * 1000))
+            seq.append(<int>(m.timespan * 1000))
+        return seq
+        # return self.mover.axis, self.mode, self.start_time, seq
 
     def __repr__(self):
         return "[{}]Move<{:.2f}=>{:.2f}|{:.2f}/{:.2f}>".format(self.mover.axis, self.src_loc, self.dst_loc,
@@ -254,7 +273,7 @@ cdef class StepWorkflow:
     cdef list steps
     cdef list sorted_steps
     cdef StepBase last_step
-    cdef readonly double finish_time
+    cdef double start_time, finish_time
 
     def __cinit__(self):
         self.steps = []
@@ -266,7 +285,7 @@ cdef class StepWorkflow:
         if isinstance(step_or_steps, StepBase):
             self.steps.append(step_or_steps)
             if self.last_step:
-                (<StepBase>step_or_steps).add_pred(self.last_step)
+                (<StepBase> step_or_steps).add_pred(self.last_step)
             self.last_step = step_or_steps
         else:
             for step in step_or_steps:
@@ -280,10 +299,11 @@ cdef class StepWorkflow:
         for step in self.steps:
             step.reset()
 
-    def __call__(self, op, double st):
+    def dry_run(self, op, double st):
         cdef StepBase step
-        self.sorted_steps = []
+        self.start_time = 0
         self.finish_time = 0
+        self.sorted_steps = []
         for step in self.steps:
             step.execute(op, st)
             heapq.heappush(self.sorted_steps, step)
@@ -296,3 +316,12 @@ cdef class StepWorkflow:
         while self.sorted_steps:
             step = heapq.heappop(self.sorted_steps)
             step.commit(yard)
+
+    def dump(self, packer):
+        cdef StepBase step
+        cdef list res = []
+        for step in self.steps:
+            if isinstance(step, MoverStep) and \
+                    (<MoverStep> step).start_time != (<MoverStep> step).finish_time:
+                res.append((<MoverStep> step).reduce())
+        return packer.pack(res)

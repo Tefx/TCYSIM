@@ -164,6 +164,7 @@ class Equipment(EquipmentRangeLayout, Process):
             op.finish_time = self.time
             self.current_op = None
             self.yard.fire_probe('operation.finish', op)
+            # op.clean()
 
     def handle_request(self, request):
         request.start_or_resume(self.time)

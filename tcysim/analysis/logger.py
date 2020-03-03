@@ -1,9 +1,9 @@
 import os
 
 from tcysim.utils.lmp import SingleLMP
-import umsgpack
+import msgpack
 
-pack = umsgpack.pack
+pack = msgpack.pack
 
 
 class _LoggerForLMPManager:
@@ -41,10 +41,10 @@ class LoggingManagerBase(SingleLMP):
         for logger in self.loggers:
             logger.finish()
 
-
 class SingleProcessLogger(SingleLMP):
     def __init__(self, fp, columns=None, start=False):
         super(SingleProcessLogger, self).__init__()
+        self.packer = None
         self.fp = fp
         self.columns = columns
         if start:
@@ -56,11 +56,14 @@ class SingleProcessLogger(SingleLMP):
             if not os.path.exists(dir_path):
                 os.makedirs(dir_path)
             self.fp = open(self.fp, "wb")
+        self.packer = msgpack.Packer()
         if self.columns:
-            pack(self.columns, self.fp)
+            self.fp.write(self.packer.pack(self.columns))
+            # pack(self.columns, self.fp)
         super(SingleProcessLogger, self).run()
         if hasattr(self.fp, "close"):
             self.fp.close()
 
     def write(self, *data):
-        pack(data, self.fp)
+        self.fp.write(self.packer.pack(data))
+        # pack(data, self.fp)
