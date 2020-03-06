@@ -11,8 +11,8 @@ cdef class Spec:
     cdef double _cache_w1
 
 cdef class Mover:
-    cdef double curr_v
-    cdef double curr_a
+    cdef public double curr_v
+    cdef public double curr_a
     cdef double _state_curr_v
     cdef double _state_curr_a
     cdef readonly object pending_motions

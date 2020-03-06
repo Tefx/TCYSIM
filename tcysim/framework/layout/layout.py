@@ -101,7 +101,7 @@ class BlockLayout(LayoutItem):
         vl = (lane.center_coord(transform_to=self) - p0).unit()
         bl = self.coord_from_cell_idx(cell_idx, box_teu) - p0
         p = min(max(bl.dot_product(vl), TEU.LENGTH * box_teu / 2), lane.length - TEU.LENGTH * box_teu / 2)
-        v = lane.transform_to(V3(p, lane.size.y / 2, lane.size.z / 2 + TEU.HEIGHT / 2 + self.offset.z), self)
+        v = lane.transform_to(V3(p, lane.size.y / 2, lane.size.z / 2 + TEU.HEIGHT / 2 + lane.offset.z), self)
         return self.transform_to(v, transform_to)
 
     def next_cell(self, cell_idx):

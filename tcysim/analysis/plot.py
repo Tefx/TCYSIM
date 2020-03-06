@@ -93,9 +93,10 @@ class PlotSet:
             zmin = np.inf
             zmax = -np.inf
             for idx, value in data.items():
-                zmin = min(zmin, value)
-                zmax = max(zmax, value)
-                self.items[idx].assign_value(zs, value)
+                if idx in self.items:
+                    zmin = min(zmin, value)
+                    zmax = max(zmax, value)
+                    self.items[idx].assign_value(zs, value)
             color_scale = kwargs.get("colorscale", "Reds")
             zmin = kwargs.get("zmin", zmin)
             zmax = kwargs.get("zmax", zmax)

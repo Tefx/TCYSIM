@@ -141,6 +141,7 @@ cdef class MoverStep(StepBase):
     cdef list motions
     cdef str mode
     cdef bint allow_interruption
+    cdef double start_v
 
     def __init__(Mover self, Mover mover, double src, double dst, bint allow_interruption=False, str mode="default"):
         self.mover = mover
@@ -157,6 +158,8 @@ cdef class MoverStep(StepBase):
         if not self.executed:
             self.cal_pred(op, est)
             self.cal_start_time(op, est)
+
+            self.start_v = self.mover.curr_v
 
             op.mark_loc(self.mover, self.start_time, self.src_loc)
             if not feq(self.src_loc, self.dst_loc):
@@ -182,21 +185,13 @@ cdef class MoverStep(StepBase):
             self.mover.commit_motions(self.motions)
         self.committed = True
 
-    # cdef tuple reduce(self):
-    #     cdef Motion m
-    #     cdef list seq = list()
-    #     for m in self.motions:
-    #         seq.append((<int>(m.a * 1000), <int>(m.timespan * 1000)))
-    #     return self.mover.axis, self.mode, self.start_time, seq
-
     cdef list reduce(self):
         cdef Motion m
-        cdef list seq = [self.mover.axis, self.mode, self.start_time]
+        cdef list seq = [self.mover.axis, self.mode, self.start_time, self.start_v]
         for m in self.motions:
-            seq.append(<int>(m.a * 1000))
-            seq.append(<int>(m.timespan * 1000))
+            seq.append(<int> (m.a * 1000))
+            seq.append(<int> (m._orig_timespan * 1000))
         return seq
-        # return self.mover.axis, self.mode, self.start_time, seq
 
     def __repr__(self):
         return "[{}]Move<{:.2f}=>{:.2f}|{:.2f}/{:.2f}>".format(self.mover.axis, self.src_loc, self.dst_loc,

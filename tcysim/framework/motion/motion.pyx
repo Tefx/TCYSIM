@@ -7,7 +7,7 @@ cdef class Motion:
         self.start_v = v
         self.a = a
         self.start_time = start_time
-        self.timespan = timespan
+        self.timespan = self._orig_timespan = timespan
         self.allow_interruption = allow_interruption
         self.update()
 

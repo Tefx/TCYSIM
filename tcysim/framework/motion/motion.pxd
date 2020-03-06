@@ -2,7 +2,7 @@ cdef class Motion:
     cdef double start_v
     cdef double a
     cdef double start_time
-    cdef double timespan
+    cdef double timespan, _orig_timespan
     cdef bint allow_interruption
 
     cdef readonly double displacement

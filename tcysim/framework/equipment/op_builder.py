@@ -43,15 +43,15 @@ class OpBuilder(Dispatcher):
 
     @classmethod
     def StoreOp(cls, request):
-        return Operation(cls.OpType.STORE, request)
+        return Operation(cls.OpType.STORE, request, request.box)
 
     @classmethod
     def RetrieveOp(cls, request):
-        return Operation(cls.OpType.RETRIEVE, request)
+        return Operation(cls.OpType.RETRIEVE, request, request.box)
 
     @classmethod
     def RelocateOp(cls, request, box, new_loc):
-        return Operation(cls.OpType.RELOCATE, request, box=box, new_loc=new_loc)
+        return Operation(cls.OpType.RELOCATE, request, box, new_loc=new_loc)
 
     @classmethod
     def AdjustOp(cls, request):

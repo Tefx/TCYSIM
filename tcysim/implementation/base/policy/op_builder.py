@@ -7,7 +7,7 @@ class OpBuilder(OpBuilderBase):
     @Dispatcher.on(OpType.STORE)
     def build_store(self, op: Operation):
         request = op.request
-        box = request.box
+        box = op.box
         lane = request.lane
         dst_loc = getattr(request, "dst_loc", None)
         op.access_loc = self.equipment.op_coord_from_box_coord(box.access_coord(lane, transform_to=self.equipment))
@@ -29,7 +29,7 @@ class OpBuilder(OpBuilderBase):
     @Dispatcher.on(OpType.RETRIEVE)
     def build_retrieve(self, op: Operation):
         request = op.request
-        box = request.box
+        box = op.box
         lane = request.lane
         op.access_loc = self.equipment.op_coord_from_box_coord(box.access_coord(lane, transform_to=self.equipment))
         op.container_loc = self.equipment.op_coord_from_box_coord(box.store_coord(transform_to=self.equipment))

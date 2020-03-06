@@ -94,7 +94,7 @@ class Equipment(EquipmentRangeLayout, Process):
     def interrupt(self):
         for component in self.components:
             component.interrupt()
-        self.wake(priority=Priority.INTERRUPT)
+        self.activate(-1, Priority.INTERRUPT)
 
     def allow_interruption(self):
         self.run_until(self.env.current_time)
@@ -116,7 +116,7 @@ class Equipment(EquipmentRangeLayout, Process):
         self.state = s2
 
     def wake(self, time=-1, priority=0):
-        if self.state != self.STATE.WORKING or self.allow_interruption():
+        if self.state != self.STATE.WORKING:
             self.activate(time, priority)
 
     def ready_for_new_task(self):
@@ -136,7 +136,7 @@ class Equipment(EquipmentRangeLayout, Process):
                 if self.allow_interruption():
                     self.interrupt()
             elif self.state != self.STATE.BLOCKING:
-                self.wake(priority=Priority.TASK_ARRIVAL)
+                self.activate(-1, Priority.TASK_ARRIVAL)
 
     def query_new_task(self, time):
         if self.next_task is None:

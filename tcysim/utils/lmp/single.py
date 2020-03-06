@@ -1,9 +1,11 @@
 from multiprocessing import Process, Value, Array, Semaphore
-from inspect import signature
+from inspect import signature, Signature
 import ctypes
 
 
 class SharedBytes:
+    __slots__ = ["array", "len"]
+
     def __init__(self, *args, **kwargs):
         self.array = Array(ctypes.c_char, *args, **kwargs)
         self.len = Value(ctypes.c_int64, lock=False)
@@ -19,6 +21,9 @@ class SharedBytes:
 
 
 class Method_LMP:
+    __slots__ = ["idx", "func", "ins", "wait_value", "wait_sem", "idle_sem",
+                 "params", "ret", "ret_sem", "last_received", "ret_is_tuple"]
+
     def __init__(self, idx, func, ins, wait_value, wait_sem, idle_sem):
         self.idx = idx
         self.func = func
@@ -42,17 +47,19 @@ class Method_LMP:
         elif a is float:
             return Value(ctypes.c_double, lock=False)
         elif a is bytes:
-            return SharedBytes(1024, lock=False)
+            return Array(ctypes.c_char, 1024, lock=False)
         elif a is str:
             return Array(ctypes.c_wchar, 1024, lock=False)
         elif isinstance(a, str):
             if a.startswith("str"):
                 return Array(ctypes.c_wchar, int(a[4:-1]), lock=False)
             elif a.startswith("bytes"):
-                return SharedBytes(int(a[6:-1]), lock=False)
+                return Array(ctypes.c_char, int(a[6:-1]), lock=False)
+            elif a.startswith("raw"):
+                return SharedBytes(int(a[4:-1]), lock=False)
         elif isinstance(a, tuple):
             return tuple(cls.create_shared_value_by_pytype(x) for x in a)
-        elif a is None:
+        elif a is None or a is Signature.empty:
             return None
         raise NotImplementedError("Unknown type: {}".format(a))
 

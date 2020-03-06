@@ -1,7 +1,7 @@
 from contextlib import contextmanager
 from enum import auto, IntEnum
 
-from .step import CallBackStep, EmptyStep, MoverStep, AndStep, StepWorkflow
+from .step import CallBackStep, EmptyStep, MoverStep, StepWorkflow
 from ..request import Request
 from ..callback import CallBack
 from tcysim.utils import Paths, V3
@@ -19,7 +19,7 @@ class OpState(IntEnum):
 class Operation:
     STATE = OpState
 
-    def __init__(self, type, request_or_equipment, locking_pos=(), **attrs):
+    def __init__(self, type, request_or_equipment, box=None, locking_pos=(), **attrs):
         self.op_type = type
         self.state = OpState.INIT
         self.start_time = -1
@@ -35,6 +35,7 @@ class Operation:
         self.paths = {}
         self.interruption_flag = False
         self.locking_positions = list(locking_pos)
+        self.box = box
         self.__dict__.update(attrs)
 
     def clean(self):
