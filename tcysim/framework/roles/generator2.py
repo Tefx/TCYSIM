@@ -1,5 +1,5 @@
 from pesim import Process, TIME_FOREVER, MinPairingHeap, MinPairingHeapNode
-
+from pesim.math_aux import flt
 from ..priority import Priority
 from tcysim.utils.dispatcher import Dispatcher
 
@@ -9,18 +9,19 @@ class EventHandlingFail(Exception):
 
 
 class GeneratorEvent(MinPairingHeapNode):
-    __slots__ = ["time", "type", "args"]
+    __slots__ = ["time", "type", "args", "priority"]
 
-    def __init__(self, time, type=None, *args):
+    def __init__(self, time, type, priority, *args):
         self.time = time
         self.type = type
+        self.priority=priority
         self.args = args
 
     def cmp(self, other):
         if self.time == other.time:
             return self.type.value < other.type.value
         else:
-            return self.time < other.time
+            return flt(self.time, other.time)
 
 
 class EventHandler(Dispatcher):
@@ -45,6 +46,7 @@ class EventGenerator(Process):
         self.yard = yard
         self.stop_time = stop_time
         self.handler = self.EventHandler(self)
+        # self.stopped = False
 
     def install_or_add(self, event):
         self.queue.push(event)
@@ -53,9 +55,11 @@ class EventGenerator(Process):
         yield from []
 
     def _wait(self, priority=Priority.REQUEST):
+        # if self.stopped:
+        #     return TIME_FOREVER, Priority.FOREVER
         ev = self.queue.first()
         if ev:
-            return ev.time, Priority.REQUEST
+            return ev.time, ev.priority
         else:
             return TIME_FOREVER, Priority.FOREVER
 
@@ -64,6 +68,10 @@ class EventGenerator(Process):
             yield from self.handler.handle(self.time, ev)
         except EventHandlingFail as e:
             yield from self.handler.on_fail(e)
+
+    def stop(self):
+        self.queue.clear()
+        # self.stopped = True
 
     def _process(self):
         ev = self.queue.pop()

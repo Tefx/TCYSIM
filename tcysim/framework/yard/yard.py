@@ -1,5 +1,4 @@
-from pesim import Environment
-from .env import YardEnv
+from pesim import Environment, PRIORITY_MAX
 from ..probe import ProbeManager
 from ..request import ReqType, Request
 from ..roles import Roles
@@ -11,13 +10,9 @@ class Yard:
     SpaceAllocator: SpaceAllocator.__class__ = SpaceAllocator
 
     def __init__(self):
-        # self.env = YardEnv(self)
         self.env = Environment()
         self.blocks = {}
         self.equipments = []
-
-        # self.boxes = set()
-        # self.requests = []
 
         self.smgr = self.SpaceAllocator(self)
         self.cmgr = CallBackManager(self)
@@ -55,8 +50,6 @@ class Yard:
         return self.probe_mgr.fire(self.env.current_time, probe_name, *args, **kwargs)
 
     def submit_request(self, time, request, ready=True):
-        if request.req_type == request.TYPE.RETRIEVE and request.box.state == request.box.STATE.RETRIEVED:
-            raise Exception("here!")
         request.submit(time, ready)
 
     def choose_location(self, box):
@@ -75,9 +68,8 @@ class Yard:
         self.submit_request(time, request)
         return request
 
-    def run_until(self, time):
-        self.env.run_until(time)
-        # self.run_equipments(time)
+    def run_until(self, time, event_priority=PRIORITY_MAX):
+        self.env.run_until(time, current_priority=event_priority)
 
     def run_equipments(self, time):
         for equipment in self.equipments:

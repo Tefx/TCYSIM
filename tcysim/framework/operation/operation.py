@@ -1,7 +1,7 @@
 from contextlib import contextmanager
 from enum import auto, IntEnum
 
-from .step import CallBackStep, EmptyStep, MoverStep, StepWorkflow
+from .step import CallBackStep, EmptyStep, MoverStep, StepWorkflow, SyncStep
 from ..request import Request
 from ..callback import CallBack
 from tcysim.utils import Paths, V3
@@ -91,6 +91,9 @@ class Operation:
 
     def wait(self, time):
         return EmptyStep(self.equipment.components[0], time)
+
+    def sync(self, request):
+        return SyncStep(request)
 
     def move(self, component, src_loc, dst_loc, mode="default"):
         if isinstance(src_loc, V3):

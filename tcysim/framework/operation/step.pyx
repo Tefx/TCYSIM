@@ -6,6 +6,7 @@ from ..motion.motion cimport Motion
 from ..motion.mover cimport Mover
 
 from cython cimport freelist
+from cpython cimport PyObject
 
 @freelist(1024)
 cdef class StepBase:
@@ -111,10 +112,29 @@ cdef class EmptyStep(StepBase):
             (<EmptyStep> self).mover.commit_motions(((<EmptyStep> self).motion,))
         self.committed = True
 
+cdef class SyncStep(StepBase):
+    cdef object req
+
+    def __init__(self, object req):
+        self.req = req
+
+    cdef void execute(SyncStep self, op, double est):
+        if not self.executed:
+            self.cal_pred(op, est)
+            self.cal_start_time(op, est)
+            self.finish_time = self.start_time
+            self.next_time = self.finish_time
+        self.executed = True
+
+    cdef void commit(self, yard):
+        if not self.committed:
+            self.req.sync_time = self.finish_time
+        self.committed = True
+
 cdef class CallBackStep(StepBase):
     cdef object callback
 
-    def __init__(CallBackStep self, callback):
+    def __init__(CallBackStep self, object callback):
         self.callback = callback
 
     cdef void execute(CallBackStep self, op, double est):
@@ -128,11 +148,8 @@ cdef class CallBackStep(StepBase):
 
     cdef void commit(self, yard):
         if not self.committed:
-            yard.cmgr.add((<CallBackStep> self).callback)
+            yard.cmgr.add(self.callback)
         self.committed = True
-
-cdef class listm(list):
-    pass
 
 cdef class MoverStep(StepBase):
     cdef Mover mover
@@ -269,11 +286,13 @@ cdef class StepWorkflow:
     cdef list sorted_steps
     cdef StepBase last_step
     cdef double start_time, finish_time
+    cdef readonly sync_time
 
     def __cinit__(self):
         self.steps = []
         self.last_step = None
         self.finish_time = 0
+        self.sync_time = -1
 
     def add(self, step_or_steps):
         cdef StepBase step

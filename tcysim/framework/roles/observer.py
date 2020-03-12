@@ -17,7 +17,7 @@ class Observer(Process):
         if self.start <= self.time < self.end:
             self.on_observe()
 
-    def _wait(self, priority=Priority.LOG):
+    def _wait(self, priority=Priority.OBSERVE):
         if self.time < self.start:
             return self.start, priority
         elif self.time >= self.end:

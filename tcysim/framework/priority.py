@@ -10,6 +10,6 @@ class Priority(IntEnum):
     REQUEST = auto()
     TASK_ARRIVAL = auto()
     SCHEDULE = auto()
-    LOG = auto()
     PROBE = auto()
+    OBSERVE = auto()
     FOREVER = PRIORITY_MAX
