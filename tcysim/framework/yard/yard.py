@@ -23,7 +23,7 @@ class Yard:
 
     @property
     def time(self):
-        return self.env.current_time
+        return self.env.time
 
     def deploy(self, block, equipments):
         self.blocks[block.id] = block
@@ -47,7 +47,7 @@ class Yard:
         self.roles.finish()
 
     def fire_probe(self, probe_name, *args, **kwargs):
-        return self.probe_mgr.fire(self.env.current_time, probe_name, *args, **kwargs)
+        return self.probe_mgr.fire(self.env.time, probe_name, *args, **kwargs)
 
     def submit_request(self, time, request, ready=True):
         request.submit(time, ready)
@@ -69,7 +69,7 @@ class Yard:
         return request
 
     def run_until(self, time, event_priority=PRIORITY_MAX):
-        self.env.run_until(time, current_priority=event_priority)
+        return self.env.run_until(time, current_priority=event_priority)
 
     def run_equipments(self, time):
         for equipment in self.equipments:

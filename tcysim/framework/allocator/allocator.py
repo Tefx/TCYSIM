@@ -4,7 +4,7 @@ class SpaceAllocator:
 
     @property
     def time(self):
-        return self.yard.env.current_time
+        return self.yard.env.time
 
     def available_blocks(self, box):
         return self.yard.blocks.values()
