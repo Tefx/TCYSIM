@@ -30,7 +30,7 @@ class AnimationLogger(Observer):
                 equ_coords[i] = coord.to_tuple()
 
         current_box_location = {}
-        for box in self.filter_boxes(self.yard.boxes):
+        for box in self.filter_boxes(self.yard._boxes):
             # if box.state != box.STATE.STORED or box.id not in self.box_last_positions:
             coord = box.current_coord(transform_to="g")
             if coord:

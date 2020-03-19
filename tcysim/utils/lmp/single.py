@@ -39,7 +39,6 @@ class Method_LMP:
 
         self.build()
 
-
     @classmethod
     def create_shared_value_by_pytype(cls, a):
         if a is int:
