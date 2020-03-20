@@ -5,10 +5,10 @@
 #include <string.h>
 #include <stdlib.h>
 #include <assert.h>
-#include "box.h"
-#include "block.h"
-#include "define.h"
-#include "error.h"
+#include "../include/box.h"
+#include "../include/block.h"
+#include "../include/define.h"
+#include "../include/error.h"
 
 static inline void _box_mark_usage(Block_TCY *blk, Box_TCY *box, int delta) {
     for (int i = 0; i < 3; ++i) {

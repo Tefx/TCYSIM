@@ -2,8 +2,8 @@
 // Created by tefx on 10/23/19.
 //
 
-#include "define.h"
-#include "cd.h"
+#include "../include/define.h"
+#include "../include/cd.h"
 
 #include <math.h>
 

@@ -2,8 +2,8 @@
 // Created by tefx on 10/23/19.
 //
 
-#include "path.h"
-#include "cd.h"
+#include "../include/path.h"
+#include "../include/cd.h"
 #include <stdlib.h>
 #include <float.h>
 #include <math.h>

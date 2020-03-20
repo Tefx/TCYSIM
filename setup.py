@@ -1,13 +1,12 @@
-from distutils.core import setup
-from distutils.extension import Extension
+from setuptools import setup, Extension, find_packages
 from Cython.Build import cythonize
-import os
 from platform import system
-import sys
+import os
+import shutil
 
-sys.path.extend([
-    "../pesim",
-    ])
+if os.path.exists("tcysim/include"):
+    shutil.rmtree("tcysim/include")
+shutil.copytree("libtcy/include", "tcysim/include")
 
 if system() == "Windows":
     extra_compile_args = [
@@ -23,8 +22,6 @@ if system() == "Windows":
     library_dir = "libtcy/msvc/Release"
 else:
     extra_compile_args = [
-        # '-O0',
-        # '-g',
         '-Ofast',
         '-march=native',
         '-ffast-math',
@@ -43,7 +40,7 @@ extensions = [
         extra_link_args=extra_link_args,
         libraries=["tcy"],
         library_dirs=[os.path.abspath(library_dir)],
-        include_dirs=[os.path.abspath("libtcy/src/core")]
+        include_dirs=[os.path.abspath("libtcy/include")]
         ),
     Extension(
         name="tcysim.framework.motion.*",
@@ -72,7 +69,13 @@ extensions = [
         ),
     ]
 
-setup(ext_modules=cythonize(extensions,
+setup(name="tcysim",
+      packages=find_packages() + ["tcysim.include"],
+      version=0.5,
+      setup_requires=["Cython"],
+      author="Tefx",
+      author_email="zhaomeng.zhu@gmail.com",
+      ext_modules=cythonize(extensions,
                             compiler_directives={
                                 "profile":          False,
                                 "linetrace":        False,
@@ -85,10 +88,11 @@ setup(ext_modules=cythonize(extensions,
                             annotate=True,
                             ),
       package_data={
-          "tcysim.libc.*":                ["tcysim/libc/*.pyx"],
-          "tcysim.framework.motion.*":    ["tcysim/framework/motion/*.pyx"],
-          "tcysim.framework.operation.*": ["tcysim/framework/operation/*.pyx"],
-          "tcysim.framework.probe.*":     ["tcysim/framework/probe/*.pyx"],
-          "tcysim.utils.*":               ["tcysim/utils/*.pyx"],
+          "": ["*.pxd"],
+          "tcysim.include": ["*.h"],
+          },
+      install_requires=["pesim>=0.9"],
+      extras_require={
+          "analysis": ["msgpack>=1", "plotly>=4.5"],
           }
       )

@@ -9,7 +9,11 @@
 #include <stdio.h>
 
 #ifdef _MSC_VER
-#define DLLEXPORT __declspec(dllexport)
+    #if defined (DLL_EXPORT)
+        #define DLLEXPORT __declspec(dllexport)
+    #else
+        #define DLLEXPORT
+    #endif
 #else
 #define DLLEXPORT
 #endif
@@ -64,8 +68,8 @@ typedef struct Box_TCY {
     Time_TCY alloc_time, store_time, retrieval_time;
     CellIdx_TCY loc[3];
     Block_TCY *block;
-    void* _self;
-    struct Box_TCY* _holder_or_origin;
+    void *_self;
+    struct Box_TCY *_holder_or_origin;
 } Box_TCY;
 
 typedef Box_TCY *Cell_TCY;
@@ -81,12 +85,14 @@ typedef struct Block_TCY {
     int stacking_axis;
     int box_orientation;
     bool *lock_map;
-    void* _self;
+    void *_self;
 } Block_TCY;
 
 
 int flt(double x, double y);
+
 int feq(double x, double y);
+
 int fne(double x, double y);
 
 #endif //LIBTCY_DEFINE_H

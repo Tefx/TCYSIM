@@ -2,10 +2,10 @@
 // Created by tefx on 10/21/19.
 //
 
-#include "define.h"
-#include "block.h"
-#include "error.h"
-#include "box.h"
+#include "../include/define.h"
+#include "../include/block.h"
+#include "../include/error.h"
+#include "../include/box.h"
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>

@@ -77,3 +77,5 @@ tcysim/*/*/*.html
 tcysim/*/*/*.pyd
 
 test/log2
+
+tcysim/include/

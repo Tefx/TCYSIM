@@ -10,4 +10,6 @@ endif (MSVC)
 
 set(CMAKE_C_STANDARD 11)
 
-add_library(tcy SHARED src/core/define.h src/core/block.c src/core/block.h src/core/error.h src/core/box.c src/core/box.h src/core/path.c src/core/path.h src/core/cd.c src/core/cd.h src/core/define.c)
+add_library(tcy
+        include/define.h include/error.h include/block.h include/box.h include/path.h include/cd.h
+        src/define.c src/block.c src/box.c src/path.c src/cd.c)
