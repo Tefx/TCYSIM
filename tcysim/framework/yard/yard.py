@@ -1,4 +1,4 @@
-from pesim import Environment, PRIORITY_MAX
+from pesim import Environment, TIME_PASSED
 from ..probe import ProbeManager
 from ..request import ReqType, Request
 from ..roles import Roles
@@ -36,15 +36,13 @@ class Yard:
                     self.movers.append(component)
 
     def start(self):
-        self.cmgr.setup()
-        for equipment in self.equipments:
-            equipment.setup()
-        self.roles.setup()
-
         self.env.start()
 
     def finish(self):
-        self.roles.finish()
+        self.env.finish()
+
+    def run_until(self, time, after_reason=TIME_PASSED):
+        return self.env.run_until(time, after_reason)
 
     def fire_probe(self, probe_name, *args, **kwargs):
         return self.probe_mgr.fire(self.env.time, probe_name, *args, **kwargs)
@@ -67,11 +65,3 @@ class Yard:
         request = Request(ReqType.RETRIEVE, time, box, lane=lane)
         self.submit_request(time, request)
         return request
-
-    def run_until(self, time, event_priority=PRIORITY_MAX):
-        return self.env.run_until(time, current_priority=event_priority)
-
-    def run_equipments(self, time):
-        for equipment in self.equipments:
-            equipment.run_until(time)
-

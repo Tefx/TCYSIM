@@ -1,6 +1,6 @@
 from pesim import Process, TIME_FOREVER, MinPairingHeap, MinPairingHeapNode
 from pesim.math_aux import flt
-from ..priority import Priority
+from ..event_reason import EventReason
 from tcysim.utils.dispatcher import Dispatcher
 
 
@@ -9,15 +9,15 @@ class EventHandlingFail(Exception):
 
 
 class GeneratorEvent(MinPairingHeapNode):
-    __slots__ = ["time", "type", "args", "priority"]
+    __slots__ = ["time", "type", "args", "reason"]
 
-    def __init__(self, time, type, priority, *args):
+    def __init__(self, time, type, reason, *args):
         self.time = time
         self.type = type
-        self.priority=priority
+        self.reason=reason
         self.args = args
 
-    def cmp(self, other):
+    def key_lt(self, other):
         if self.time == other.time:
             return self.type.value < other.type.value
         else:
@@ -46,7 +46,6 @@ class EventGenerator(Process):
         self.yard = yard
         self.stop_time = stop_time
         self.handler = self.EventHandler(self)
-        # self.stopped = False
 
     def install_or_add(self, event):
         self.queue.push(event)
@@ -54,14 +53,12 @@ class EventGenerator(Process):
     def initial_events(self):
         yield from []
 
-    def _wait(self, priority=Priority.REQUEST):
-        # if self.stopped:
-        #     return TIME_FOREVER, Priority.FOREVER
+    def _wait(self):
         ev = self.queue.first()
         if ev:
-            return ev.time, ev.priority
+            return ev.time, ev.reason
         else:
-            return TIME_FOREVER, Priority.FOREVER
+            return TIME_FOREVER, EventReason.LAST
 
     def on_event(self, ev: GeneratorEvent):
         try:
@@ -71,7 +68,6 @@ class EventGenerator(Process):
 
     def stop(self):
         self.queue.clear()
-        # self.stopped = True
 
     def _process(self):
         ev = self.queue.pop()
@@ -79,6 +75,6 @@ class EventGenerator(Process):
             if ev2.time < self.stop_time:
                 self.install_or_add(ev2)
 
-    def setup(self):
+    def start(self):
         self.queue = MinPairingHeap(self.initial_events())
-        super(EventGenerator, self).setup()
+        super(EventGenerator, self).start()

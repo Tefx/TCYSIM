@@ -1,6 +1,6 @@
 from pesim import TIME_FOREVER, Process, MinPairingHeap
 from .callback import CallBack
-from ..priority import Priority
+from ..event_reason import EventReason
 
 
 class CallBackManager(Process):
@@ -12,19 +12,19 @@ class CallBackManager(Process):
     def add(self, callback: CallBack):
         self.queue.push(callback)
         if self.queue.first() is callback:
-            self.activate(callback.time, Priority.CALLBACK)
+            self.activate(callback.time, EventReason.CALLBACK)
 
     def add_callback(self, time, func, *args, **kwargs):
         cb = CallBack(func, *args, **kwargs)
         cb.time = time
         self.add(cb)
 
-    def _wait(self, priority=Priority.CALLBACK):
+    def _wait(self):
         cb = self.queue.first()
         if cb:
-            return cb.time, Priority.CALLBACK
+            return cb.time, EventReason.CALLBACK
         else:
-            return TIME_FOREVER, Priority.FOREVER
+            return TIME_FOREVER, EventReason.LAST
 
     def _process(self):
         callback = self.queue.pop()

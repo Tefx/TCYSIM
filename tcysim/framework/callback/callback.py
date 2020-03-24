@@ -15,7 +15,7 @@ class CallBack(MinPairingHeapNode):
         self.id = self.__class__.__id
         self.__class__.__id += 1
 
-    def cmp(self, other):
+    def key_lt(self, other):
         if self.time < other.time:
             return True
         elif self.time == other.time:

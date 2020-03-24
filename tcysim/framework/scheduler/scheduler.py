@@ -1,5 +1,5 @@
 from pesim import Process
-from ..priority import Priority
+from ..event_reason import EventReason
 
 
 class JobScheduler(Process):
@@ -28,7 +28,7 @@ class JobScheduler(Process):
 
     def schedule(self, time):
         self.pending = True
-        self.activate(time, Priority.SCHEDULE)
+        self.activate(time, EventReason.SCHEDULE)
 
     def on_schedule(self, time):
         if self.pending:

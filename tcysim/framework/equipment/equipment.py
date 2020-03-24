@@ -5,7 +5,7 @@ from enum import Enum, auto
 from pesim import TIME_FOREVER, Process
 from ..exception.handling import ReqOpRejectionError, ROREquipmentConflictError
 from ..operation import Operation
-from ..priority import Priority
+from ..event_reason import EventReason
 from ..layout import EquipmentRangeLayout
 from tcysim.utils import V3
 from .req_handler import ReqHandler
@@ -46,10 +46,6 @@ class Equipment(EquipmentRangeLayout, Process):
         self.op_builder = self.OpBuilder(self)
         self.job_scheduler = self.JobScheduler(self)
         self.last_running_time = -1
-
-    def setup(self):
-        super(Equipment, self).setup()
-        self.job_scheduler.setup()
 
     @contextmanager
     def save_state(self):
@@ -94,7 +90,7 @@ class Equipment(EquipmentRangeLayout, Process):
     def interrupt(self):
         for component in self.components:
             component.interrupt()
-        self.activate(-1, Priority.INTERRUPT)
+        self.activate(-1, EventReason.INTERRUPTED)
 
     def allow_interruption(self):
         self.run_until(self.env.time)
@@ -115,9 +111,9 @@ class Equipment(EquipmentRangeLayout, Process):
         yield
         self.state = s2
 
-    def wake(self, time=-1, priority=0):
+    def wake(self, reason):
         if self.state != self.STATE.WORKING:
-            self.activate(time, priority)
+            self.activate(-1, reason)
 
     def ready_for_new_task(self):
         if self.next_task:
@@ -136,22 +132,22 @@ class Equipment(EquipmentRangeLayout, Process):
                 if self.allow_interruption():
                     self.interrupt()
             elif self.state != self.STATE.BLOCKING:
-                self.activate(-1, Priority.TASK_ARRIVAL)
+                self.activate(-1, EventReason.TASK_ARRIVAL)
 
     def query_new_task(self, time):
         if self.next_task is None:
             self.job_scheduler.schedule(time)
 
-    def _wait(self, priority=Priority.FOREVER):
+    def _wait(self):
         if not self.next_task:
             op_or_req = self.job_scheduler.on_idle(self.time)
             if op_or_req is not None:
                 self.submit_task(op_or_req, from_self=True)
-                return self.time, priority
+                return self.time, EventReason.LAST
             else:
-                return TIME_FOREVER, priority
+                return TIME_FOREVER, EventReason.LAST
         else:
-            return self.next_task.time, priority
+            return self.next_task.time, EventReason.LAST
 
     def perform_op(self, time, op):
         op.commit(self.yard)
@@ -159,7 +155,7 @@ class Equipment(EquipmentRangeLayout, Process):
             self.current_op = op
             self.yard.fire_probe('operation.start', op)
             op.state = op.STATE.RUNNING
-            yield op.finish_time, Priority.OP_FINISH
+            yield op.finish_time, EventReason.OP_FINISHED
             op.state = op.STATE.FINISHED
             op.finish_time = self.time
             self.current_op = None
@@ -198,7 +194,7 @@ class Equipment(EquipmentRangeLayout, Process):
             elif isinstance(op_or_req, Operation):
                 yield from self.handle_operation(op_or_req)
             self.query_new_task(self.time)
-        yield self.time, Priority.FOREVER
+        yield self.time, EventReason.LAST
 
     def __getattr__(self, item):
         return self.attrs.get(item, None)

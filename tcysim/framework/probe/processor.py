@@ -1,5 +1,5 @@
 from pesim import Process, TIME_FOREVER, MinPairingHeap
-from tcysim.framework.priority import Priority
+from tcysim.framework.event_reason import EventReason
 from tcysim.framework.probe.action import ProbeActionTemplate
 
 
@@ -15,16 +15,16 @@ class ProbeProcessor(Process):
                 self.probe_mgr.register(item)
                 item.set_processor(self)
 
-    def _wait(self, priority=Priority.PROBE):
+    def _wait(self):
         action = self.actions.first()
         if action:
-            return action.time, priority
+            return action.time, EventReason.PROBE_ACTION
         else:
-            return TIME_FOREVER, priority
+            return TIME_FOREVER, EventReason.LAST
 
     def _process(self):
         self.actions.pop()()
 
     def add_action(self, action):
         self.actions.push(action)
-        self.activate(action.time, Priority.PROBE)
+        self.activate(action.time, EventReason.PROBE_ACTION)

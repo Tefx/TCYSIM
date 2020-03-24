@@ -3,7 +3,7 @@ from enum import IntEnum, auto
 
 from pesim import Process, TIME_FOREVER
 
-from ..priority import Priority
+from ..event_reason import EventReason
 from tcysim.utils.dispatcher import Dispatcher
 
 class BoxEventType(IntEnum):
@@ -49,11 +49,11 @@ class EventGenerator(Process):
     def install_or_add(self, bomb_or_event):
         heapq.heappush(self.queue, bomb_or_event)
 
-    def _wait(self, priority=Priority.REQUEST):
+    def _wait(self):
         if not self.queue:
-            return TIME_FOREVER, Priority.FOREVER
+            return TIME_FOREVER, EventReason.LAST
         else:
-            return self.queue[0].time, Priority.REQUEST
+            return self.queue[0].time, EventReason.REQUEST
 
     def on_event(self, ev: GeneratorEvent):
         if isinstance(ev, ChainedEventBomb):

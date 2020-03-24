@@ -1,6 +1,5 @@
 from multiprocessing import SimpleQueue as Queue, Process
 import msgpack
-# msgpack.compatibility = True
 
 pack = msgpack.pack
 

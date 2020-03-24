@@ -4,6 +4,7 @@ from platform import system
 import os
 import shutil
 
+
 if os.path.exists("tcysim/include"):
     shutil.rmtree("tcysim/include")
 shutil.copytree("libtcy/include", "tcysim/include")
