@@ -1,4 +1,4 @@
-from pesim import PRIORITY_MAX
+from pesim import TIME_PASSED
 from enum import IntEnum, auto
 
 
@@ -12,4 +12,4 @@ class Priority(IntEnum):
     SCHEDULE = auto()
     PROBE = auto()
     OBSERVE = auto()
-    FOREVER = PRIORITY_MAX
+    FOREVER = TIME_PASSED

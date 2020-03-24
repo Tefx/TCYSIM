@@ -121,3 +121,32 @@ class PlotSet:
                                               line=dict(width=1)))
         fig.update_shapes(dict(xref='x', yref='y'))
         return fig
+
+
+def plot_layout(yard, blocks=True, lanes=False):
+    fig = go.Figure()
+    fig.update_xaxes(range=(0, 4000), showgrid=False)
+    fig.update_yaxes(range=(0, 1000), showgrid=False)
+
+    trace = []
+
+    for bid, block in yard.blocks.items():
+        if blocks:
+            x0, y0, _ = block.offset
+            x1, y1, _ = block.coord_l2g(block.size)
+            fig.add_shape(x0=x0, y0=y0, x1=x1, y1=y1, layer="below",
+                          line=dict(color="RoyalBlue", width=1),
+                          fillcolor="LightSkyBlue")
+            trace.append(block.center_coord("g").to_list()[:2] + [str(bid)])
+
+        if lanes:
+            for lid, lane in block.lanes.items():
+                x0, y0, _ = lane.offset
+                x1, y1, _ = lane.coord_l2g(lane.size)
+                fig.add_shape(x0=x0, y0=y0, x1=x1, y1=y1, layer="below",
+                              line=dict(color="LightSkyBlue"))
+                trace.append(lane.center_coord("g").to_list()[:2] + [lid])
+
+    x, y, text = zip(*trace)
+    fig.add_trace(go.Scatter(x=x, y=y, text=text, mode="text"))
+    return fig
