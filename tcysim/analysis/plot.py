@@ -98,8 +98,12 @@ class PlotSet:
                     zmax = max(zmax, value)
                     self.items[idx].assign_value(zs, value)
             color_scale = kwargs.get("colorscale", "Reds")
-            zmin = kwargs.get("zmin", zmin)
-            zmax = kwargs.get("zmax", zmax)
+            if "zmin" in kwargs:
+                zmin = kwargs["zmin"]
+                del kwargs["zmin"]
+            if "zmax" in kwargs:
+                zmax = kwargs["zmax"]
+                del kwargs["zmax"]
             fig.add_trace(go.Heatmap(z=zs.T, x=self.xs, y=self.ys,
                                      colorscale=color_scale,
                                      zmin=zmin, zmax=zmax, zauto=False,

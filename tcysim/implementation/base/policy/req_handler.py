@@ -37,7 +37,6 @@ class ReqHandler(ReqHandlerBase):
         new_loc = getattr(request, "new_loc", False)
         if not new_loc:
             new_loc = self.equipment.yard.smgr.slot_for_relocation(box)
-            # print("[REQ/RLCT]", time, box.block.id, request.equipment.idx, new_loc)
             if not new_loc:
                 self.yard.fire_probe("allocator.fail.relocate", box)
                 raise RORUndefinedError("no slot for relocation")
