@@ -169,11 +169,11 @@ void _blk_top_of_stack(Block_TCY *blk, CellIdx_TCY *idx) {
 CellIdx_TCY blk_stack_hash(Block_TCY *blk, const CellIdx_TCY *idx) {
     CellIdx_TCY map_idx = 0;
     CellIdx_TCY k = 1;
-    for (int i = 2; i >= 0; --i)
-        if (i != blk->stacking_axis) {
-            map_idx = idx[i] * k;
-            k *= blk->spec[i];
-        }
+    for (int i = 2; i >= 0; --i) {
+        if (i != blk->stacking_axis)
+            map_idx += idx[i] * k;
+        k *= blk->spec[i];
+    }
     return map_idx;
 }
 
