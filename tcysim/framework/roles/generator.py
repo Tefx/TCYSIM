@@ -30,7 +30,7 @@ class ChainedEventBomb(GeneratorEvent):
 
 class EventHandler(Dispatcher):
     def handle(self, yard, time, ev):
-        return self.dispatch(ev.type, "_", yard, time, *ev.args, **ev.kwargs)
+        return self.dispatch(ev.type.name, "_", yard, time, *ev.args, **ev.kwargs)
 
     def on_fail(self, ev):
         pass

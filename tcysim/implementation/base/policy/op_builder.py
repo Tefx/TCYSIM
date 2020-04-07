@@ -1,10 +1,10 @@
 from tcysim.framework.equipment import OpBuilder as OpBuilderBase
-from tcysim.framework.operation import OpType, Operation
+from tcysim.framework.operation import Operation
 from tcysim.utils.dispatcher import Dispatcher
 
 
 class OpBuilder(OpBuilderBase):
-    @Dispatcher.on(OpType.STORE)
+    @Dispatcher.on("STORE")
     def build_store(self, op: Operation):
         request = op.request
         box = op.box
@@ -28,7 +28,7 @@ class OpBuilder(OpBuilderBase):
         yield from self.move_steps(op, op.container_loc, container_ready_loc)
         yield op.emit_signal("finish_or_fail")
 
-    @Dispatcher.on(OpType.RETRIEVE)
+    @Dispatcher.on("RETRIEVE")
     def build_retrieve(self, op: Operation):
         request = op.request
         box = op.box
@@ -51,14 +51,12 @@ class OpBuilder(OpBuilderBase):
         yield from self.move_steps(op, op.access_loc, access_ready_loc)
         yield op.emit_signal("finish_or_fail")
 
-    @Dispatcher.on(OpType.RELOCATE)
+    @Dispatcher.on("RELOCATE")
     def build_relocate(self, op: Operation):
         op.src_loc = self.equipment.op_coord_from_box_coord(op.box.store_coord(transform_to=self.equipment))
         op.dst_loc = self.equipment.op_coord_from_box_coord(op.box.store_coord(op.new_loc, transform_to=self.equipment))
         src_ready_loc = self.equipment.prepare_coord_for_op_coord(op.src_loc)
         dst_ready_loc = self.equipment.prepare_coord_for_op_coord(op.dst_loc)
-
-        # print("[OP/RLCT]", self.equipment.time, op.box.block.id, self.equipment.idx, op.box)
 
         yield op.emit_signal("rlct_start_or_resume")
         yield from self.move_steps(op, self.equipment.current_coord(), src_ready_loc)
@@ -71,7 +69,7 @@ class OpBuilder(OpBuilderBase):
         yield from self.move_steps(op, op.dst_loc, dst_ready_loc)
         yield op.emit_signal("rlct_finish_or_fail")
 
-    @Dispatcher.on(OpType.ADJUST)
+    @Dispatcher.on("ADJUST")
     def build_adjust(self, op: Operation):
         other = op.request.blocking_request.equipment
         op.dst_loc = op.request.new_loc
@@ -85,7 +83,7 @@ class OpBuilder(OpBuilderBase):
     def adjust_is_necessary(self, other_equipment, dst_loc):
         return (other_equipment.current_coord(transform_to=self.equipment) - dst_loc).dot_product(self.equipment.current_coord() - dst_loc) >= 0
 
-    @Dispatcher.on(OpType.MOVE)
+    @Dispatcher.on("MOVE")
     def build_move(self, op: Operation):
         load = op.load
         dst_loc = op.dst_loc

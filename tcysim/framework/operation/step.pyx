@@ -286,13 +286,11 @@ cdef class StepWorkflow:
     cdef list sorted_steps
     cdef StepBase last_step
     cdef double start_time, finish_time
-    cdef readonly sync_time
 
     def __cinit__(self):
         self.steps = []
         self.last_step = None
         self.finish_time = 0
-        self.sync_time = -1
 
     def add(self, step_or_steps):
         cdef StepBase step

@@ -6,12 +6,22 @@ class JobScheduler(Process):
     def __init__(self, equipment):
         self.equipment = equipment
         self.pending = False
+        self.yard = equipment.yard
         super(JobScheduler, self).__init__(equipment.yard.env)
 
+    def rank_task(self, request):
+        return request.ready_time
+
     def choose_task(self, time, tasks):
+        min_rank = None
+        chosen = None
         for task in tasks:
             if task.is_ready():
-                return task
+                rank = self.rank_task(task)
+                if min_rank is None or rank < min_rank:
+                    chosen = task
+                    min_rank = rank
+        return chosen
 
     @property
     def parent_dispatchers(self):

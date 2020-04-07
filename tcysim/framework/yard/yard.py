@@ -1,6 +1,6 @@
 from pesim import Environment, TIME_PASSED
 from ..probe import ProbeManager
-from ..request import ReqType, Request
+from ..request import Request
 from ..roles import Roles
 from ..callback import CallBackManager
 from ..allocator import SpaceAllocator
@@ -8,6 +8,7 @@ from ..allocator import SpaceAllocator
 
 class Yard:
     SpaceAllocator: SpaceAllocator.__class__ = SpaceAllocator
+    ReqCls = Request
 
     def __init__(self):
         self.env = Environment()
@@ -57,11 +58,15 @@ class Yard:
         box.alloc(time, block, loc)
 
     def store(self, time, box, lane):
-        request = Request(ReqType.STORE, time, box, lane=lane)
+        request = self.new_request("STORE", time, box, lane=lane)
         self.submit_request(time, request)
         return request
 
     def retrieve(self, time, box, lane):
-        request = Request(ReqType.RETRIEVE, time, box, lane=lane)
+        request = self.new_request("RETRIEVE", time, box, lane=lane)
         self.submit_request(time, request)
         return request
+
+    @classmethod
+    def new_request(cls, type, *args, **kwargs):
+        return cls.ReqCls(cls.ReqCls.TYPE[type], *args, **kwargs)

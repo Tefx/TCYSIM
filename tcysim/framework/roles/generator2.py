@@ -31,7 +31,7 @@ class EventHandler(Dispatcher):
         self.yard = generator.yard
 
     def handle(self, time, ev):
-        return self.dispatch(ev.type, "_", time, *ev.args)
+        return self.dispatch(ev.type.name, "_", time, *ev.args)
 
     def on_fail(self, ev):
         raise ev from ev
