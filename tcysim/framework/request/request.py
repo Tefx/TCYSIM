@@ -42,6 +42,7 @@ class Request(IndexObject):
         self.start_time = -1
         self.finish_time = -1
         self.reject_time = -1
+        self.resume_time = -1
         self.sync_time = -1
         self.signals = dict() if signals is None else signals
         self.state = self.STATE.INIT
@@ -79,6 +80,7 @@ class Request(IndexObject):
     def ready(self, time):
         if self.state == self.STATE.REJECTED:
             self.state = self.STATE.RESUME_READY
+            self.resume_time = time
         else:
             self.state = self.STATE.READY
             self.ready_time = time

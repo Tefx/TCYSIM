@@ -169,11 +169,11 @@ void _blk_top_of_stack(Block_TCY *blk, CellIdx_TCY *idx) {
 CellIdx_TCY blk_stack_hash(Block_TCY *blk, const CellIdx_TCY *idx) {
     CellIdx_TCY map_idx = 0;
     CellIdx_TCY k = 1;
-    for (int i = 2; i >= 0; --i) {
-        if (i != blk->stacking_axis)
+    for (int i = 2; i >= 0; --i)
+        if (i != blk->stacking_axis) {
             map_idx += idx[i] * k;
-        k *= blk->spec[i];
-    }
+            k *= blk->spec[i];
+        }
     return map_idx;
 }
 
@@ -244,7 +244,7 @@ static inline int _other_axes(int axis, int *a0, int *a1) {
     return 0;
 }
 
-int block_all_column_usages(Block_TCY *blk, int axis, bool include_occupied, const int* avail, int *results) {
+int block_all_column_usages(Block_TCY *blk, int axis, bool include_occupied, const int *avail, int *results) {
     CellIdx_TCY tmp_loc[3], clmn_idx;
     CellIdx_TCY a0, a1;
     CellIdx_TCY **usages;
@@ -270,7 +270,7 @@ int block_all_column_usages(Block_TCY *blk, int axis, bool include_occupied, con
     return 0;
 }
 
-int block_all_slot_usages(Block_TCY *blk, int norm_axis, bool include_occupied, const int* avail, int *results) {
+int block_all_slot_usages(Block_TCY *blk, int norm_axis, bool include_occupied, const int *avail, int *results) {
     CellIdx_TCY tmp_loc[3];
     CellIdx_TCY a0, a1;
     CellIdx_TCY **usages;
@@ -297,7 +297,7 @@ int block_all_slot_usages(Block_TCY *blk, int norm_axis, bool include_occupied, 
     return 0;
 }
 
-int block_all_slot_states(Block_TCY *blk, int norm_axis, int*results) {
+int block_all_slot_states(Block_TCY *blk, int norm_axis, int *results) {
     CellIdx_TCY tmp_idx[3];
     CellIdx_TCY a0, a1;
 
@@ -308,10 +308,10 @@ int block_all_slot_states(Block_TCY *blk, int norm_axis, int*results) {
         tmp_idx[a0] = tmp_idx[a1] = 0;
         if (blk->column_use_type[a0]) {
             tmp_idx[a1] = 0;
-            results[i] = (int)blk->column_use_type[a0][_blk_clmn_idx(blk, tmp_idx, a0)];
+            results[i] = (int) blk->column_use_type[a0][_blk_clmn_idx(blk, tmp_idx, a0)];
         } else if (blk->column_use_type[a1]) {
             tmp_idx[a0] = 0;
-            results[i] = (int)blk->column_use_type[a1][_blk_clmn_idx(blk, tmp_idx, a1)];
+            results[i] = (int) blk->column_use_type[a1][_blk_clmn_idx(blk, tmp_idx, a1)];
         } else
             return -2;
     }
@@ -324,19 +324,19 @@ int block_validate_all_slots_for_size(Block_TCY *blk, int norm_axis, BoxSize_TCY
     CellIdx_TCY tmp_idx[3];
     CellIdx_TCY as[2];
 
-    if (_other_axes(norm_axis, as, as+1)) return -1;
+    if (_other_axes(norm_axis, as, as + 1)) return -1;
 
     memset(results, 1, sizeof(int) * blk->spec[norm_axis]);
 
     for (int i = 0; i < blk->spec[norm_axis]; ++i) {
         tmp_idx[norm_axis] = i;
-        for (int k = 0; k<2; k++){
-            if (blk->column_use_type[as[k]]){
-                tmp_idx[as[1-k]] = 0;
+        for (int k = 0; k < 2; k++) {
+            if (blk->column_use_type[as[k]]) {
+                tmp_idx[as[1 - k]] = 0;
                 clmn_ut = blk->column_use_type[as[k]][_blk_clmn_idx(blk, tmp_idx, as[k])];
                 if (box_size == BOX_SIZE_FORTY) {
                     tmp_idx[blk->box_orientation]++;
-                    if (tmp_idx[blk->box_orientation] >= blk->spec[blk->box_orientation]){
+                    if (tmp_idx[blk->box_orientation] >= blk->spec[blk->box_orientation]) {
                         results[i] = FALSE;
                     } else {
                         clmn_ut2 = blk->column_use_type[as[k]][_blk_clmn_idx(blk, tmp_idx, as[k])];
