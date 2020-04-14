@@ -9,9 +9,6 @@ class OpBuilder(Dispatcher):
         self.equipment = equipment
         super(OpBuilder, self).__init__()
 
-    def build(self, op: Operation):
-        op.extend(self.dispatch(op.op_type.name, "_", op))
-
     @Dispatcher.on("STORE")
     def build_store(self, op: Operation):
         raise NotImplementedError
@@ -33,7 +30,7 @@ class OpBuilder(Dispatcher):
         raise NotImplementedError
 
     def build_and_check(self, time, op: Operation):
-        self.build(op)
+        op.extend(self.dispatch(op.op_type.name, "_", op))
         op.dry_run(time)
         itf, other, new_loc = self.equipment.check_interference(op)
         if itf:

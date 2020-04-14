@@ -1,4 +1,5 @@
 from tcysim.framework.equipment import ReqHandler as ReqHandlerBase
+from tcysim.framework.event_reason import EventReason
 from tcysim.framework.exception.handling import *
 from tcysim.utils.dispatcher import Dispatcher
 
@@ -116,7 +117,7 @@ class ReqHandler(ReqHandlerBase):
     def on_adjust_start(self, time, request):
         blocking_req = request.blocking_request
         blocking_req.ready(time)
-        blocking_req.equipment.job_scheduler.schedule(time)
+        blocking_req.equipment.job_scheduler.schedule(time, EventReason.SCHEDULE_RESUME)
 
     def on_adjust_finish_or_fail(self, time, request):
         pass

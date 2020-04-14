@@ -9,6 +9,7 @@ class EventReason(IntEnum):
     OP_FINISHED = auto()
     REQUEST = auto()
     TASK_ARRIVAL = auto()
+    SCHEDULE_RESUME = auto()
     SCHEDULE = auto()
     PROBE_ACTION = auto()
     OBSERVE = auto()

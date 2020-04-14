@@ -36,9 +36,9 @@ class JobScheduler(Process):
     def _process(self):
         self.on_schedule(self.time)
 
-    def schedule(self, time):
+    def schedule(self, time, reason=EventReason.SCHEDULE):
         self.pending = True
-        self.activate(time, EventReason.SCHEDULE)
+        self.activate(time, reason)
 
     def on_schedule(self, time):
         if self.pending:
