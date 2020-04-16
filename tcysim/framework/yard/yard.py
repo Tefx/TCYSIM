@@ -1,4 +1,5 @@
 from pesim import Environment, TIME_PASSED
+from ..event_reason import EventReason
 from ..probe import ProbeManager
 from ..request import Request
 from ..roles import Roles
@@ -46,7 +47,7 @@ class Yard:
         return self.env.run_until(time, after_reason)
 
     def fire_probe(self, probe_name, *args, **kwargs):
-        return self.probe_mgr.fire(self.env.time, probe_name, *args, **kwargs)
+        return self.probe_mgr.fire(self.env.time, probe_name, args, kwargs, EventReason.PROBE_ACTION)
 
     def submit_request(self, time, request, ready=True):
         request.submit(time, ready)

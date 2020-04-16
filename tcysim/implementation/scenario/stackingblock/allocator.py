@@ -14,7 +14,7 @@ class RandomSpaceAllocator(SpaceAllocator):
                 return block, random.choice(locs)
         return None, None
 
-    def slot_for_relocation(self, box, start_bay=None, finish_bay=None):
+    def slot_for_relocation(self, box, request, start_bay=None, finish_bay=None):
         i, j, _ = box.location
         block = box.block
         start_bay = i if start_bay is None else start_bay

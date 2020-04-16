@@ -1,4 +1,5 @@
 from tcysim.framework.equipment import OpBuilder as OpBuilderBase
+from tcysim.framework.event_reason import EventReason
 from tcysim.framework.operation import Operation
 from tcysim.utils.dispatcher import Dispatcher
 
@@ -24,6 +25,7 @@ class OpBuilder(OpBuilderBase):
         yield from self.move_steps(op, op.access_loc, access_ready_loc, load=True)
         yield from self.move_steps(op, access_ready_loc, op.container_loc, load=True)
         yield op.emit_signal("in_block")
+        yield op.fire_probe("box.after_in_block", box, op, probe_reason=EventReason.CALLBACK.after)
         yield op.wait(self.equipment.RELEASE_TIME)
         yield from self.move_steps(op, op.container_loc, container_ready_loc)
         yield op.emit_signal("finish_or_fail")
@@ -41,6 +43,7 @@ class OpBuilder(OpBuilderBase):
         yield op.emit_signal("start_or_resume")
         yield from self.move_steps(op, self.equipment.current_coord(), container_ready_loc)
         yield from self.move_steps(op, container_ready_loc, op.container_loc)
+        yield op.fire_probe("box.before_off_block", box, op, probe_reason=EventReason.CALLBACK.before)
         yield op.emit_signal("off_block")
         yield op.wait(self.equipment.GRASP_TIME)
         yield from self.move_steps(op, op.container_loc, access_ready_loc, load=True)
@@ -53,8 +56,9 @@ class OpBuilder(OpBuilderBase):
 
     @Dispatcher.on("RELOCATE")
     def build_relocate(self, op: Operation):
-        op.src_loc = self.equipment.op_coord_from_box_coord(op.box.store_coord(transform_to=self.equipment))
-        op.dst_loc = self.equipment.op_coord_from_box_coord(op.box.store_coord(op.new_loc, transform_to=self.equipment))
+        box = op.box
+        op.src_loc = self.equipment.op_coord_from_box_coord(box.store_coord(transform_to=self.equipment))
+        op.dst_loc = self.equipment.op_coord_from_box_coord(box.store_coord(op.new_loc, transform_to=self.equipment))
         src_ready_loc = self.equipment.prepare_coord_for_op_coord(op.src_loc)
         dst_ready_loc = self.equipment.prepare_coord_for_op_coord(op.dst_loc)
 
@@ -62,9 +66,11 @@ class OpBuilder(OpBuilderBase):
         yield from self.move_steps(op, self.equipment.current_coord(), src_ready_loc)
         yield from self.move_steps(op, src_ready_loc, op.src_loc)
         yield op.wait(self.equipment.GRASP_TIME)
+        yield op.fire_probe("box.before_off_block",  box, op, probe_reason=EventReason.CALLBACK.before)
         yield op.emit_signal("rlct_pick_up")
         yield from self.move_steps(op, op.src_loc, op.dst_loc, load=True)
         yield op.emit_signal("rlct_put_down")
+        yield op.fire_probe("box.after_in_block", box, op, probe_reason=EventReason.CALLBACK.after)
         yield op.wait(self.equipment.RELEASE_TIME)
         yield from self.move_steps(op, op.dst_loc, dst_ready_loc)
         yield op.emit_signal("rlct_finish_or_fail")
@@ -76,8 +82,6 @@ class OpBuilder(OpBuilderBase):
         yield op.emit_signal("start_or_resume")
         if self.adjust_is_necessary(other, op.dst_loc):
             yield from self.adjust_steps(op, self.equipment.current_coord(), op.dst_loc)
-        else:
-            self.equipment.yard.fire_probe("operation.cancelled.adjust", op)
         yield op.emit_signal("finish_or_fail")
 
     def adjust_is_necessary(self, other_equipment, dst_loc):

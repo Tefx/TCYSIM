@@ -32,7 +32,7 @@ class Request(IndexObject):
                  equipment=None,
                  signals=None,
                  block=None,
-                 one_time_only=False,
+                 one_time_attemp=False,
                  **attrs):
         super(Request, self).__init__()
         self.req_type = req_type
@@ -57,7 +57,7 @@ class Request(IndexObject):
         else:
             self.block = None
         self.access_point = None
-        self.one_time_only = one_time_only
+        self.one_time_attemp = one_time_attemp
         self.reject_times = 0
         self.acquire_fails = set()
         self.acquired_positions = []
@@ -119,7 +119,7 @@ class Request(IndexObject):
         self.finish_time = -1
         self.reject_time = time
         self.reject_times += 1
-        if not self.one_time_only:
+        if not self.one_time_attemp:
             self.submit(time, ready=False)
 
     def new_successor(self, type, *args, **kwargs):

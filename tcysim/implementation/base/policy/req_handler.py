@@ -6,7 +6,7 @@ from tcysim.utils.dispatcher import Dispatcher
 
 class ReqHandler(ReqHandlerBase):
     def on_conflict(self, time, op):
-        if not op.request.one_time_only:
+        if not op.request.one_time_attemp:
             req2 = self.yard.new_request("ADJUST", time,
                            equipment=op.itf_other,
                            src_loc=op.itf_other.current_coord(),
@@ -45,10 +45,9 @@ class ReqHandler(ReqHandlerBase):
         box = request.box
         new_loc = getattr(request, "new_loc", False)
         if not new_loc:
-            new_loc = self.equipment.yard.smgr.slot_for_relocation(box)
+            new_loc = self.equipment.yard.smgr.slot_for_relocation(box, request)
             if not new_loc:
-                self.yard.fire_probe("allocator.fail.relocate", box)
-                raise RORUndefinedError("no slot for relocation", request)
+                raise RORNoPositionForRelocateError(request)
         request.acquire_stack(time, box.location, new_loc)
         yield self.gen_relocate_op(time, box, new_loc, request)
 
@@ -65,10 +64,9 @@ class ReqHandler(ReqHandlerBase):
         for above_box in box.box_above():
             if above_box.has_undone_relocation():
                 raise RORBoxHasUndoneRelocation(request)
-            new_loc = self.equipment.yard.smgr.slot_for_relocation(above_box)
+            new_loc = self.equipment.yard.smgr.slot_for_relocation(above_box, request)
             if not new_loc:
-                self.yard.fire_probe("allocator.fail.relocate", above_box)
-                raise RORUndefinedError("no slot for relocation")
+                raise RORNoPositionForRelocateError(request)
             request.acquire_stack(time, above_box.location, new_loc)
             yield self.gen_relocate_op(time, above_box, new_loc, request)
 

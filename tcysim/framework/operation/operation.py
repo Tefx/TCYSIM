@@ -1,7 +1,8 @@
 from contextlib import contextmanager
 from enum import Enum, auto, IntEnum
 
-from .step import CallBackStep, EmptyStep, MoverStep, StepWorkflow, SyncStep
+from .step import CallBackStep, EmptyStep, MoverStep, ProbeStep, StepWorkflow, SyncStep
+from ..event_reason import EventReason
 from ..request import Request
 from ..callback import CallBack
 from tcysim.utils import Paths, V3
@@ -93,6 +94,9 @@ class Operation:
 
     def emit_signal(self, name):
         return CallBackStep(self.request.signals[name])
+
+    def fire_probe(self, probe_name, *args, probe_reason=EventReason.PROBE_ACTION, **kwargs):
+        return ProbeStep(probe_name, args, kwargs, probe_reason)
 
     def wait(self, time):
         return EmptyStep(self.equipment.components[0], time)

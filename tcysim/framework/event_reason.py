@@ -1,8 +1,22 @@
 from pesim import TIME_PASSED
-from enum import IntEnum, auto
+from enum import Enum, auto
 
 
-class EventReason(IntEnum):
+class EventReason(int, Enum):
+    def __new__(cls, *args):
+        value = args[0] * 2
+        obj = int.__new__(cls, value)
+        obj._value_ = value
+        return obj
+
+    @property
+    def before(self):
+        return self.value - 1
+
+    @property
+    def after(self):
+        return self.value + 1
+
     CALLBACK = auto()
     INTERRUPTED = auto()
     INTERFERENCE_SOLVED = auto()

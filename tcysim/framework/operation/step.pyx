@@ -6,7 +6,7 @@ from ..motion.motion cimport Motion
 from ..motion.mover cimport Mover
 
 from cython cimport freelist
-from cpython cimport PyObject
+
 
 @freelist(1024)
 cdef class StepBase:
@@ -149,6 +149,32 @@ cdef class CallBackStep(StepBase):
     cdef void commit(self, yard):
         if not self.committed:
             yard.cmgr.add(self.callback)
+        self.committed = True
+
+
+cdef class ProbeStep(StepBase):
+    cdef str probe_name
+    cdef int probe_reason
+    cdef tuple args
+    cdef dict kwargs
+
+    def __init__(ProbeStep self, str probe_name, tuple args, dict kwargs, int probe_reason):
+        self.probe_name = probe_name
+        self.probe_reason = probe_reason
+        self.args = args
+        self.kwargs = kwargs
+
+    cdef void execute(ProbeStep self, op, double est):
+        if not self.executed:
+            self.cal_pred(op, est)
+            self.cal_start_time(op, est)
+            self.finish_time = self.start_time
+            self.next_time = self.finish_time
+        self.executed = True
+
+    cdef void commit(ProbeStep self, yard):
+        if not self.committed:
+            yard.probe_mgr.fire(self.start_time, self.probe_name, self.args, self.kwargs, self.probe_reason)
         self.committed = True
 
 cdef class MoverStep(StepBase):
