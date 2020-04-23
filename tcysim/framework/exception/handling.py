@@ -20,3 +20,6 @@ class RORBoxHasUndoneRelocation(ReqOpRejectionError):
 
 class ROREquipmentConflictError(ReqOpRejectionError):
     pass
+
+class RORNoPositionForRelocateError(ReqOpRejectionError):
+    pass

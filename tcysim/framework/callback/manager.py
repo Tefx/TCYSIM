@@ -27,7 +27,4 @@ class CallBackManager(Process):
             return TIME_FOREVER, EventReason.LAST
 
     def _process(self):
-        callback = self.queue.pop()
-        self.yard.fire_probe(self.time, "callback.before", callback)
-        callback(self.time)
-        self.yard.fire_probe(self.time, "callback.after", callback)
+        self.queue.pop()(self.time)

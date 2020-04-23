@@ -1,11 +1,20 @@
 from tcysim.framework.equipment import ReqHandler as ReqHandlerBase
+from tcysim.framework.event_reason import EventReason
 from tcysim.framework.exception.handling import *
-from tcysim.framework.request import ReqType
 from tcysim.utils.dispatcher import Dispatcher
 
 
 class ReqHandler(ReqHandlerBase):
-    @Dispatcher.on(ReqType.STORE)
+    def on_conflict(self, time, op):
+        if not op.request.one_time_attemp:
+            req2 = self.yard.new_request("ADJUST", time,
+                           equipment=op.itf_other,
+                           src_loc=op.itf_other.current_coord(),
+                           new_loc=op.itf_loc,
+                           blocking_request=op.request)
+            self.yard.submit_request(time, req2, ready=True)
+
+    @Dispatcher.on("STORE")
     def on_request_store(self, time, request):
         request.acquire_stack(time, request.box.location)
         request.link_signal("start_or_resume", self.on_store_start, request)
@@ -14,7 +23,7 @@ class ReqHandler(ReqHandlerBase):
         request.link_signal("finish_or_fail", self.on_store_finish_or_fail, request)
         yield self.equipment.OpBuilder.StoreOp(request)
 
-    @Dispatcher.on(ReqType.RETRIEVE)
+    @Dispatcher.on("RETRIEVE")
     def on_request_retrieve(self, time, request):
         yield from self.reshuffle_operations(time, request)
         box = request.box
@@ -30,16 +39,15 @@ class ReqHandler(ReqHandlerBase):
         request.link_signal("finish_or_fail", self.on_retrieve_finish_or_fail, request)
         yield self.equipment.op_builder.RetrieveOp(request)
 
-    @Dispatcher.on(ReqType.RELOCATE)
+    @Dispatcher.on("RELOCATE")
     def on_request_relocate(self, time, request):
         yield from self.reshuffle_operations(time, request)
         box = request.box
         new_loc = getattr(request, "new_loc", False)
         if not new_loc:
-            new_loc = self.equipment.yard.smgr.slot_for_relocation(box)
+            new_loc = self.equipment.yard.smgr.slot_for_relocation(box, request)
             if not new_loc:
-                self.yard.fire_probe("allocator.fail.relocate", box)
-                raise RORUndefinedError("no slot for relocation")
+                raise RORNoPositionForRelocateError(request)
         request.acquire_stack(time, box.location, new_loc)
         yield self.gen_relocate_op(time, box, new_loc, request)
 
@@ -56,14 +64,13 @@ class ReqHandler(ReqHandlerBase):
         for above_box in box.box_above():
             if above_box.has_undone_relocation():
                 raise RORBoxHasUndoneRelocation(request)
-            new_loc = self.equipment.yard.smgr.slot_for_relocation(above_box)
+            new_loc = self.equipment.yard.smgr.slot_for_relocation(above_box, request)
             if not new_loc:
-                self.yard.fire_probe("allocator.fail.relocate", above_box)
-                raise RORUndefinedError("no slot for relocation")
+                raise RORNoPositionForRelocateError(request)
             request.acquire_stack(time, above_box.location, new_loc)
             yield self.gen_relocate_op(time, above_box, new_loc, request)
 
-    @Dispatcher.on(ReqType.ADJUST)
+    @Dispatcher.on("ADJUST")
     def on_request_adjust(self, time, request):
         request.link_signal("start_or_resume", self.on_adjust_start, request)
         request.link_signal("finish_or_fail", self.on_adjust_finish_or_fail, request)
@@ -108,7 +115,7 @@ class ReqHandler(ReqHandlerBase):
     def on_adjust_start(self, time, request):
         blocking_req = request.blocking_request
         blocking_req.ready(time)
-        blocking_req.equipment.job_scheduler.schedule(time)
+        blocking_req.equipment.job_scheduler.schedule(time, EventReason.SCHEDULE_RESUME)
 
     def on_adjust_finish_or_fail(self, time, request):
         pass

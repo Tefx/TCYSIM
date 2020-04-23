@@ -12,7 +12,7 @@ class SpaceAllocator:
     def alloc_space(self, box, blocks, *args, **kwargs):
         raise NotImplementedError
 
-    def slot_for_relocation(self, box, *args, **kwargs):
+    def slot_for_relocation(self, box, request, *args, **kwargs):
         raise NotImplementedError
 
 

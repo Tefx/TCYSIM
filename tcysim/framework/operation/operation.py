@@ -1,12 +1,21 @@
 from contextlib import contextmanager
-from enum import auto, IntEnum
+from enum import Enum, auto, IntEnum
 
-from .step import CallBackStep, EmptyStep, MoverStep, StepWorkflow, SyncStep
+from .step import CallBackStep, EmptyStep, MoverStep, ProbeStep, StepWorkflow, SyncStep
+from ..event_reason import EventReason
 from ..request import Request
 from ..callback import CallBack
 from tcysim.utils import Paths, V3
 
 import heapq
+
+
+class OpType(Enum):
+    STORE = auto()
+    RETRIEVE = auto()
+    RELOCATE = auto()
+    ADJUST = auto()
+    MOVE = auto()
 
 
 class OpState(IntEnum):
@@ -18,10 +27,11 @@ class OpState(IntEnum):
 
 class Operation:
     STATE = OpState
+    TYPE = OpType
 
     def __init__(self, type, request_or_equipment, box=None, locking_pos=(), **attrs):
         self.op_type = type
-        self.state = OpState.INIT
+        self.state = self.STATE.INIT
         self.start_time = -1
         self.finish_time = -1
         if isinstance(request_or_equipment, Request):
@@ -46,10 +56,6 @@ class Operation:
 
     def add_lock(self, pos):
         self.locking_positions.append(pos)
-
-    @property
-    def TYPE(self):
-        return self.equipment.op_builder.OpType
 
     @property
     def operation_time(self):
@@ -89,6 +95,9 @@ class Operation:
     def emit_signal(self, name):
         return CallBackStep(self.request.signals[name])
 
+    def fire_probe(self, probe_name, *args, probe_reason=EventReason.PROBE_ACTION, **kwargs):
+        return ProbeStep(probe_name, args, kwargs, probe_reason)
+
     def wait(self, time):
         return EmptyStep(self.equipment.components[0], time)
 
@@ -113,4 +122,3 @@ class Operation:
 
     def __repr__(self):
         return "<OP/{}>{}".format(self.op_type.name, str(hash(self))[-4:0])
-

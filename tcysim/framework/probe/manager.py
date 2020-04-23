@@ -1,3 +1,5 @@
+
+
 class ProbeManager:
     def __init__(self, yard):
         self._set = {}
@@ -9,9 +11,9 @@ class ProbeManager:
             self._set[probe_name] = []
         self._set[probe_name].append(probe_action_template)
 
-    def fire(self, time, prob_name, *args, **kwargs):
+    def fire(self, time, prob_name, args, kwargs, reason):
         if prob_name in self._set:
             for action in self._set[prob_name]:
-                action.activate(time, args, kwargs)
+                action.activate(time, args, kwargs, reason)
             return True
 

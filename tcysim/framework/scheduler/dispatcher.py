@@ -1,4 +1,3 @@
-from ..request import ReqState
 from .pool import ReqPool
 
 
@@ -19,7 +18,7 @@ class ReqDispatcher:
 
     def refresh_pool(self, time):
         for request in self.pool.available_requests():
-            if request.state >= ReqState.READY and request.equipment is None:
+            if request.state >= request.STATE.READY and request.equipment is None:
                 if not request.equipment:
                     request.equipment = self.choose_equipment(time, request)
                 if request.equipment:

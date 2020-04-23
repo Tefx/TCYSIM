@@ -1,5 +1,4 @@
 from collections import deque
-from ..request import ReqState
 
 
 class ReqPool:
@@ -48,5 +47,5 @@ class ReqPool:
             if queue:
                 req = queue[0]
                 if req.predecessor is None or \
-                        req.predecessor.state == ReqState.FINISHED:
+                        req.predecessor.state == req.STATE.FINISHED:
                     yield req
