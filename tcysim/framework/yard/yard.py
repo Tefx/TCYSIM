@@ -71,3 +71,7 @@ class Yard:
     @classmethod
     def new_request(cls, type, *args, **kwargs):
         return cls.ReqCls(cls.ReqCls.TYPE[type], *args, **kwargs)
+
+    def boxes(self):
+        for block in self.blocks:
+            yield from block.iterboxes()

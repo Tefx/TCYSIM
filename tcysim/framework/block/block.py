@@ -21,7 +21,7 @@ class Block(BlockLayout, CBlock):
         self.req_dispatcher = self.ReqDispatcher(self)
         self.lock_waiting_requests = {}
         self.num_equipments= 0
-        self.boxes = set()
+        # self.boxes = set()
 
     def deploy(self, equipments):
         for equipment in equipments:
@@ -65,4 +65,16 @@ class Block(BlockLayout, CBlock):
     def available_cells(self, box):
         for i, j, k in product(*self.shape):
             if self.position_is_valid_for_size(i, j, k, box.teu):
-                return loc
+                return V3i(i, j, k)
+
+    def pending_requests(self):
+        yield from self.req_dispatcher.pool.all_requests()
+        for equipment in self.equipments:
+            if equipment.next_task:
+                yield equipment.next_task
+
+    def current_tasks(self):
+        for equipment in self.equipments:
+            task = equipment.current_tasks()
+            if task is not None:
+                yield task

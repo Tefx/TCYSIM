@@ -128,9 +128,12 @@ static inline int _box_float(Box_TCY *box) {
     Box_TCY *box2;
     while (box->loc[along] < blk->spec[along]) {
         box2 = _blk_neighbor_box(blk, box, along, TRUE);
-        if (box2 && box2->state != BOX_STATE_STORED)
+//        if (box2 && box2->state != BOX_STATE_STORED)
+        if (box2) {
+            if (box2->state == BOX_STATE_STORED)
+                printf("Warning: floating under stored, this should only happen when restoring from snapshots!");
             _box_swap(box, along);
-        else
+        } else
             break;
     }
     return SUCCEED;

@@ -1,5 +1,7 @@
 from cpython cimport PyObject
 
+from tcysim.utils.vector cimport V3i
+
 cdef class BlockColumnUsage:
     FREE = SLOT_USAGE_FREE
     TWENTY_ONLY = SLOT_USAGE_TWENTY_ONLY
@@ -33,6 +35,25 @@ cdef class CBlock:
         loc[2] = z
         res = block_usage(&self.c, loc, include_occupied)
         return res
+
+    def iterboxes(self):
+        cdef CellIdx_TCY pos[3], i, j, k
+        cdef Box_TCY*box, *tmp
+        cdef V3i loc
+        for i in range(self.c.spec[0]):
+            for j in range(self.c.spec[1]):
+                for k in range(self.c.spec[2]):
+                    pos[0] = i
+                    pos[1] = j
+                    pos[2] = k
+                    box = block_box_at(&self.c, pos)
+                    if box != NULL:
+                        if box.size == BOX_SIZE_FORTY and pos[self.c.box_orientation] > 0:
+                            pos[self.c.box_orientation] -= 1
+                            tmp = block_box_at(&self.c, pos)
+                            if tmp and tmp == box:
+                                continue
+                        yield V3i(i, j, k), box.state, <object> box._self
 
     def box_at(self, V3 loc):
         cdef CellIdx_TCY pos[3]
@@ -118,7 +139,7 @@ cdef class CBlock:
     cpdef array.array all_slot_states(self, int norm_axis, array.array res=None):
         cdef array.array results
         if res is None:
-            results= array.array("i")
+            results = array.array("i")
             array.resize(results, self.c.spec[norm_axis])
         else:
             results = res

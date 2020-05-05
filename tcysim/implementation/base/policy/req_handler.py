@@ -77,14 +77,15 @@ class ReqHandler(ReqHandlerBase):
         yield self.equipment.OpBuilder.AdjustOp(request)
 
     def on_store_start(self, time, request):
-        request.block.boxes.add(request.box)
+        box = request.box
+        box.start_store()
+        # request.block.boxes.add(box)
 
     def on_store_finish_or_fail(self, time, request):
         pass
 
     def on_store_off_agv(self, time, request):
         box = request.box
-        box.start_store()
         box.equipment = request.equipment
         request.sync(time)
 
@@ -98,7 +99,8 @@ class ReqHandler(ReqHandlerBase):
         pass
 
     def on_retrieve_finish_or_fail(self, time, request):
-        request.block.boxes.remove(request.box)
+        pass
+        # request.block.boxes.remove(request.box)
 
     def on_retrieve_leaving_block(self, time, request):
         box = request.box

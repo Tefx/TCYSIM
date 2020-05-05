@@ -11,6 +11,7 @@ cdef class CBoxState:
     RELOCATING = BOX_STATE_RELOCATING
     RETRIEVING = BOX_STATE_RETRIEVING
     RETRIEVED = BOX_STATE_RETRIEVED
+    PLACEHOLDER = BOX_STATE_PLACEHOLDER
 
 cdef class CBox:
     def __init__(self, bytes box_id, int size=20, *args, **kwargs):
@@ -52,6 +53,22 @@ cdef class CBox:
         elif self.c.state == BOX_STATE_RELOCATING:
             box_relocate_store(&self.c, time)
 
+    def restore(self, Time_TCY time, block,
+                CellIdx_TCY x, CellIdx_TCY y, CellIdx_TCY z,
+                *args, BoxState_TCY level=BOX_STATE_STORED):
+        if level == BOX_STATE_INITIAL:
+            return
+        self.set_location(block, x, y, z)
+        box_alloc(&self.c, time)
+        if level >= BOX_STATE_STORED:
+            box_store(&self.c, time)
+
+    def add_direct(self, Time_TCY time):
+        box_store(&self.c, time)
+
+    def remove_direct(self, Time_TCY time):
+        box_retrieve(&self.c, time)
+
     def has_undone_relocation(self):
         return self.c._holder_or_origin is not NULL
 
@@ -73,17 +90,17 @@ cdef class CBox:
     def id(self):
         return self.c.id
 
-    @property
-    def alloc_time(self):
-        return self.c.alloc_time
-
-    @property
-    def store_time(self):
-        return self.c.store_time
-
-    @property
-    def retrieval_time(self):
-        return self.c.retrieval_time
+    # @property
+    # def alloc_time(self):
+    #     return self.c.alloc_time
+    #
+    # @property
+    # def store_time(self):
+    #     return self.c.store_time
+    #
+    # @property
+    # def retrieval_time(self):
+    #     return self.c.retrieval_time
 
     @property
     def location(self):

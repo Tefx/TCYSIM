@@ -7,6 +7,13 @@ class ReqPool:
         self.local_pool = {}
         self.access_queues = {}
 
+    def all_requests(self):
+        yield from self.free_pool
+        for pool in self.local_pool.values():
+            yield from pool
+        for queue in self.access_queues.values():
+            yield from queue
+
     def push(self, request, equipment=None, access_name=None):
         if equipment is not None:
             if equipment not in self.local_pool:

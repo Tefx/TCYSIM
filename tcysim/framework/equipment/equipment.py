@@ -196,6 +196,14 @@ class Equipment(EquipmentRangeLayout, Process):
             self.query_new_task(self.time)
         yield self.time, EventReason.LAST
 
+    def current_tasks(self):
+        if self.current_op:
+            if self.current_op.request:
+                return self.current_op.request
+            else:
+                return self.current_op
+        return None
+
     def __getattr__(self, item):
         return self.attrs.get(item, None)
 
