@@ -9,9 +9,9 @@ except ImportError as e:
 
 
 class ProgressIndicator(Observer):
-    def __init__(self, ds, yard, interval, start=0, end=TIME_FOREVER, env=None):
+    def __init__(self, yard, interval, start=0, end=TIME_FOREVER, env=None):
         self.sim_start = start
-        self._time_zero = pd.to_datetime(ds.TIME_ZERO)
+        self._time_zero = pd.to_datetime(yard.ds.TIME_ZERO)
         self.total = end - start
         super(ProgressIndicator, self).__init__(yard=yard, start=start, end=end, interval=interval, env=env)
 

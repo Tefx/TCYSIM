@@ -26,5 +26,6 @@ class EventReason(int, Enum):
     SCHEDULE_RESUME = auto()
     SCHEDULE = auto()
     PROBE_ACTION = auto()
+    EV_GEN= auto()
     OBSERVE = auto()
     LAST = TIME_PASSED
