@@ -41,11 +41,11 @@ class EventGenerator(Process):
     EventHandler = EventHandler
 
     def __init__(self, yard, stop_time=TIME_FOREVER, env=None):
-        super(EventGenerator, self).__init__(env or yard.env)
         self.queue = None
         self.yard = yard
         self.stop_time = stop_time
         self.handler = self.EventHandler(self)
+        super(EventGenerator, self).__init__(env or yard.env)
 
     def install_or_add(self, event):
         self.queue.push(event)

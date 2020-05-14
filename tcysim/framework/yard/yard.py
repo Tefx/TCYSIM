@@ -57,6 +57,7 @@ class Yard:
 
     def alloc(self, time, box, block, loc):
         box.alloc(time, block, loc)
+        self.fire_probe("box.alloc", box)
 
     def store(self, time, box, lane):
         request = self.new_request("STORE", time, box, lane=lane)
