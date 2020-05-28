@@ -63,12 +63,6 @@ cdef class CBox:
         if level >= BOX_STATE_STORED:
             box_store(&self.c, time)
 
-    # def add_direct(self, Time_TCY time):
-    #     box_store(&self.c, time)
-    #
-    # def remove_direct(self, Time_TCY time):
-    #     box_retrieve(&self.c, time)
-
     def has_undone_relocation(self):
         return self.c._holder_or_origin is not NULL
 
@@ -89,18 +83,6 @@ cdef class CBox:
     @property
     def id(self):
         return self.c.id
-
-    # @property
-    # def alloc_time(self):
-    #     return self.c.alloc_time
-    #
-    # @property
-    # def store_time(self):
-    #     return self.c.store_time
-    #
-    # @property
-    # def retrieval_time(self):
-    #     return self.c.retrieval_time
 
     @property
     def location(self):
