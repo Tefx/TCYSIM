@@ -77,6 +77,7 @@ class ReqHandler(ReqHandlerBase):
         yield self.equipment.OpBuilder.AdjustOp(request)
 
     def on_store_start(self, time, request):
+        # pass
         box = request.box
         box.start_store()
         # request.block.boxes.add(box)
@@ -87,6 +88,7 @@ class ReqHandler(ReqHandlerBase):
     def on_store_off_agv(self, time, request):
         box = request.box
         box.equipment = request.equipment
+        # box.start_store()
         request.sync(time)
 
     def on_store_in_block(self, time, request):
