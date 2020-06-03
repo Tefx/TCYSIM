@@ -44,12 +44,12 @@ class ReqHandler(Dispatcher):
         elif isinstance(e, RORBoxHasUndoneRelocation):
             request = e.args[0]
             request.on_reject(time)
-            if not request.one_time_attemp:
+            if not request.one_time_attempt:
                 self.yard.cmgr.add_callback(time + 60, request.ready)
         elif isinstance(e, RORNoPositionForRelocateError):
             request = e.args[0]
             request.on_reject(time)
-            if not request.one_time_attemp:
+            if not request.one_time_attempt:
                 raise NotImplementedError(e) from e
         else:
             raise NotImplementedError(e)

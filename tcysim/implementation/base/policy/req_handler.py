@@ -6,7 +6,7 @@ from tcysim.utils.dispatcher import Dispatcher
 
 class ReqHandler(ReqHandlerBase):
     def on_conflict(self, time, op):
-        if not op.request.one_time_attemp:
+        if not op.request.one_time_attempt:
             req2 = self.yard.new_request("ADJUST", time,
                            equipment=op.itf_other,
                            src_loc=op.itf_other.current_coord(),
