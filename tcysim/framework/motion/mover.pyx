@@ -1,8 +1,6 @@
 from collections import deque
 from libc.math cimport sqrt, fabs
-from libc.stdint cimport int64_t
 
-from tcysim.utils.math cimport feq
 from .motion cimport Motion
 
 cdef class Spec:

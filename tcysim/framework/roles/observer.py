@@ -1,19 +1,21 @@
 from collections import deque
+from abc import ABC, abstractmethod
 
 from pesim import Process, TIME_FOREVER, TIME_PASSED
 from ..event_reason import EventReason
 
 
-class Observer(Process):
+class ObserverBase(Process, ABC):
     def __init__(self, yard, start=0, end=TIME_FOREVER, interval=1, env=None):
-        super(Observer, self).__init__(env or yard.env)
+        super(ObserverBase, self).__init__(env or yard.env)
         self.yard = yard
         self.interval = interval
         self.start_time = start
         self.end_time = end
 
+    @abstractmethod
     def on_observe(self):
-        raise NotImplementedError
+        pass
 
     def _process(self):
         if self.start_time <= self.time < self.end_time:
@@ -28,14 +30,15 @@ class Observer(Process):
             return self.time + self.interval, EventReason.OBSERVE
 
 
-class TimedObserver(Process):
+class TimedObserverBase(Process, ABC):
     def __init__(self, yard, *tps, env=None):
-        super(TimedObserver, self).__init__(env or yard.env)
+        super(TimedObserverBase, self).__init__(env or yard.env)
         self.yard = yard
         self.tps = deque(sorted(tps))
 
+    @abstractmethod
     def on_observe(self):
-        raise NotImplementedError
+        pass
 
     def _process(self):
         self.on_observe()

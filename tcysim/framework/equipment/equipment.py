@@ -1,17 +1,16 @@
 from contextlib import contextmanager
 from copy import copy
 from enum import Enum, auto
+from typing import Type
 
 from pesim import TIME_FOREVER, Process
 from ..exception.handling import ReqOpRejectionError, ROREquipmentConflictError
-from ..operation import Operation
+from ..operation import OperationABC, OpBuilderBase
 from ..event_reason import EventReason
 from ..layout import EquipmentRangeLayout
+from ..request import RequestBase, ReqHandlerBase
+from .scheduler import JobScheduler
 from tcysim.utils import V3
-from .req_handler import ReqHandler
-from .op_builder import OpBuilder
-from ..request import Request
-from ..scheduler.scheduler import JobScheduler
 
 
 class EquipmentState(Enum):
@@ -21,14 +20,11 @@ class EquipmentState(Enum):
 
 
 class Equipment(EquipmentRangeLayout, Process):
-    STATE = EquipmentState
+    STATE: Type[EquipmentState] = EquipmentState
 
-    ReqHandler = ReqHandler
-    OpBuilder = OpBuilder
-    JobScheduler = JobScheduler
-
-    GRASP_TIME = 5
-    RELEASE_TIME = 5
+    ReqHandler: Type[ReqHandlerBase] = NotImplemented
+    OpBuilder: Type[OpBuilderBase] = NotImplemented
+    JobScheduler: Type[JobScheduler] = JobScheduler
 
     def __init__(self, yard, components, offset, move_range, rotate=0, init_offset=V3.zero(), **attrs):
         Process.__init__(self, yard.env)
@@ -96,9 +92,6 @@ class Equipment(EquipmentRangeLayout, Process):
         self.run_until(self.env.time)
         return all(component.allow_interruption() for component in self.components)
 
-    def check_interference(self, operation):
-        raise NotImplementedError
-
     def nearby_equipments(self):
         for block in self.blocks:
             for equipment in block.equipments:
@@ -124,7 +117,7 @@ class Equipment(EquipmentRangeLayout, Process):
             return self.state != self.STATE.BLOCKING
 
     def submit_task(self, task, from_self=False):
-        if isinstance(task, Request):
+        if isinstance(task, RequestBase):
             task.equipment = self
         self.next_task = task
         if not from_self:
@@ -149,50 +142,44 @@ class Equipment(EquipmentRangeLayout, Process):
         else:
             return self.next_task.time, EventReason.LAST
 
-    def perform_op(self, time, op):
-        op.commit(self.yard)
-        with self.lock_state(self.STATE.WORKING):
+    def perform_op(self, op, request=None):
+        if op.build_and_check(self.time, self.op_builder):
+            self.yard.fire_probe('operation.start', self)
+            self.state = self.STATE.WORKING
             self.current_op = op
-            self.yard.fire_probe('operation.start', op)
-            op.state = op.STATE.RUNNING
-            yield op.finish_time, EventReason.OP_FINISHED
-            op.state = op.STATE.FINISHED
-            op.finish_time = self.time
+            yield from op.perform(self.yard)
             self.current_op = None
-            self.yard.fire_probe('operation.finish', op)
-            # op.clean()
+            self.state = self.STATE.IDLE
+            self.yard.fire_probe('operation.finish', self)
+        else:
+            op.cancel(self.yard)
+            self.yard.fire_probe('operation.conflict', self)
+            if request:
+                raise ROREquipmentConflictError(op)
 
     def handle_request(self, request):
         request.start_or_resume(self.time)
         try:
             self.yard.fire_probe('request.start', request)
             for op in request.gen_op(self.time):
-                if self.op_builder.build_and_check(self.time, op):
-                    yield from self.perform_op(self.time, op)
-                else:
-                    op.state = op.STATE.CANCELLED
-                    self.yard.fire_probe('operation.conflict', op)
-                    raise ROREquipmentConflictError(op)
+                yield from self.perform_op(op, request)
             self.yard.fire_probe('request.succeed', request)
         except ReqOpRejectionError as e:
             self.req_handler.on_reject(self.time, e)
             self.yard.fire_probe('request.rejected', request)
         request.finish_or_fail(self.time)
 
-    def handle_operation(self, op):
-        if self.op_builder.build_and_check(self.time, op):
-            yield from self.perform_op(self.time, op)
-        else:
-            op.state = op.STATE.CANCELLED
+    def check_interference(self, op):
+        return False, None, None
 
     def _process(self):
         if self.next_task:
             op_or_req = self.next_task
             self.next_task = None
-            if isinstance(op_or_req, Request):
+            if isinstance(op_or_req, RequestBase):
                 yield from self.handle_request(op_or_req)
-            elif isinstance(op_or_req, Operation):
-                yield from self.handle_operation(op_or_req)
+            elif isinstance(op_or_req, OperationABC):
+                yield from self.perform_op(op_or_req)
             self.query_new_task(self.time)
         yield self.time, EventReason.LAST
 

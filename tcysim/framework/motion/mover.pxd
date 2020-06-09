@@ -1,6 +1,3 @@
-from collections import deque
-from libc.math cimport sqrt, fabs
-
 from .motion cimport Motion
 
 cdef class Spec:

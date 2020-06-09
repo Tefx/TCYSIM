@@ -1,14 +1,14 @@
+from abc import ABC
 from enum import Enum, IntEnum, auto
+from typing import Type
 
 from ..callback import CallBack
-from ..exception.handling import RORAcquireFail
 from ...utils.idx_obj import IndexObject
 
 
 class ReqType(Enum):
     STORE = auto()
     RETRIEVE = auto()
-    ADJUST = auto()
     RELOCATE = auto()
 
 
@@ -23,9 +23,9 @@ class ReqState(IntEnum):
     FINISHED = auto()
 
 
-class Request(IndexObject):
-    STATE = ReqState
-    TYPE = ReqType
+class RequestBase(IndexObject, ABC):
+    TYPE: Type[Enum] = NotImplemented
+    STATE: Type[IntEnum] = ReqState
 
     def __init__(self, req_type, time,
                  box=None,
@@ -34,7 +34,7 @@ class Request(IndexObject):
                  block=None,
                  one_time_attempt=False,
                  **attrs):
-        super(Request, self).__init__()
+        super(RequestBase, self).__init__()
         self.req_type = req_type
         self.id = -1
         self.arrival_time = time
@@ -59,17 +59,11 @@ class Request(IndexObject):
         self.access_point = None
         self.one_time_attempt = one_time_attempt
         self.reject_times = 0
-        self.acquire_fails = set()
-        self.acquired_positions = []
         self.ops = []
-        self.pred = None
-        self.succ = None
         self.__dict__.update(attrs)
 
     def clean(self):
         self.signals = None
-        self.acquire_fails = None
-        self.acquired_positions = []
         for op in self.ops:
             op.clean()
         self.ops = None
@@ -86,11 +80,7 @@ class Request(IndexObject):
             self.ready_time = time
 
     def is_ready(self):
-        if self.state == self.STATE.READY or self.state == self.STATE.RESUME_READY:
-            if self.req_type == self.TYPE.RETRIEVE:
-                return self.box.state != self.box.STATE.RELOCATING
-            return True
-        return False
+        return self.state == self.STATE.READY or self.state == self.STATE.RESUME_READY
 
     def submit(self, time, ready=True):
         if ready:
@@ -103,10 +93,6 @@ class Request(IndexObject):
         else:
             self.state = self.STATE.STARTED
         self.start_time = time
-
-    def acquire_stack(self, time, *locations):
-        if not self.block.acquire_stack(time, self, *locations):
-            raise RORAcquireFail(self)
 
     def gen_op(self, time):
         for op in self.equipment.req_handler.handle(time, self):
@@ -122,12 +108,6 @@ class Request(IndexObject):
         if not self.one_time_attempt:
             self.submit(time, ready=False)
 
-    def new_successor(self, type, *args, **kwargs):
-        req = self.__class__(self.TYPE[type], *args, **kwargs)
-        self.succ = req
-        req.pred = self
-        return req
-
     def sync(self, time):
         self.state = self.STATE.SYNCED
         # self.sync_time = time
@@ -139,24 +119,6 @@ class Request(IndexObject):
         if self.state != self.STATE.REJECTED:
             self.state = self.STATE.FINISHED
             self.finish_time = time
-        else:
-            for pos in self.acquired_positions:
-                self.block.release_stack(time, pos)
-            self.acquired_positions = []
-        # if self.state == self.STATE.FINISHED:
-        #     self.clean()
-
-    def on_acquire_fail(self, time, pos_hash):
-        self.acquire_fails.add(pos_hash)
-
-    def on_acquire_success(self, time, pos):
-        self.acquired_positions.append(pos)
-
-    def on_resource_release(self, time, pos_hash):
-        self.acquire_fails.remove(pos_hash)
-        if not self.acquire_fails:
-            self.ready(time)
-        self.equipment.job_scheduler.schedule(time)
 
     def __repr__(self):
         return "[{}/{}]({}/AT:{:.2f})".format(self.req_type, self.state.name, self.equipment, self.arrival_time)

@@ -1,6 +1,6 @@
 from pesim import Process, TIME_FOREVER, MinPairingHeap
-from tcysim.framework.event_reason import EventReason
-from tcysim.framework.probe.action import ProbeActionTemplate
+from ..event_reason import EventReason
+from .action import ProbeActionTemplate
 
 
 class ProbeProcessor(Process):

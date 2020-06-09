@@ -68,6 +68,14 @@ extensions = [
         extra_compile_args=extra_compile_args,
         extra_link_args=extra_link_args,
         ),
+    Extension(
+        name="tcysim.utils.set.*",
+        sources=["tcysim/utils/set/*.pyx"],
+        extra_compile_args=extra_compile_args,
+        extra_link_args=extra_link_args,
+        library_dirs=[os.path.abspath(library_dir)],
+        include_dirs=[os.path.abspath("libtcy/include")]
+        ),
     ]
 
 setup(name="tcysim",

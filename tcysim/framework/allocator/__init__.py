@@ -1,1 +1,1 @@
-from .allocator import SpaceAllocator
+from .allocator import SpaceAllocatorBase

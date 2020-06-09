@@ -1,21 +1,18 @@
+from abc import ABC, abstractmethod
 from contextlib import contextmanager
 from enum import Enum, auto, IntEnum
+from typing import Type
+import heapq
 
 from .step import CallBackStep, EmptyStep, MoverStep, ProbeStep, StepWorkflow, SyncStep
 from ..event_reason import EventReason
-from ..request import Request
+from ..request import RequestBase
 from ..callback import CallBack
 from tcysim.utils import Paths, V3
 
-import heapq
-
 
 class OpType(Enum):
-    STORE = auto()
-    RETRIEVE = auto()
-    RELOCATE = auto()
-    ADJUST = auto()
-    MOVE = auto()
+    pass
 
 
 class OpState(IntEnum):
@@ -25,37 +22,78 @@ class OpState(IntEnum):
     CANCELLED = auto()
 
 
-class Operation:
-    STATE = OpState
-    TYPE = OpType
+class OperationABC(ABC):
+    STATE: Type[IntEnum] = OpState
 
-    def __init__(self, type, request_or_equipment, box=None, locking_pos=(), **attrs):
-        self.op_type = type
+    def init__(self, equipment, **attrs):
         self.state = self.STATE.INIT
         self.start_time = -1
-        self.finish_time = -1
-        if isinstance(request_or_equipment, Request):
+        self.finish_Time = -1
+        self.equipment = equipment
+        self.__dict__.update(attrs)
+
+    def build_and_check(self, time, builder):
+        return True
+
+    @abstractmethod
+    def perform(self, yard):
+        with self.running_context(yard):
+            pass
+
+    def cancel(self, yard):
+        self.state = self.STATE.CANCELLED
+
+    def clean(self):
+        pass
+
+    @contextmanager
+    def running_context(self):
+        self.start_time = self.equipment.time
+        self.state = self.STATE.RUNNING
+        yield
+        self.state = self.STATE.FINISHED
+        self.finish_time = self.equipment.time
+
+class OperationBase(OperationABC):
+    TYPE: Type[Enum] = NotImplementedError
+
+    def __init__(self, type, request_or_equipment, box=None, **attrs):
+        if isinstance(request_or_equipment, RequestBase):
             self.request = request_or_equipment
-            self.equipment = request_or_equipment.equipment
+            equipment = request_or_equipment.equipment
         else:
             self.request = None
-            self.equipment = request_or_equipment
-        self._pps = {}
-        self.workflow = StepWorkflow()
-        self.paths = {}
-        self.interruption_flag = False
-        self.locking_positions = list(locking_pos)
+            equipment = request_or_equipment
         self.box = box
-        self.__dict__.update(attrs)
+        self.op_type = type
+        self.workflow = StepWorkflow()
+        self.interruption_flag = False
+        self._pps = {}
+        self.paths = {}
+        super(OperationBase, self).__init__(equipment, **attrs)
+
+    def check_interference(self):
+        itf, other, new_loc = self.equipment.check_interference(self)
+        if itf:
+            self.itf_other = other
+            self.itf_loc = new_loc
+        return not itf
+
+    def build_and_check(self, time, builder):
+        for step in builder.dispatch(self.op_type.name, "_", self):
+            self.workflow.add(step)
+        self.dry_run(time)
+        return self.check_interference()
+
+    def perform(self, yard):
+        self.workflow.commit(yard)
+        with self.running_context():
+            yield self.finish_time, EventReason.OP_FINISHED
 
     def clean(self):
         self._pps = None
         self.workflow = None
         self.paths = None
-        self.locking_positions = None
-
-    def add_lock(self, pos):
-        self.locking_positions.append(pos)
 
     @property
     def operation_time(self):
@@ -70,9 +108,6 @@ class Operation:
             pps = self._pps[component]
             while pps:
                 path.append(*heapq.heappop(pps))
-
-    def commit(self, yard):
-        self.workflow.commit(yard)
 
     def dry_run(self, start_time):
         self.workflow.reset()
@@ -122,3 +157,6 @@ class Operation:
 
     def __repr__(self):
         return "<OP/{}>{}".format(self.op_type.name, str(hash(self))[-4:0])
+
+class BlockingOperationBase(OperationABC):
+    pass

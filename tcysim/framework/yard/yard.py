@@ -1,22 +1,23 @@
+from abc import ABC
+
+from typing import Type
 from pesim import Environment, TIME_PASSED
 from ..event_reason import EventReason
 from ..probe import ProbeManager
-from ..request import Request
 from ..roles import Roles
 from ..callback import CallBackManager
-from ..allocator import SpaceAllocator
+from ..allocator import SpaceAllocatorBase
 
 
-class Yard:
-    SpaceAllocator: SpaceAllocator.__class__ = SpaceAllocator
-    ReqCls = Request
+class YardBase(ABC):
+    SpaceAllocatorCls: Type[SpaceAllocatorBase] = NotImplemented
 
     def __init__(self):
         self.env = Environment()
         self.blocks = {}
         self.equipments = []
 
-        self.smgr = self.SpaceAllocator(self)
+        self.smgr = self.SpaceAllocatorCls(self)
         self.cmgr = CallBackManager(self)
         self.probe_mgr = ProbeManager(self)
 
@@ -60,18 +61,14 @@ class Yard:
         self.fire_probe("box.alloc", box)
 
     def store(self, time, box, lane):
-        request = self.new_request("STORE", time, box, lane=lane)
+        request = box.block.new_request("STORE", time, box, lane=lane)
         self.submit_request(time, request)
         return request
 
     def retrieve(self, time, box, lane):
-        request = self.new_request("RETRIEVE", time, box, lane=lane)
+        request = box.block.new_request("RETRIEVE", time, box, lane=lane)
         self.submit_request(time, request)
         return request
-
-    @classmethod
-    def new_request(cls, type, *args, **kwargs):
-        return cls.ReqCls(cls.ReqCls.TYPE[type], *args, **kwargs)
 
     def boxes(self):
         for block in self.blocks:

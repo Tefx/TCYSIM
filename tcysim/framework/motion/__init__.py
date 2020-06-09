@@ -1,3 +1,3 @@
 from .component import Component
-from .mover import Spec
+from .mover import Spec, Mover
 from .motion import Motion

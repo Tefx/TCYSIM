@@ -1,12 +1,10 @@
 import heapq
-from libc.float cimport DBL_MAX
 
+from libc.float cimport DBL_MAX
 from tcysim.utils.math cimport feq
 from ..motion.motion cimport Motion
 from ..motion.mover cimport Mover
-
 from cython cimport freelist
-
 
 @freelist(1024)
 cdef class StepBase:
@@ -150,7 +148,6 @@ cdef class CallBackStep(StepBase):
         if not self.committed:
             yard.cmgr.add(self.callback)
         self.committed = True
-
 
 cdef class ProbeStep(StepBase):
     cdef str probe_name

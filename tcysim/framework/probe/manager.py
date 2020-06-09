@@ -1,5 +1,3 @@
-
-
 class ProbeManager:
     def __init__(self, yard):
         self._set = {}

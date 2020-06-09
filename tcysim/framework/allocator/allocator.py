@@ -1,4 +1,6 @@
-class SpaceAllocator:
+from abc import ABC, abstractmethod
+
+class SpaceAllocatorBase(ABC):
     def __init__(self, yard):
         self.yard = yard
 
@@ -9,10 +11,12 @@ class SpaceAllocator:
     def available_blocks(self, box):
         return self.yard.blocks.values()
 
+    @abstractmethod
     def alloc_space(self, box, blocks, *args, **kwargs):
-        raise NotImplementedError
+        pass
 
+    @abstractmethod
     def slot_for_relocation(self, box, request, *args, **kwargs):
-        raise NotImplementedError
+        pass
 
 

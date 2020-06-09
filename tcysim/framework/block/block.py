@@ -1,14 +1,16 @@
 from itertools import product
+from typing import Type
 
 from tcysim.libc import CBlock
 from tcysim.utils import V3, V3i
 
 from ..layout import BlockLayout
-from ..scheduler import ReqDispatcher
+from ..request import RequestBase, ReqDispatcher
 
 
 class Block(BlockLayout, CBlock):
-    ReqDispatcher = ReqDispatcher
+    ReqCls: Type[RequestBase] = NotImplemented
+    ReqDispatcherCls: Type[ReqDispatcher] = ReqDispatcher
 
     def __init__(self, yard, bid, offset, shape: V3, rotate, stacking_axis, sync_axes, lanes=()):
         self.id = bid
@@ -18,10 +20,8 @@ class Block(BlockLayout, CBlock):
         self.yard = yard
         BlockLayout.__init__(self, offset, shape, rotate, lanes=lanes)
         CBlock.__init__(self, shape, stacking_axis=stacking_axis, sync_axes=sync_axes)
-        self.req_dispatcher = self.ReqDispatcher(self)
-        self.lock_waiting_requests = {}
-        self.num_equipments= 0
-        # self.boxes = set()
+        self.req_dispatcher = self.ReqDispatcherCls(self)
+        self.num_equipments = 0
 
     def deploy(self, equipments):
         for equipment in equipments:
@@ -34,33 +34,6 @@ class Block(BlockLayout, CBlock):
 
     def access_coord(self, lane, box, transform_to=None):
         return self.projected_coord_on_lane_from_cell_idx(lane, box.location, box.teu, transform_to)
-
-    def acquire_stack(self, time, acquirer, *positions):
-        succeed = True
-        for pos in positions:
-            pos = pos.set1(self.stacking_axis, 0)
-            if self.is_locked(pos):
-                idx = self.stack_hash(pos)
-                if idx not in self.lock_waiting_requests:
-                    self.lock_waiting_requests[idx] = set()
-                acquirer.on_acquire_fail(time, idx)
-                self.lock_waiting_requests[idx].add(acquirer)
-                succeed = False
-        if succeed:
-            for pos in positions:
-                self.lock(pos)
-                acquirer.on_acquire_success(time, pos)
-        return succeed
-
-    def release_stack(self, time, *positions):
-        for pos in positions:
-            pos = pos.set1(self.stacking_axis, 0)
-            self.unlock(pos)
-            idx = self.stack_hash(pos)
-            if idx in self.lock_waiting_requests:
-                for request in self.lock_waiting_requests[idx]:
-                    request.on_resource_release(time, idx)
-                del self.lock_waiting_requests[idx]
 
     def available_cells(self, box):
         for i, j, k in product(*self.shape):
@@ -78,3 +51,7 @@ class Block(BlockLayout, CBlock):
             task = equipment.current_tasks()
             if task is not None:
                 yield task
+
+    @classmethod
+    def new_request(cls, type, *args, **kwargs):
+        return cls.ReqCls(cls.ReqCls.TYPE[type], *args, **kwargs)
