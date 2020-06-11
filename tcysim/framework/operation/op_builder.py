@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Type
 from tcysim.utils.dispatcher import Dispatcher
-from ..operation import OperationBase
+from .operation import OperationBase
 
 
 class OpBuilderBase(Dispatcher, ABC):

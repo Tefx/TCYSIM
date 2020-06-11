@@ -4,7 +4,7 @@ from enum import Enum, auto, IntEnum
 from typing import Type
 import heapq
 
-from .step import CallBackStep, EmptyStep, MoverStep, ProbeStep, StepWorkflow, SyncStep
+from .step import CallBackStep, EmptyStep, GraspStep, ReleaseStep, MoverStep, ProbeStep, StepWorkflow
 from ..event_reason import EventReason
 from ..request import RequestBase
 from ..callback import CallBack
@@ -25,10 +25,12 @@ class OpState(IntEnum):
 class OperationABC(ABC):
     STATE: Type[IntEnum] = OpState
 
-    def init__(self, equipment, **attrs):
+    def __init__(self, equipment, **attrs):
         self.state = self.STATE.INIT
         self.start_time = -1
         self.finish_Time = -1
+        self.attach_time = -1
+        self.detach_time = -1
         self.equipment = equipment
         self.__dict__.update(attrs)
 
@@ -37,7 +39,7 @@ class OperationABC(ABC):
 
     @abstractmethod
     def perform(self, yard):
-        with self.running_context(yard):
+        with self.running_context():
             pass
 
     def cancel(self, yard):
@@ -53,6 +55,7 @@ class OperationABC(ABC):
         yield
         self.state = self.STATE.FINISHED
         self.finish_time = self.equipment.time
+
 
 class OperationBase(OperationABC):
     TYPE: Type[Enum] = NotImplementedError
@@ -70,6 +73,7 @@ class OperationBase(OperationABC):
         self.interruption_flag = False
         self._pps = {}
         self.paths = {}
+        self.start_coord = None
         super(OperationBase, self).__init__(equipment, **attrs)
 
     def check_interference(self):
@@ -86,8 +90,9 @@ class OperationBase(OperationABC):
         return self.check_interference()
 
     def perform(self, yard):
-        self.workflow.commit(yard)
+        self.workflow.commit(yard, self)
         with self.running_context():
+            self.start_coord = self.equipment.current_coord()
             yield self.finish_time, EventReason.OP_FINISHED
 
     def clean(self):
@@ -136,8 +141,14 @@ class OperationBase(OperationABC):
     def wait(self, time):
         return EmptyStep(self.equipment.components[0], time)
 
-    def sync(self, request):
-        return SyncStep(request)
+    # def sync(self):
+    #     return SyncStep(self.request)
+
+    def grasp(self, time, sync=False):
+        return GraspStep(time, sync)
+
+    def release(self, time, sync=False):
+        return ReleaseStep(time, sync)
 
     def move(self, component, src_loc, dst_loc, mode="default"):
         if isinstance(src_loc, V3):
@@ -150,7 +161,7 @@ class OperationBase(OperationABC):
     def allow_interruption(self, equipment, query_task_before_perform=True):
         self.interruption_flag = True
         if query_task_before_perform:
-            cbs = CallBackStep(self.workflow, CallBack(equipment.query_new_task))
+            cbs = CallBackStep(CallBack(equipment.query_new_task))
             self.workflow.add(cbs)
         yield
         self.interruption_flag = False
@@ -158,5 +169,9 @@ class OperationBase(OperationABC):
     def __repr__(self):
         return "<OP/{}>{}".format(self.op_type.name, str(hash(self))[-4:0])
 
+    def dump(self):
+        return self.workflow.dump(self.start_time)
+
 class BlockingOperationBase(OperationABC):
-    pass
+    def __init_subclass__(cls, **kwargs):
+        cls.op_type = cls.__name__

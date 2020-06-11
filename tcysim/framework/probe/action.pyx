@@ -1,4 +1,5 @@
 from pesim.pairing_heap cimport MinPairingHeapNode
+from libc.stdint cimport uint64_t
 
 cdef class ProbeActionTemplate:
     cdef readonly str probe_name
@@ -20,6 +21,7 @@ cdef class ProbeActionTemplate:
     cdef call(self, tuple args, dict kwargs):
         self.func(self.processor, *args, **kwargs)
 
+cdef uint64_t _global_idx = 0
 
 cdef class ProbeAction(MinPairingHeapNode):
     cdef readonly double time
@@ -27,6 +29,7 @@ cdef class ProbeAction(MinPairingHeapNode):
     cdef tuple args
     cdef dict kwargs
     cdef int reason
+    cdef uint64_t idx
 
     def __init__(self, ProbeActionTemplate template, double time, tuple args, dict kwargs,
                  int reason):
@@ -35,12 +38,19 @@ cdef class ProbeAction(MinPairingHeapNode):
         self.args = args
         self.kwargs = kwargs
         self.reason = reason
+        self.idx = _global_idx + 1
+
+        global _global_idx
+        _global_idx += 1
 
     def __call__(self):
         self.template.call(self.args, self.kwargs)
 
     cpdef bint key_lt(self, MinPairingHeapNode other):
         if self.time == (<ProbeAction>other).time:
-            return self.reason < (<ProbeAction>other).reason
+            if self.reason == (<ProbeAction>other).reason:
+                return self.idx < (<ProbeAction>other).idx
+            else:
+                return self.reason < (<ProbeAction>other).reason
         else:
             return self.time < (<ProbeAction>other).time

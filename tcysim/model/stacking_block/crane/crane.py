@@ -16,19 +16,23 @@ class CraneBase(Equipment):
 
     _btw_clr_error = 5
 
-    gantry: Component = NotImplemented
-    trolley: Component = NotImplemented
-    hoist: Component = NotImplemented
+    hoist_max_height = NotImplemented
+    gantry_spec: Spec= NotImplemented
+    trolley_spec: Spec= NotImplemented
+    hoist_spec: Spec= NotImplemented
 
     GRASP_TIME: float = 5
     RELEASE_TIME: float = 5
 
+    def __init_subclass__(cls, **kwargs):
+        cls.gantry = Component(axis="x", specs=cls.gantry_spec, may_interfere=True)
+        cls.trolley = Component(axis="y", specs=cls.trolley_spec)
+        cls.hoist = Component(axis="z", specs=cls.hoist_spec, max_height=cls.hoist_max_height)
+
     def __init__(self, yard, block, init_offset, **attrs):
-        components = self.gantry, self.trolley, self.hoist
         init_offset = init_offset if init_offset >= 0 else block.size.x - init_offset
         init_offset = V3(init_offset, 0, 0)
-        super().__init__(yard, components, block.offset, block.size, block.rotate, init_offset, **attrs)
-        self.gantry, self.trolley, self.hoist = self.components
+        super().__init__(yard, block.offset, block.size, block.rotate, init_offset, **attrs)
 
     def attached_box_coord(self, transform_to="g"):
         return self.current_coord(transform_to=transform_to).sub1("z", TEU.HEIGHT / 2)

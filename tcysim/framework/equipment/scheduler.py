@@ -50,7 +50,7 @@ class JobScheduler(Process):
                     request.block.req_dispatcher.pop_request(request)
                     setattr(request, "time", time)
                     self.equipment.submit_task(request)
-                    self.equipment.yard.fire_probe(self.time, 'scheduler.scheduled', request)
+                    self.yard.fire_probe(self.time, 'scheduler.scheduled', request)
             self.pending = False
 
     def on_idle(self, time):

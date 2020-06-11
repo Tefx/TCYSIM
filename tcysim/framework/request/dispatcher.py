@@ -64,8 +64,9 @@ class ReqDispatcher:
         self.block = block
 
     def choose_equipment(self, time, request):
-        for equipment in self.block.equipments:
-            return equipment
+        return None
+        # for equipment in self.block.equipments:
+        #     return equipment
 
     def available_requests(self, equipment):
         return self.pool.available_requests(equipment)

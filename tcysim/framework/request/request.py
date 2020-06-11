@@ -9,7 +9,6 @@ from ...utils.idx_obj import IndexObject
 class ReqType(Enum):
     STORE = auto()
     RETRIEVE = auto()
-    RELOCATE = auto()
 
 
 class ReqState(IntEnum):

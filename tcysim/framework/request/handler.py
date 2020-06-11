@@ -12,7 +12,6 @@ class ReqHandlerBase(Dispatcher, ABC):
     def handle(self, time, request):
         yield from self.dispatch(request.req_type.name, "_", time, request)
 
-    @abstractmethod
     def on_conflict(self, time, op):
         pass
 
@@ -27,17 +26,12 @@ class ReqHandlerBase(Dispatcher, ABC):
         else:
             raise NotImplementedError(e)
 
-    @abstractmethod
     @Dispatcher.on("STORE")
+    @abstractmethod
     def on_request_store(self, time, request):
-        pass
+        raise NotImplementedError
 
-    @abstractmethod
     @Dispatcher.on("RETRIEVE")
-    def on_request_retrieve(self, time, request):
-        pass
-
     @abstractmethod
-    @Dispatcher.on("RELOCATE")
-    def on_request_relocate(self, time, request):
-        pass
+    def on_request_retrieve(self, time, request):
+        raise NotImplementedError

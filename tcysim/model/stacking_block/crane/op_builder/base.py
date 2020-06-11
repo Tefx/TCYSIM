@@ -23,7 +23,7 @@ class OpBuilderForCrane(OpBuilderBase):
         yield from self.move_steps(op, access_ready_loc, op.access_loc)
         yield op.wait(self.equipment.GRASP_TIME)
         yield op.emit_signal("off_agv")
-        yield op.sync(request)
+        yield op.sync()
         yield from self.move_steps(op, op.access_loc, access_ready_loc, load=True)
         yield from self.move_steps(op, access_ready_loc, op.container_loc, load=True)
         yield op.emit_signal("in_block")
@@ -52,7 +52,7 @@ class OpBuilderForCrane(OpBuilderBase):
         yield from self.move_steps(op, access_ready_loc, op.access_loc, load=True)
         yield op.wait(self.equipment.RELEASE_TIME)
         yield op.emit_signal("on_agv")
-        yield op.sync(request)
+        yield op.sync()
         yield from self.move_steps(op, op.access_loc, access_ready_loc)
         yield op.emit_signal("finish_or_fail")
 

@@ -3,14 +3,15 @@ from copy import copy
 from enum import Enum, auto
 from typing import Type
 
-from pesim import TIME_FOREVER, Process
-from ..exception.handling import ReqOpRejectionError, ROREquipmentConflictError
-from ..operation import OperationABC, OpBuilderBase
-from ..event_reason import EventReason
-from ..layout import EquipmentRangeLayout
-from ..request import RequestBase, ReqHandlerBase
-from .scheduler import JobScheduler
+from pesim import Process, TIME_FOREVER
 from tcysim.utils import V3
+from .scheduler import JobScheduler
+from ..event_reason import EventReason
+from ..exception.handling import ROREquipmentConflictError, ReqOpRejectionError
+from ..layout import EquipmentRangeLayout
+from ..motion import Component
+from ..operation import OpBuilderBase, OperationABC
+from ..request import ReqHandlerBase, RequestBase
 
 
 class EquipmentState(Enum):
@@ -26,22 +27,41 @@ class Equipment(EquipmentRangeLayout, Process):
     OpBuilder: Type[OpBuilderBase] = NotImplemented
     JobScheduler: Type[JobScheduler] = JobScheduler
 
-    def __init__(self, yard, components, offset, move_range, rotate=0, init_offset=V3.zero(), **attrs):
+    def __init__(self, yard, offset, rotate=0, init_offset=V3.zero(), name=None, **attrs):
         Process.__init__(self, yard.env)
-        EquipmentRangeLayout.__init__(self, offset, move_range, rotate)
+        EquipmentRangeLayout.__init__(self, offset, rotate)
         self.yard = yard
         self.blocks = []
         self.num_blocks = 0
         self.current_op = None
         self.state = self.STATE.IDLE
         self.next_task = None
-        self.components = [copy(item) for item in components]
-        self.set_coord(init_offset, glob=False)
+        if name is None:
+            self.name = str(hash(self))[-4:]
+        else:
+            self.name = name
         self.attrs = copy(attrs)
         self.req_handler = self.ReqHandler(self)
         self.op_builder = self.OpBuilder(self)
         self.job_scheduler = self.JobScheduler(self)
         self.last_running_time = -1
+        self.guess_components()
+        self.set_coord(init_offset, glob=False)
+
+    def guess_components(self):
+        self.components = []
+        for k in dir(self):
+            v = getattr(self, k)
+            if isinstance(v, Component):
+                v = copy(v)
+                setattr(self, k, v)
+                self.components.append(v)
+
+    def instance_name(self):
+        if self.name is not None:
+            return "{}-{}".format(self.__class__.__name__, self.name)
+        else:
+            return self.__class__.__name__
 
     @contextmanager
     def save_state(self):
@@ -144,16 +164,16 @@ class Equipment(EquipmentRangeLayout, Process):
 
     def perform_op(self, op, request=None):
         if op.build_and_check(self.time, self.op_builder):
-            self.yard.fire_probe('operation.start', self)
+            self.yard.fire_probe('operation.start', op)
             self.state = self.STATE.WORKING
             self.current_op = op
             yield from op.perform(self.yard)
             self.current_op = None
             self.state = self.STATE.IDLE
-            self.yard.fire_probe('operation.finish', self)
+            self.yard.fire_probe('operation.finish', op)
         else:
             op.cancel(self.yard)
-            self.yard.fire_probe('operation.conflict', self)
+            self.yard.fire_probe('operation.conflict', op)
             if request:
                 raise ROREquipmentConflictError(op)
 
@@ -195,5 +215,4 @@ class Equipment(EquipmentRangeLayout, Process):
         return self.attrs.get(item, None)
 
     def __repr__(self):
-        return "<{}>{}.{} at {}".format(self.__class__.__name__, str(id(self.blocks[0]))[-4:], str(hash(self))[-4:],
-                                        self.current_coord())
+        return "<{}> at {}".format(self.instance_name(), self.current_coord("g"))

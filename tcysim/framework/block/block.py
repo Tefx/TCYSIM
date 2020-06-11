@@ -25,8 +25,9 @@ class Block(BlockLayout, CBlock):
 
     def deploy(self, equipments):
         for equipment in equipments:
-            self.equipments.append(equipment)
-            equipment.assign_block(self)
+            if equipment not in self.equipments:
+                self.equipments.append(equipment)
+                equipment.assign_block(self)
         self.num_equipments = len(self.equipments)
 
     def box_coord(self, box, transform_to=None):
@@ -36,9 +37,9 @@ class Block(BlockLayout, CBlock):
         return self.projected_coord_on_lane_from_cell_idx(lane, box.location, box.teu, transform_to)
 
     def available_cells(self, box):
-        for i, j, k in product(*self.shape):
-            if self.position_is_valid_for_size(i, j, k, box.teu):
-                return V3i(i, j, k)
+        for cell in self.cells():
+            if self.position_is_valid_for_size(*cell.idx, box.teu):
+                yield cell.idx
 
     def pending_requests(self):
         yield from self.req_dispatcher.pool.all_requests()

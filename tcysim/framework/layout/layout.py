@@ -121,5 +121,5 @@ class BlockLayout(LayoutItem):
 
 
 class EquipmentRangeLayout(LayoutItem):
-    def __init__(self, offset, move_range, rotate=0, **kwargs):
-        super(EquipmentRangeLayout, self).__init__(offset, move_range, rotate, **kwargs)
+    def __init__(self, offset, rotate=0, **kwargs):
+        super(EquipmentRangeLayout, self).__init__(offset, V3.zero(), rotate, **kwargs)

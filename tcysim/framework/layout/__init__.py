@@ -1,3 +1,3 @@
-from .layout import LaneLayout, BlockLayout, EquipmentRangeLayout
+from .layout import LaneLayout, BlockLayout, EquipmentRangeLayout, LayoutItem
 
 Lane = LaneLayout

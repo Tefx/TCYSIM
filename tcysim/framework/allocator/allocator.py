@@ -15,8 +15,7 @@ class SpaceAllocatorBase(ABC):
     def alloc_space(self, box, blocks, *args, **kwargs):
         pass
 
-    @abstractmethod
     def slot_for_relocation(self, box, request, *args, **kwargs):
-        pass
+        raise NotImplementedError
 
 
