@@ -1,1 +1,1 @@
-from .generator import GeneratorEvent, EventGenerator, EventHandler
+from .generator2 import GeneratorEvent, EventGenerator, EventHandler

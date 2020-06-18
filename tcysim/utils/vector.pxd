@@ -28,8 +28,8 @@ cdef double _TEU_WIDTH
 cdef double _TEU_HEIGHT
 
 cdef class RotateOperator:
-    cdef double angle
-    cdef double radian
-    cdef double sinv
-    cdef double cosv
+    cdef readonly double angle
+    cdef readonly double radian
+    cdef readonly double sinv
+    cdef readonly double cosv
 

@@ -23,7 +23,8 @@ class ReqHandlerForStackingBlock(ReqHandlerBase):
                                          src_loc=op.itf_other.current_coord(),
                                          new_loc=op.itf_loc,
                                          blocking_request=op.request)
-            self.yard.submit_request(time, req2, ready=True)
+            req2.submit(time, ready=True)
+            # self.yard.submit_request(time, req2, ready=True)
 
     @Dispatcher.on("STORE")
     def on_request_store(self, time, request):
@@ -159,7 +160,7 @@ class ReqHandlerForStackingBlock(ReqHandlerBase):
             request = e.args[0]
             request.on_reject(time)
             if not request.one_time_attempt:
-                self.yard.cmgr.add_callback(time + 60, request.ready)
+                self.yard.cmgr.add_callback(time + 60, request.ready_and_schedule)
         elif isinstance(e, RORNoPositionForRelocateError):
             request = e.args[0]
             request.on_reject(time)

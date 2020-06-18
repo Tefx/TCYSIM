@@ -112,7 +112,7 @@ cdef class PeriodStep(StepBase):
         if not self.committed:
             self.op = op
             if self.mover is not None:
-                (<EmptyStep> self).mover.commit_motions(((<EmptyStep> self).motion,))
+                (<PeriodStep> self).mover.commit_motions(((<PeriodStep> self).motion,))
             self.on_start(self.start_time)
             self.on_finish(self.finish_time)
         self.committed = True
@@ -136,12 +136,12 @@ cdef class EmptyStep(PeriodStep):
 
 cdef class GraspStep(PeriodStep):
     cdef bint sync
-    def __init__(self, double time, bint sync):
-        super(GraspStep, self).__init__(None, time)
+    def __init__(self, Mover mover, double time, bint sync):
+        super(GraspStep, self).__init__(mover, time)
         self.sync = sync
 
     cdef void on_start(self, double time):
-        self.op.attach_time = time - self.op.start_time
+        self.op.attach_time = time
         if self.op.box is None:
             self.op.box = self.op.request.box
 
@@ -151,16 +151,20 @@ cdef class GraspStep(PeriodStep):
 
 cdef class ReleaseStep(PeriodStep):
     cdef bint sync
-    def __init__(self, double time, bint sync):
-        super(ReleaseStep, self).__init__(None, time)
+    cdef V3 pos
+
+    def __init__(self, Mover mover, double time, V3 pos, bint sync):
+        super(ReleaseStep, self).__init__(mover, time)
         self.sync = sync
+        self.pos = pos
 
     cdef void on_start(self, double time):
         if self.sync:
             self.op.request.sync_time = time
 
     cdef void on_finish(self, double time):
-        self.op.detach_time = time - self.op.start_time
+        self.op.detach_time = time
+        self.op.detach_pos = self.pos
         if self.op.box is None:
             self.op.box = self.op.request.box
 
@@ -345,13 +349,13 @@ cdef class StepWorkflow:
     cdef list steps
     cdef list sorted_steps
     cdef StepBase last_step
-    # cdef double start_time, finish_time
+    # cdef double start_time, end_time
     cdef V3 start_position
 
     def __cinit__(self):
         self.steps = []
         self.last_step = None
-        # self.finish_time = 0
+        # self.end_time = 0
 
     def add(self, step_or_steps):
         cdef StepBase step
@@ -374,7 +378,7 @@ cdef class StepWorkflow:
 
     def dry_run(self, op, double st):
         cdef StepBase step
-        # self.finish_time = 0
+        # self.end_time = 0
         self.sorted_steps = []
         cdef double finish_time = -1
         for step in self.steps:
@@ -382,17 +386,19 @@ cdef class StepWorkflow:
             heapq.heappush(self.sorted_steps, step)
             if finish_time < step.finish_time:
                 finish_time = step.finish_time
-            # if self.finish_time < step.finish_time:
-            #     self.finish_time = step.finish_time
+            # if self.end_time < step.end_time:
+            #     self.end_time = step.end_time
         # self.start_time = st
         return finish_time
 
     def commit(self, yard, op):
         cdef StepBase step
         self.start_position = op.equipment.current_coord()
+        self.steps = []
         while self.sorted_steps:
             step = heapq.heappop(self.sorted_steps)
             step.commit(yard, op)
+            self.steps.append(step)
 
     def dump(self, double start_time):
         cdef StepBase step
@@ -406,6 +412,6 @@ cdef class StepWorkflow:
                     motions[axis] = []
                 motions[axis].extend((<MoverStep> step).reduce(start_time))
         if motions:
-            return start_time, *self.start_position, motions
+            return start_time, self.start_position.to_tuple(), motions
         else:
             return None

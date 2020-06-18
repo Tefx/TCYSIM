@@ -13,10 +13,10 @@ class OpBuilderForCrane(OpBuilderBase):
         box = op.box
         lane = request.lane
         dst_loc = getattr(request, "dst_loc", None)
-        op.access_loc = self.equipment.op_coord_from_box_coord(box.access_coord(lane, transform_to=self.equipment))
-        op.container_loc = self.equipment.op_coord_from_box_coord(box.store_coord(dst_loc, transform_to=self.equipment))
-        access_ready_loc = self.equipment.prepare_coord_for_op_coord(op.access_loc)
-        container_ready_loc = self.equipment.prepare_coord_for_op_coord(op.container_loc)
+        op.access_loc = self.equipment.coord_from_box(box.access_coord(lane, transform_to=self.equipment))
+        op.container_loc = self.equipment.coord_from_box(box.store_coord(dst_loc, transform_to=self.equipment))
+        access_ready_loc = self.equipment.prepare_coord(op.access_loc)
+        container_ready_loc = self.equipment.prepare_coord(op.container_loc)
 
         yield op.emit_signal("start_or_resume")
         yield from self.move_steps(op, self.equipment.current_coord(), access_ready_loc)
@@ -37,10 +37,10 @@ class OpBuilderForCrane(OpBuilderBase):
         request = op.request
         box = op.box
         lane = request.lane
-        op.access_loc = self.equipment.op_coord_from_box_coord(box.access_coord(lane, transform_to=self.equipment))
-        op.container_loc = self.equipment.op_coord_from_box_coord(box.store_coord(transform_to=self.equipment))
-        access_ready_loc = self.equipment.prepare_coord_for_op_coord(op.access_loc)
-        container_ready_loc = self.equipment.prepare_coord_for_op_coord(op.container_loc)
+        op.access_loc = self.equipment.coord_from_box(box.access_coord(lane, transform_to=self.equipment))
+        op.container_loc = self.equipment.coord_from_box(box.store_coord(transform_to=self.equipment))
+        access_ready_loc = self.equipment.prepare_coord(op.access_loc)
+        container_ready_loc = self.equipment.prepare_coord(op.container_loc)
 
         yield op.emit_signal("start_or_resume")
         yield from self.move_steps(op, self.equipment.current_coord(), container_ready_loc)
@@ -59,10 +59,10 @@ class OpBuilderForCrane(OpBuilderBase):
     @Dispatcher.on("RELOCATE")
     def build_relocate(self, op: Operation):
         box = op.box
-        op.src_loc = self.equipment.op_coord_from_box_coord(box.store_coord(transform_to=self.equipment))
-        op.dst_loc = self.equipment.op_coord_from_box_coord(box.store_coord(op.new_loc, transform_to=self.equipment))
-        src_ready_loc = self.equipment.prepare_coord_for_op_coord(op.src_loc)
-        dst_ready_loc = self.equipment.prepare_coord_for_op_coord(op.dst_loc)
+        op.src_loc = self.equipment.coord_from_box(box.store_coord(transform_to=self.equipment))
+        op.dst_loc = self.equipment.coord_from_box(box.store_coord(op.new_loc, transform_to=self.equipment))
+        src_ready_loc = self.equipment.prepare_coord(op.src_loc)
+        dst_ready_loc = self.equipment.prepare_coord(op.dst_loc)
 
         yield op.emit_signal("rlct_start_or_resume")
         yield from self.move_steps(op, self.equipment.current_coord(), src_ready_loc)

@@ -92,3 +92,10 @@ class ReqDispatcher:
         else:
             for equipment in self.block.equipments:
                 equipment.job_scheduler.schedule(time)
+
+    def schedule(self, time, request):
+        if request.equipment:
+            request.equipment.job_scheduler.schedule(time)
+        else:
+            for equipment in self.block.equipments:
+                equipment.job_scheduler.schedule(time)

@@ -44,14 +44,21 @@ class YardBase(ABC):
     def finish(self):
         self.env.finish()
 
+    def __enter__(self):
+        self.start()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.finish()
+
     def run_until(self, time, after_reason=TIME_PASSED):
         return self.env.run_until(time, after_reason)
 
     def fire_probe(self, probe_name, *args, **kwargs):
         return self.probe_mgr.fire(self.env.time, probe_name, args, kwargs, EventReason.PROBE_ACTION)
 
-    def submit_request(self, time, request, ready=True):
-        request.submit(time, ready)
+    # def submit_request(self, time, request, ready=True):
+    #     request.submit(time, ready)
 
     def choose_location(self, box):
         return self.smgr.alloc_space(box, self.smgr.available_blocks(box))
@@ -62,12 +69,14 @@ class YardBase(ABC):
 
     def store(self, time, box, lane):
         request = box.block.new_request("STORE", time, box, lane=lane)
-        self.submit_request(time, request)
+        request.submit(time)
+        # self.submit_request(time, request)
         return request
 
     def retrieve(self, time, box, lane):
         request = box.block.new_request("RETRIEVE", time, box, lane=lane)
-        self.submit_request(time, request)
+        request.submit(time)
+        # self.submit_request(time, request)
         return request
 
     def boxes(self):

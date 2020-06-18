@@ -14,6 +14,7 @@ class ReqType(Enum):
 class ReqState(IntEnum):
     INIT = auto()
     READY = auto()
+    SCHEDULED = auto()
     STARTED = auto()
     REJECTED = auto()
     RESUME_READY = auto()
@@ -78,6 +79,10 @@ class RequestBase(IndexObject, ABC):
             self.state = self.STATE.READY
             self.ready_time = time
 
+    def ready_and_schedule(self, time):
+        self.ready(time)
+        self.equipment.job_scheduler.schedule(time)
+
     def is_ready(self):
         return self.state == self.STATE.READY or self.state == self.STATE.RESUME_READY
 
@@ -106,6 +111,9 @@ class RequestBase(IndexObject, ABC):
         self.reject_times += 1
         if not self.one_time_attempt:
             self.submit(time, ready=False)
+
+    def on_scheduled(self, time):
+        pass
 
     def sync(self, time):
         self.state = self.STATE.SYNCED

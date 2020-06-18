@@ -21,8 +21,8 @@ class LayoutItem:
     def __mul__(self, num):
         return [deepcopy(self) for _ in range(num)]
 
-    # def __contains__(self, local_coord):
-    #     return V3.zero() <= local_coord <= self.size
+    # def __contains__(self, self_coord):
+    #     return V3.zero() <= self_coord <= self.size
 
     def coord_l2g(self, local_offset):
         return local_offset.rotate(self.rtt_operator) + self.offset

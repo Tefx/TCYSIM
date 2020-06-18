@@ -31,6 +31,7 @@ class OperationABC(ABC):
         self.finish_Time = -1
         self.attach_time = -1
         self.detach_time = -1
+        self.detach_pos = None
         self.equipment = equipment
         self.__dict__.update(attrs)
 
@@ -145,10 +146,10 @@ class OperationBase(OperationABC):
     #     return SyncStep(self.request)
 
     def grasp(self, time, sync=False):
-        return GraspStep(time, sync)
+        return GraspStep(self.equipment.components[0], time, sync)
 
-    def release(self, time, sync=False):
-        return ReleaseStep(time, sync)
+    def release(self, time, pos, sync=False):
+        return ReleaseStep(self.equipment.components[0], time, pos, sync)
 
     def move(self, component, src_loc, dst_loc, mode="default"):
         if isinstance(src_loc, V3):

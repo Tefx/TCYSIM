@@ -10,7 +10,7 @@ from ..event_reason import EventReason
 from ..exception.handling import ROREquipmentConflictError, ReqOpRejectionError
 from ..layout import EquipmentRangeLayout
 from ..motion import Component
-from ..operation import OpBuilderBase, OperationABC
+from ..operation import OpBuilderBase, OperationABC, BlockingOperationBase
 from ..request import ReqHandlerBase, RequestBase
 
 
@@ -26,6 +26,8 @@ class Equipment(EquipmentRangeLayout, Process):
     ReqHandler: Type[ReqHandlerBase] = NotImplemented
     OpBuilder: Type[OpBuilderBase] = NotImplemented
     JobScheduler: Type[JobScheduler] = JobScheduler
+
+    BoxEquipmentDelta = V3.zero()
 
     def __init__(self, yard, offset, rotate=0, init_offset=V3.zero(), name=None, **attrs):
         Process.__init__(self, yard.env)
@@ -84,14 +86,25 @@ class Equipment(EquipmentRangeLayout, Process):
         for component in self.components:
             component.loc = v[component.axis]
 
-    def attached_box_coord(self, transform_to="g"):
-        return self.current_coord(transform_to=transform_to)
+    # def attached_box_coord(self, transform_to="g"):
+    #     return self.current_coord(transform_to=transform_to)
+    #
+    # def op_coord_from_box_coord(self, local_coord, transform_to=None):
+    #     return self.transform_to(local_coord, transform_to)
+    #
+    # def prepare_coord_for_op_coord(self, local_coord, transform_to=None):
+    #     return self.transform_to(local_coord, transform_to)
 
-    def op_coord_from_box_coord(self, local_coord, transform_to=None):
-        return self.transform_to(local_coord, transform_to)
+    def coord_from_box(self, box_coord, transform_to=None):
+        return self.transform_to(box_coord - self.BoxEquipmentDelta, transform_to)
 
-    def prepare_coord_for_op_coord(self, local_coord, transform_to=None):
-        return self.transform_to(local_coord, transform_to)
+    def prepare_coord(self, op_coord, transform_to=None):
+        return self.transform_to(op_coord, transform_to)
+
+    def coord_to_box(self, self_coord=None, transform_to=None):
+        if self_coord is None:
+            self_coord = self.current_coord()
+        return self.transform_to(self_coord + self.BoxEquipmentDelta, transform_to)
 
     def assign_block(self, block):
         self.blocks.append(block)
@@ -109,8 +122,11 @@ class Equipment(EquipmentRangeLayout, Process):
         self.activate(-1, EventReason.INTERRUPTED)
 
     def allow_interruption(self):
-        self.run_until(self.env.time)
-        return all(component.allow_interruption() for component in self.components)
+        if self.current_op and isinstance(self.current_op, BlockingOperationBase):
+            return False
+        else:
+            self.run_until(self.env.time)
+            return all(component.allow_interruption() for component in self.components)
 
     def nearby_equipments(self):
         for block in self.blocks:
@@ -210,6 +226,9 @@ class Equipment(EquipmentRangeLayout, Process):
             else:
                 return self.current_op
         return None
+
+    def is_at_idle_position(self):
+        return False
 
     def __getattr__(self, item):
         return self.attrs.get(item, None)
