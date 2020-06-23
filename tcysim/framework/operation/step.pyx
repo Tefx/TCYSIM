@@ -113,14 +113,14 @@ cdef class PeriodStep(StepBase):
             self.op = op
             if self.mover is not None:
                 (<PeriodStep> self).mover.commit_motions(((<PeriodStep> self).motion,))
-            self.on_start(self.start_time)
-            self.on_finish(self.finish_time)
+            self.on_start(self.start_time, yard)
+            self.on_finish(self.finish_time, yard)
         self.committed = True
 
-    cdef void on_start(PeriodStep self, double time):
+    cdef void on_start(PeriodStep self, double time, yard):
         pass
 
-    cdef void on_finish(PeriodStep self, double time):
+    cdef void on_finish(PeriodStep self, double time, yard):
         pass
 
 cdef class EmptyStep(PeriodStep):
@@ -140,14 +140,15 @@ cdef class GraspStep(PeriodStep):
         super(GraspStep, self).__init__(mover, time)
         self.sync = sync
 
-    cdef void on_start(self, double time):
+    cdef void on_start(self, double time, yard):
         self.op.attach_time = time
         if self.op.box is None:
             self.op.box = self.op.request.box
 
-    cdef void on_finish(self, double time):
+    cdef void on_finish(self, double time, yard):
         if self.sync:
             self.op.request.sync_time = time
+            yard.cmgr.add_callback(time, self.op.request.sync)
 
 cdef class ReleaseStep(PeriodStep):
     cdef bint sync
@@ -158,15 +159,14 @@ cdef class ReleaseStep(PeriodStep):
         self.sync = sync
         self.pos = pos
 
-    cdef void on_start(self, double time):
-        if self.sync:
-            self.op.request.sync_time = time
-
-    cdef void on_finish(self, double time):
+    cdef void on_finish(self, double time, yard):
         self.op.detach_time = time
         self.op.detach_pos = self.pos
         if self.op.box is None:
             self.op.box = self.op.request.box
+        if self.sync:
+            yard.cmgr.add_callback(time, self.op.request.sync)
+            self.op.request.sync_time = time
 
 cdef class CallBackStep(StepBase):
     cdef object callback

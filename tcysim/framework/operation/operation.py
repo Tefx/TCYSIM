@@ -136,6 +136,9 @@ class OperationBase(OperationABC):
     def emit_signal(self, name):
         return CallBackStep(self.request.signals[name])
 
+    def emit_callback(self, func, *args, **kwargs):
+        return CallBackStep(CallBack(func, *args, **kwargs))
+
     def fire_probe(self, probe_name, *args, probe_reason=EventReason.PROBE_ACTION, **kwargs):
         return ProbeStep(probe_name, args, kwargs, probe_reason)
 
