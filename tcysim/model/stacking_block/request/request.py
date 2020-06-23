@@ -29,8 +29,8 @@ class RequestForStackingBlock(RequestBase):
         self.acquired_positions = []
         super(RequestForStackingBlock, self).clean()
 
-    def is_ready(self):
-        if super(RequestForStackingBlock, self).is_ready():
+    def is_ready_for(self, equipment):
+        if super(RequestForStackingBlock, self).is_ready_for(equipment):
             if self.req_type == self.TYPE.RETRIEVE:
                 return self.box.state != self.box.STATE.RELOCATING
             return True

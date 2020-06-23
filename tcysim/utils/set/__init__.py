@@ -1,2 +1,2 @@
-from .indexed import IdxSet
 from .recent import RecentSet
+from .indexed import IdxSet

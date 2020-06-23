@@ -1,7 +1,10 @@
 from abc import ABC
-from enum import Enum, IntEnum, auto
+from enum import Enum, IntEnum, auto, Flag
 from typing import Type
 
+from pesim.math_aux import fle
+
+from pesim import TIME_FOREVER
 from ..callback import CallBack
 from ...utils.idx_obj import IndexObject
 
@@ -11,7 +14,49 @@ class ReqType(Enum):
     RETRIEVE = auto()
 
 
-class ReqState(IntEnum):
+# class ReqState(IntEnum):
+#     INIT = auto()
+#     READY = auto()
+#     SCHEDULED = auto()
+#     STARTED = auto()
+#     REJECTED = auto()
+#     RESUME_READY = auto()
+#     RESUMED = auto()
+#     SYNCED = auto()
+#     FINISHED = auto()
+
+# class ReqState(Flag):
+#     PENDING_FLAG = auto()
+#     READY_FLAG = auto()
+#     RUNNING_FLAG = auto()
+#     SYNCED_FLAG = auto()
+#     FINISHED_FLAG = auto()
+#
+#     __INIT = auto()
+#     INIT = __INIT | PENDING_FLAG
+#
+#     __REJECTED = auto()
+#     REJECTED = __REJECTED | PENDING_FLAG
+#
+#     __READY = auto()
+#     READY = __READY | READY_FLAG
+#
+#     __RESUME_READY = auto()
+#     RESUME_READY = __RESUME_READY | READY_FLAG
+#
+#     __STARTED = auto()
+#     STARTED = __STARTED | RUNNING_FLAG
+#
+#     SCHEDULED = auto()
+#
+#     __RESUMED = auto()
+#     RESUMED = __RESUMED | RUNNING_FLAG
+#
+#     SYNCED = SYNCED_FLAG | RUNNING_FLAG
+#
+#     FINISHED = FINISHED_FLAG | SYNCED_FLAG
+
+class ReqState(Flag):
     INIT = auto()
     READY = auto()
     SCHEDULED = auto()
@@ -22,10 +67,16 @@ class ReqState(IntEnum):
     SYNCED = auto()
     FINISHED = auto()
 
+    PENDING_FLAG = INIT | REJECTED
+    SYNCED_FLAG = SYNCED | FINISHED
+    RUNNING_FLAG = SYNCED | RESUMED | STARTED
+    SCHEDULED_FLAG = SCHEDULED | RUNNING_FLAG | FINISHED
+    READY_FLAG = READY | RESUME_READY | RUNNING_FLAG | FINISHED
+
 
 class RequestBase(IndexObject, ABC):
     TYPE: Type[Enum] = NotImplemented
-    STATE: Type[IntEnum] = ReqState
+    STATE: Type[Flag] = ReqState
 
     def __init__(self, req_type, time,
                  box=None,
@@ -37,7 +88,7 @@ class RequestBase(IndexObject, ABC):
         super(RequestBase, self).__init__()
         self.req_type = req_type
         self.id = -1
-        self.arrival_time = time
+        self.create_time = time
         self.ready_time = -1
         self.start_time = -1
         self.finish_time = -1
@@ -81,10 +132,18 @@ class RequestBase(IndexObject, ABC):
 
     def ready_and_schedule(self, time):
         self.ready(time)
-        self.equipment.job_scheduler.schedule(time)
+        if self.equipment:
+            self.equipment.job_scheduler.schedule(time)
+        else:
+            for equipment in self.block.equipments:
+                equipment.job_scheduler.schedule(time)
 
-    def is_ready(self):
-        return self.state == self.STATE.READY or self.state == self.STATE.RESUME_READY
+    def is_ready_for(self, equipment):
+        return self.state & self.STATE.READY_FLAG
+        # return self.state == self.STATE.READY or self.state == self.STATE.RESUME_READY
+
+    # def is_no_ready(self):
+    #     return self.state == self.STATE.INIT and self.state == self.STATE.REJECTED
 
     def submit(self, time, ready=True):
         if ready:
@@ -120,12 +179,48 @@ class RequestBase(IndexObject, ABC):
         # self.sync_time = time
 
     def is_synced(self):
-        return self.state >= self.STATE.SYNCED and self.sync_time >= 0
+        return self.state & self.STATE.SYNCED_FLAG and self.sync_time >= 0
 
     def finish_or_fail(self, time):
         if self.state != self.STATE.REJECTED:
             self.state = self.STATE.FINISHED
             self.finish_time = time
 
+    def estimate_sync_time(self, time, env):
+        if self.state & self.STATE.RUNNING_FLAG:
+        # if self.state == self.STATE.STARTED or self.state == self.STATE.RESUMED:
+            if self.sync_time > 0:
+                return self.sync_time
+            else:
+                next_time = self.equipment.next_event_time()
+                if fle(TIME_FOREVER, next_time):
+                    next_time = min(e.next_event_time() for e in self.block.equipments)
+                    if fle(TIME_FOREVER, next_time):
+                        for block in self.equipment.blocks:
+                            if block is not self.block:
+                                for equipment in block.equipments:
+                                    next_time = min(next_time, equipment.next_event_time())
+        else:
+            if self.equipment is not None:
+                next_time = self.equipment.next_event_time()
+                if fle(TIME_FOREVER, next_time):
+                    next_time = min(e.next_event_time() for e in self.block.equipments)
+                    if fle(TIME_FOREVER, next_time):
+                        for block in self.equipment.blocks:
+                            if block is not self.block:
+                                for equipment in block.equipments:
+                                    next_time = min(next_time, equipment.next_event_time())
+            elif self.block is not None:
+                next_time = min(eqp.next_event_time() for eqp in self.block.equipments)
+                if fle(TIME_FOREVER, next_time):
+                    for equipment in self.block.yard.equipments:
+                        next_time = min(next_time, equipment.next_event_time())
+            else:
+                next_time = env.next_event_time()
+        if fle(TIME_FOREVER, next_time):
+            print("Warning: next time is forever!")
+        return next_time
+
+
     def __repr__(self):
-        return "[{}/{}]({}/AT:{:.2f})".format(self.req_type, self.state.name, self.equipment, self.arrival_time)
+        return "[{}/{}]({}/AT:{:.2f})".format(self.req_type, self.state.name, self.equipment, self.create_time)

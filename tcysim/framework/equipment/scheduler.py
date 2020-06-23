@@ -16,7 +16,7 @@ class JobScheduler(Process):
         min_rank = None
         chosen = None
         for task in tasks:
-            if task.is_ready():
+            if task.is_ready_for(self.equipment):
                 rank = self.rank_task(task)
                 if min_rank is None or rank < min_rank:
                     chosen = task
@@ -46,6 +46,7 @@ class JobScheduler(Process):
                 avail_tasks = self.available_requests(time)
                 request = self.choose_task(time, avail_tasks)
                 if request is not None:
+                    request.block.req_dispatcher.pop_request(request)
                     request.equipment = self.equipment
                     setattr(request, "time", time)
                     request.state = request.STATE.SCHEDULED
