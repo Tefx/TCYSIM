@@ -25,6 +25,7 @@ class EventReason(int, Enum):
     TASK_ARRIVAL = auto()
     SCHEDULE_RESUME = auto()
     SCHEDULE = auto()
+    QUERY_STATE = auto()
     PROBE_ACTION = auto()
     EV_GEN= auto()
     OBSERVE = auto()

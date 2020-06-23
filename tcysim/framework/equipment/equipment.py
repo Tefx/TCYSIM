@@ -172,11 +172,11 @@ class Equipment(EquipmentRangeLayout, Process):
             op_or_req = self.job_scheduler.on_idle(self.time)
             if op_or_req is not None:
                 self.submit_task(op_or_req, from_self=True)
-                return self.time, EventReason.LAST
+                return self.time, EventReason.TASK_ARRIVAL
             else:
                 return TIME_FOREVER, EventReason.LAST
         else:
-            return self.next_task.time, EventReason.LAST
+            return self.next_task.time, EventReason.TASK_ARRIVAL
 
     def perform_op(self, op, request=None):
         if op.build_and_check(self.time, self.op_builder):
@@ -217,7 +217,7 @@ class Equipment(EquipmentRangeLayout, Process):
             elif isinstance(op_or_req, OperationABC):
                 yield from self.perform_op(op_or_req)
             self.query_new_task(self.time)
-        yield self.time, EventReason.LAST
+        yield self.time, EventReason.SCHEDULE.after
 
     def current_tasks(self):
         if self.current_op:
@@ -228,10 +228,13 @@ class Equipment(EquipmentRangeLayout, Process):
         return None
 
     def is_at_idle_position(self):
-        return False
+        return True
 
     def __getattr__(self, item):
         return self.attrs.get(item, None)
 
     def __repr__(self):
         return "<{}> at {}".format(self.instance_name(), self.current_coord("g"))
+
+    def plot_info(self):
+        return None

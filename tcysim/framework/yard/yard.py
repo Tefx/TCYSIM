@@ -2,6 +2,7 @@ from abc import ABC
 
 from typing import Type
 from pesim import Environment, TIME_PASSED
+from .access import AccessPoint
 from ..event_reason import EventReason
 from ..probe import ProbeManager
 from ..roles import Roles
@@ -24,6 +25,8 @@ class YardBase(ABC):
         self.roles = Roles()
         self.movers = []
 
+        self.access_points = {}
+
     @property
     def time(self):
         return self.env.time
@@ -38,7 +41,12 @@ class YardBase(ABC):
                 for component in equipment.components:
                     self.movers.append(component)
 
-    def start(self):
+    def deploy_access_point(self, block, lane, access_point=None):
+        if access_point is None:
+            access_point = AccessPoint(self.env)
+        self.access_points[(block, lane)] = access_point
+
+    def start(self, request_pool_size=10240):
         self.env.start()
 
     def finish(self):
@@ -69,16 +77,23 @@ class YardBase(ABC):
 
     def store(self, time, box, lane):
         request = box.block.new_request("STORE", time, box, lane=lane)
-        request.submit(time)
-        # self.submit_request(time, request)
+        ap = self.access_points.get((box.block, lane), None)
+        if ap is None:
+            request.submit(time)
+        else:
+            ap.submit(time, request)
         return request
 
     def retrieve(self, time, box, lane):
         request = box.block.new_request("RETRIEVE", time, box, lane=lane)
-        request.submit(time)
-        # self.submit_request(time, request)
+        ap = self.access_points.get((box.block, lane), None)
+        if ap is None:
+            request.submit(time)
+        else:
+            ap.submit(time, request)
         return request
 
     def boxes(self):
         for block in self.blocks:
             yield from block.iterboxes()
+
