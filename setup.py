@@ -73,6 +73,7 @@ extensions = [
         sources=["tcysim/utils/set/*.pyx"],
         extra_compile_args=extra_compile_args,
         extra_link_args=extra_link_args,
+        libraries=["tcy"],
         library_dirs=[os.path.abspath(library_dir)],
         include_dirs=[os.path.abspath("libtcy/include")]
         ),

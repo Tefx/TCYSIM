@@ -28,6 +28,6 @@ DLLEXPORT void idxset_destroy(IdxSet_C* ixst);
 DLLEXPORT idx_t idxset_add(IdxSet_C* ixst, void* item);
 DLLEXPORT void* idxset_get(IdxSet_C* ixst, idx_t idx);
 DLLEXPORT void* idxset_pop(IdxSet_C* ixst, idx_t idx);
-void* idxset_update(IdxSet_C *ixst, idx_t idx, void* item);
+DLLEXPORT void* idxset_update(IdxSet_C *ixst, idx_t idx, void* item);
 
 #endif //LIBTCY_IDX_SET_H
