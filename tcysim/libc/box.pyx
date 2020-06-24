@@ -44,6 +44,10 @@ cdef class CBox:
             if not self.c._holder_or_origin:
                 loc.cpy2mem_i(new_loc)
                 box_relocate_alloc(&self.c, time, new_loc)
+        elif self.c.state == BOX_STATE_RETRIEVING:
+            self.set_location(block, loc.x, loc.y, loc.z)
+            box_alloc(&self.c, time)
+            self.c.state = BOX_STATE_RETRIEVING
         else:
             raise NotImplementedError
 
@@ -52,6 +56,11 @@ cdef class CBox:
             box_store(&self.c, time)
         elif self.c.state == BOX_STATE_RELOCATING:
             box_relocate_store(&self.c, time)
+        elif self.c.state == BOX_STATE_RETRIEVING:
+            box_store(&self.c, time)
+        else:
+            print(self.c.state)
+            raise NotImplementedError
 
     def restore(self, Time_TCY time, block,
                 CellIdx_TCY x, CellIdx_TCY y, CellIdx_TCY z,

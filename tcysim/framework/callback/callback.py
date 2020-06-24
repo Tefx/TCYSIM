@@ -22,6 +22,11 @@ class CallBack(MinPairingHeapNode):
         else:
             return False
 
-    def __call__(self, time):
-        return self.func(time, *self.args, **self.kwargs)
+    def __call__(self, time, debug):
+        if debug:
+            print(self.time, self.func, self.args, self.kwargs)
+        res = self.func(time, *self.args, **self.kwargs)
+        if debug:
+            print(self.func, "done:", res)
+        return res
 

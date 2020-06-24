@@ -4,9 +4,10 @@ from ..event_reason import EventReason
 
 
 class CallBackManager(Process):
-    def __init__(self, yard):
+    def __init__(self, yard, debug=False):
         self.yard = yard
         self.queue = MinPairingHeap()
+        self.debug = debug
         super(CallBackManager, self).__init__(yard.env)
 
     def add(self, callback: CallBack):
@@ -27,4 +28,4 @@ class CallBackManager(Process):
             return TIME_FOREVER, EventReason.LAST
 
     def _process(self):
-        self.queue.pop()(self.time)
+        self.queue.pop()(self.time, self.debug)

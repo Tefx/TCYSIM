@@ -47,12 +47,17 @@ class JobScheduler(Process):
                 request = self.choose_task(time, avail_tasks)
                 if request is not None:
                     request.block.req_dispatcher.pop_request(request)
-                    request.equipment = self.equipment
+                    # request.equipment = self.equipment
                     setattr(request, "time", time)
                     request.state = request.STATE.SCHEDULED
                     self.equipment.submit_task(request)
                     self.yard.fire_probe(self.time, 'scheduler.scheduled', request)
                     request.on_scheduled(time)
+                elif self.equipment.state == self.equipment.STATE.IDLE:
+                    request = self.on_idle(time)
+                    if request:
+                        setattr(request, "time", time)
+                        self.equipment.submit_task(request)
             self.pending = False
 
     def on_idle(self, time):

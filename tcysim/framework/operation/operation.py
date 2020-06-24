@@ -75,6 +75,7 @@ class OperationBase(OperationABC):
         self._pps = {}
         self.paths = {}
         self.start_coord = None
+        self.interrupted = False
         super(OperationBase, self).__init__(equipment, **attrs)
 
     def check_interference(self):
@@ -163,11 +164,17 @@ class OperationBase(OperationABC):
 
     @contextmanager
     def allow_interruption(self, equipment, query_task_before_perform=True):
+        self.start_allow_interruption(equipment, query_task_before_perform)
+        yield
+        self.end_allow_interruption()
+
+    def start_allow_interruption(self, equipment, query_task_before_perform=True):
         self.interruption_flag = True
         if query_task_before_perform:
             cbs = CallBackStep(CallBack(equipment.query_new_task))
             self.workflow.add(cbs)
-        yield
+
+    def end_allow_interruption(self):
         self.interruption_flag = False
 
     def __repr__(self):
@@ -175,6 +182,7 @@ class OperationBase(OperationABC):
 
     def dump(self):
         return self.workflow.dump(self.start_time)
+
 
 class BlockingOperationBase(OperationABC):
     def __init_subclass__(cls, **kwargs):

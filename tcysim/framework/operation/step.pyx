@@ -144,11 +144,13 @@ cdef class GraspStep(PeriodStep):
         self.op.attach_time = time
         if self.op.box is None:
             self.op.box = self.op.request.box
+        yard.cmgr.add_callback(time, self.op.equipment.callback_before_grasp, op=self.op)
 
     cdef void on_finish(self, double time, yard):
         if self.sync:
             self.op.request.sync_time = time
             yard.cmgr.add_callback(time, self.op.request.sync)
+        yard.cmgr.add_callback(time, self.op.equipment.callback_after_grasp, op=self.op)
 
 cdef class ReleaseStep(PeriodStep):
     cdef bint sync
@@ -159,6 +161,9 @@ cdef class ReleaseStep(PeriodStep):
         self.sync = sync
         self.pos = pos
 
+    cdef void on_start(self, double time, yard):
+        yard.cmgr.add_callback(time, self.op.equipment.callback_before_release, op=self.op)
+
     cdef void on_finish(self, double time, yard):
         self.op.detach_time = time
         self.op.detach_pos = self.pos
@@ -167,6 +172,7 @@ cdef class ReleaseStep(PeriodStep):
         if self.sync:
             yard.cmgr.add_callback(time, self.op.request.sync)
             self.op.request.sync_time = time
+        yard.cmgr.add_callback(time, self.op.equipment.callback_after_release, op=self.op)
 
 cdef class CallBackStep(StepBase):
     cdef object callback

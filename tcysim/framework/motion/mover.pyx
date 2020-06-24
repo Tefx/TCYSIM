@@ -45,6 +45,17 @@ cdef class Mover:
         self.curr_v = m.finish_velocity
         self.curr_a = m.a
 
+    def brake_loc(self, mode="default"):
+        cdef Spec spec = self.specs[mode]
+        cdef double t
+        if self.curr_v > 0:
+            t = self.curr_v / spec.d
+            l = self.curr_v * t - spec.d * t * t * 0.5
+        else:
+            t = -self.curr_v / spec.d
+            l = -self.curr_v * t + spec.d * t * t * 0.5
+        return self.loc + l
+
     def sync_with(self, Mover other):
         self.loc = other.loc
         self.time = other.time

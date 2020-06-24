@@ -36,6 +36,7 @@ class Equipment(EquipmentRangeLayout, Process):
         self.blocks = []
         self.num_blocks = 0
         self.current_op = None
+        self.load = None
         self.state = self.STATE.IDLE
         self.next_task = None
         if name is None:
@@ -80,6 +81,13 @@ class Equipment(EquipmentRangeLayout, Process):
             v[component.axis] = component.loc
         return self.transform_to(v, transform_to)
 
+    def brake_coord(self, modes, transform_to=None):
+        self.run_until(self.env.time)
+        v = V3(0, 0, 0)
+        for component in self.components:
+            v[component.axis] = component.brake_loc(modes[component.axis])
+        return self.transform_to(v, transform_to)
+
     def set_coord(self, v, glob=True):
         if glob:
             v = self.coord_g2l(v)
@@ -119,6 +127,7 @@ class Equipment(EquipmentRangeLayout, Process):
     def interrupt(self):
         for component in self.components:
             component.interrupt()
+        self.current_op.interrupted = True
         self.activate(-1, EventReason.INTERRUPTED)
 
     def allow_interruption(self):
@@ -229,6 +238,18 @@ class Equipment(EquipmentRangeLayout, Process):
 
     def is_at_idle_position(self):
         return True
+
+    def callback_before_grasp(self, time, op):
+        pass
+
+    def callback_after_grasp(self, time, op):
+        self.load = op.box
+
+    def callback_before_release(self, time, op):
+        self.load = None
+
+    def callback_after_release(self, time, op):
+        pass
 
     def __getattr__(self, item):
         return self.attrs.get(item, None)
