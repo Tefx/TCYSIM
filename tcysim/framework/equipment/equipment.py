@@ -129,6 +129,7 @@ class Equipment(EquipmentRangeLayout, Process):
             component.interrupt()
         self.current_op.interrupted = True
         self.activate(-1, EventReason.INTERRUPTED)
+        # print(self.time, self, "interrupt", [(c.axis, c.time, c.curr_v) for c in self.components])
 
     def allow_interruption(self):
         if self.current_op and isinstance(self.current_op, BlockingOperationBase):

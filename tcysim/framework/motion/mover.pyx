@@ -1,5 +1,6 @@
 from collections import deque
 from libc.math cimport sqrt, fabs
+from pesim.math_aux cimport feq
 
 from .motion cimport Motion
 
@@ -20,6 +21,7 @@ cdef class Mover:
         self.curr_a = 0
         self._state_curr_v = 0
         self._state_curr_a = 0
+        self._state_curr_t = -1
         self.pending_motions = deque()
         self.loc = 0
         self.time = -1
@@ -34,10 +36,12 @@ cdef class Mover:
     def save_state(self):
         self._state_curr_v = self.curr_v
         self._state_curr_a = self.curr_a
+        self._state_curr_t = self.time
 
     def restore_state(self):
         self.curr_v = self._state_curr_v
         self.curr_a = self._state_curr_a
+        self.time = self._state_curr_t
 
     cdef void perform_motion(self, Motion m):
         self.loc += m.displacement
@@ -111,6 +115,11 @@ cdef class Mover:
         cdef double t0, t1, t2, dflg, vx
         cdef Motion m
 
+        displacement -= self.curr_v * (start_time - self.time)
+
+        # if not feq(start_time, self.time) and not feq(self.curr_v, 0):
+        #     print("EEE", start_time, self.time, self.curr_v, self.curr_v * (start_time - self.time), self.time)
+
         # cdef bint _do_cache = feq(v0,0)
         # cdef dict _cache = self._cache[mode]
         # cdef double cd, ct, cv, ca
@@ -135,7 +144,7 @@ cdef class Mover:
             st += t0
         elif v0 < 0 and displacement > -v0 * v0 / (2 * d):
             t0 = -v0 / d
-            s0 = -v0 * t0 + 0.5 * d * t0 * t0
+            s0 = -v0 * t0 - 0.5 * d * t0 * t0
             m = Motion.__new__(Motion, st, t0, v0, d, allow_interruption)
             motions.append(m)
             displacement += s0
@@ -181,11 +190,16 @@ cdef class Mover:
         if motions:
             m = motions[len(motions) - 1]
             self.curr_v = m.finish_velocity
-            self.curr_a = m.a
+            # self.curr_a = m.a
+            self.curr_a = 0
+            self.time = m.finish_time
             st = m.finish_time
 
             # if _do_cache:
             #     _cache[_cache_key] = [(m.start_time - start_time, m.timespan, m.start_v, m.a) for m in motions]
+
+        # if v0 > 1e-6:
+        #     print("V", start_time, motions)
 
         return st - start_time, motions
 

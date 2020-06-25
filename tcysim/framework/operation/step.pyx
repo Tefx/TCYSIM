@@ -247,7 +247,7 @@ cdef class MoverStep(StepBase):
             self.start_v = self.mover.curr_v
 
             op.mark_loc(self.mover, self.start_time, self.src_loc)
-            if not feq(self.src_loc, self.dst_loc):
+            if not (feq(self.src_loc, self.dst_loc) and feq(self.mover.curr_v, 0)):
                 rt, self.motions = self.mover.create_motions(
                     self.start_time, self.dst_loc - self.src_loc,
                     self.allow_interruption, self.mode

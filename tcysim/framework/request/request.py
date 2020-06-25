@@ -25,37 +25,6 @@ class ReqType(Enum):
 #     SYNCED = auto()
 #     FINISHED = auto()
 
-# class ReqState(Flag):
-#     PENDING_FLAG = auto()
-#     READY_FLAG = auto()
-#     RUNNING_FLAG = auto()
-#     SYNCED_FLAG = auto()
-#     FINISHED_FLAG = auto()
-#
-#     __INIT = auto()
-#     INIT = __INIT | PENDING_FLAG
-#
-#     __REJECTED = auto()
-#     REJECTED = __REJECTED | PENDING_FLAG
-#
-#     __READY = auto()
-#     READY = __READY | READY_FLAG
-#
-#     __RESUME_READY = auto()
-#     RESUME_READY = __RESUME_READY | READY_FLAG
-#
-#     __STARTED = auto()
-#     STARTED = __STARTED | RUNNING_FLAG
-#
-#     SCHEDULED = auto()
-#
-#     __RESUMED = auto()
-#     RESUMED = __RESUMED | RUNNING_FLAG
-#
-#     SYNCED = SYNCED_FLAG | RUNNING_FLAG
-#
-#     FINISHED = FINISHED_FLAG | SYNCED_FLAG
-
 class ReqState(Flag):
     INIT = auto()
     READY = auto()
@@ -142,9 +111,6 @@ class RequestBase(IndexObject, ABC):
         return self.state & self.STATE.READY_FLAG
         # return self.state == self.STATE.READY or self.state == self.STATE.RESUME_READY
 
-    # def is_no_ready(self):
-    #     return self.state == self.STATE.INIT and self.state == self.STATE.REJECTED
-
     def submit(self, time, ready=True):
         if ready:
             self.ready(time)
@@ -188,7 +154,6 @@ class RequestBase(IndexObject, ABC):
 
     def estimate_sync_time(self, time, env):
         if self.state & self.STATE.RUNNING_FLAG:
-        # if self.state == self.STATE.STARTED or self.state == self.STATE.RESUMED:
             if self.sync_time > 0:
                 return self.sync_time
             else:
@@ -196,20 +161,16 @@ class RequestBase(IndexObject, ABC):
                 if fle(TIME_FOREVER, next_time):
                     next_time = min(e.next_event_time() for e in self.block.equipments)
                     if fle(TIME_FOREVER, next_time):
-                        for block in self.equipment.blocks:
-                            if block is not self.block:
-                                for equipment in block.equipments:
-                                    next_time = min(next_time, equipment.next_event_time())
+                        for equipment in self.block.yard.equipments:
+                            next_time = min(next_time, equipment.next_event_time())
         else:
             if self.equipment is not None:
                 next_time = self.equipment.next_event_time()
                 if fle(TIME_FOREVER, next_time):
                     next_time = min(e.next_event_time() for e in self.block.equipments)
                     if fle(TIME_FOREVER, next_time):
-                        for block in self.equipment.blocks:
-                            if block is not self.block:
-                                for equipment in block.equipments:
-                                    next_time = min(next_time, equipment.next_event_time())
+                        for equipment in self.block.yard.equipments:
+                            next_time = min(next_time, equipment.next_event_time())
             elif self.block is not None:
                 next_time = min(eqp.next_event_time() for eqp in self.block.equipments)
                 if fle(TIME_FOREVER, next_time):
