@@ -92,13 +92,8 @@ class OpBuilderForCrane(OpBuilderBase):
 
     @Dispatcher.on("MOVE")
     def build_move(self, op: Operation):
-        load = op.load
-        dst_loc = op.dst_loc
-        if op.interruptable:
-            with op.allow_interruption(self.equipment, query_task_before_perform=False):
-                yield from self.move_steps(op, self.equipment.current_coord(), dst_loc, load)
-        else:
-            yield from self.move_steps(op, self.equipment.current_coord(), dst_loc, load)
+        with op.handle_interruption(op.interruptable, query_task_before_perform=False):
+            yield from self.move_steps(op, self.equipment.current_coord(), op.dst_loc, op.load)
 
     def move_steps(self, op, src_loc, dst_loc, load=False):
         hoist_mode = "rated load" if load else "no load"

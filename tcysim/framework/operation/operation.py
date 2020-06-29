@@ -32,6 +32,7 @@ class OperationABC(ABC):
         self.attach_time = -1
         self.detach_time = -1
         self.detach_pos = None
+        self.interrupted = False
         self.equipment = equipment
         self.__dict__.update(attrs)
 
@@ -75,7 +76,6 @@ class OperationBase(OperationABC):
         self._pps = {}
         self.paths = {}
         self.start_coord = None
-        self.interrupted = False
         super(OperationBase, self).__init__(equipment, **attrs)
 
     def check_interference(self):
@@ -164,18 +164,23 @@ class OperationBase(OperationABC):
 
     @contextmanager
     def allow_interruption(self, equipment, query_task_before_perform=True):
-        self.start_allow_interruption(equipment, query_task_before_perform)
-        yield
-        self.end_allow_interruption()
-
-    def start_allow_interruption(self, equipment, query_task_before_perform=True):
         self.interruption_flag = True
         if query_task_before_perform:
             cbs = CallBackStep(CallBack(equipment.query_new_task))
             self.workflow.add(cbs)
-
-    def end_allow_interruption(self):
+        yield
         self.interruption_flag = False
+
+    @contextmanager
+    def handle_interruption(self, allow, query_task_before_perform=True):
+        if allow:
+            self.interruption_flag = True
+            if query_task_before_perform:
+                cbs = CallBackStep(CallBack(self.equipment.query_new_task))
+                self.workflow.add(cbs)
+        yield
+        if allow:
+            self.interruption_flag = False
 
     def __repr__(self):
         return "<OP/{}>{}".format(self.op_type.name, str(hash(self))[-4:0])

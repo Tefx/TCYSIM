@@ -209,6 +209,8 @@ class Equipment(EquipmentRangeLayout, Process):
             self.yard.fire_probe('request.start', request)
             for op in request.gen_op(self.time):
                 yield from self.perform_op(op, request)
+                if op.interrupted:
+                    break
             self.yard.fire_probe('request.succeed', request)
         except ReqOpRejectionError as e:
             self.req_handler.on_reject(self.time, e)
