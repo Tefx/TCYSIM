@@ -288,7 +288,7 @@ cdef class TEU(V3):
         return TEU(1, 1, 1, along=along)
 
 cdef class RotateOperator:
-    def __cinit__(self, double angle):
+    def __init__(self, double angle):
         self.angle = angle
         self.radian = angle / 180.0 * pi
         self.sinv = sin(self.radian)

@@ -11,5 +11,5 @@ endif (MSVC)
 set(CMAKE_C_STANDARD 11)
 
 add_library(tcy
-        include/define.h include/error.h include/block.h include/box.h include/path.h include/cd.h include/idx_set.h
-        src/define.c src/block.c src/box.c src/path.c src/cd.c src/idx_set.c)
+        include/define.h include/error.h include/block.h include/box.h include/path.h include/cd.h include/idx_set.h include/interval_tree.h
+        src/define.c src/block.c src/box.c src/path.c src/cd.c src/idx_set.c src/interval_tree.c)

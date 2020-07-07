@@ -5,11 +5,11 @@ from ..event_reason import EventReason
 
 
 class AccessPoint(Process):
-    def __init__(self, yard, entry_time=0):
-        super(AccessPoint, self).__init__(yard.env)
+    def __init__(self, env, entry_time=0):
         self.queue = deque()
         self.entry_time = entry_time
         self.idle = True
+        super(AccessPoint, self).__init__(env)
 
     def _wait(self):
         if self.queue:

@@ -95,4 +95,7 @@ int feq(double x, double y);
 
 int fne(double x, double y);
 
+#define MAX(a,b) ((a) > (b) ? a : b)
+#define MIN(a,b) ((a) < (b) ? a : b)
+
 #endif //LIBTCY_DEFINE_H

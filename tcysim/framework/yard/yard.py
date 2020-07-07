@@ -1,8 +1,10 @@
 from abc import ABC
 
-from typing import Type
+from typing import Type, Optional
 from pesim import Environment, TIME_PASSED
 from .access import AccessPoint
+from ..block import Block
+from ..layout import Lane
 from ..event_reason import EventReason
 from ..probe import ProbeManager
 from ..roles import Roles
@@ -25,7 +27,7 @@ class YardBase(ABC):
         self.roles = Roles()
         self.movers = []
 
-        self.access_points = {}
+        # self.access_points = {}
 
     @property
     def time(self):
@@ -41,10 +43,10 @@ class YardBase(ABC):
                 for component in equipment.components:
                     self.movers.append(component)
 
-    def deploy_access_point(self, block, lane, access_point=None):
-        if access_point is None:
-            access_point = AccessPoint(self.env)
-        self.access_points[(block, lane)] = access_point
+    # def deploy_access_point(self, block, lane, access_point=None):
+    #     if access_point is None:
+    #         access_point = AccessPoint(self.env)
+    #     self.access_points[(block, lane)] = access_point
 
     def start(self, request_pool_size=10240):
         self.env.start()
@@ -75,9 +77,12 @@ class YardBase(ABC):
         box.alloc(time, block, loc)
         self.fire_probe("box.alloc", box)
 
+    def get_access_point(self, block: Block, lane: Lane) -> Optional[AccessPoint]:
+        return None
+
     def store(self, time, box, lane):
         request = box.block.new_request("STORE", time, box, lane=lane)
-        ap = self.access_points.get((box.block, lane), None)
+        ap = self.get_access_point(box.block, lane)
         if ap is None:
             request.submit(time)
         else:
@@ -86,7 +91,7 @@ class YardBase(ABC):
 
     def retrieve(self, time, box, lane):
         request = box.block.new_request("RETRIEVE", time, box, lane=lane)
-        ap = self.access_points.get((box.block, lane), None)
+        ap = self.get_access_point(box.block, lane)
         if ap is None:
             request.submit(time)
         else:
