@@ -1,6 +1,7 @@
 from copy import deepcopy, copy
+from math import isclose
+
 import numpy as np
-from collections import OrderedDict
 
 from ...utils import V3, TEU, RotateOperator
 
@@ -41,11 +42,16 @@ class LayoutItem:
 
     def transform_to(self, coord: V3, other=None):
         if other is None:
-            return coord
+            return copy(coord)
         elif other == "g":
             return self.coord_l2g(coord)
         else:
-            return other.coord_g2l(self.coord_l2g(coord))
+            if isclose(self.rotate, other.rotate, abs_tol=1e-3):
+                assert coord + other.coord_g2l(self.offset) == other.coord_g2l(self.coord_l2g(coord))
+                return coord + other.coord_g2l(self.offset)
+                # return coord - self.coord_g2l(other.offset)
+            else:
+                return other.coord_g2l(self.coord_l2g(coord))
 
 
 class LaneLayout(LayoutItem):

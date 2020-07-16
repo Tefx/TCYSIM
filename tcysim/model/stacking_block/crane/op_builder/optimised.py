@@ -80,5 +80,7 @@ class OptimisedOpBuilderForCrane(OpBuilderForCrane):
         yield from self.move_steps(op, src_loc, dst_loc, load=False)
 
     def adjust_is_necessary(self, other_equipment, dst_loc):
+        # if self.equipment.blocks[0].id == 49:
+        #     print(self.equipment.idx, other_equipment.current_coord(self.equipment).x, dst_loc.x, self.equipment.current_coord().x)
         return (other_equipment.current_coord(transform_to=self.equipment).x - dst_loc.x) * \
                (self.equipment.current_coord().x - dst_loc.x) > 0

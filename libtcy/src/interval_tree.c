@@ -212,8 +212,8 @@ void interval_node_search(IntervalNode_TCY *node, IntervalNum start, IntervalNum
             interval_node_search(node->children[_LEFT_CHILD], start, end, processor, data);
 
         if (interval_overlap(node, start, end))
-            for (uint64_t i = 0; i < node->ref_count ; ++i)
-                processor(node, data);
+//            for (uint64_t i = 0; i < node->ref_count ; ++i)
+            processor(node, data);
 
         if (_NUM_LT(node->start, end) && node->children[_RIGHT_CHILD])
             interval_node_search(node->children[_RIGHT_CHILD], start, end, processor, data);

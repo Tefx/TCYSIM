@@ -1,3 +1,5 @@
+from copy import copy
+
 from libc.math cimport sin, cos, pi, sqrt
 from .math import feq
 from cython cimport freelist
@@ -215,6 +217,22 @@ cdef class V3:
             x = self.x * rtt_op.cosv - self.y * rtt_op.sinv
             y = self.x * rtt_op.sinv + self.y * rtt_op.cosv
             return V3(x, y, self.z)
+
+    cpdef V3 rotate_angle(V3 self, double angle, V3 ref=None):
+        cdef double radian, sinv, cosv
+        if feq(angle, 0):
+            return copy(self)
+        else:
+            radian = angle / 180.0 * pi
+            sinv = sin(radian)
+            cosv = cos(radian)
+
+            if ref:
+                return (self - ref).rotate_angle(angle) + ref
+            else:
+                x = self.x * cosv - self.y * sinv
+                y = self.x * sinv + self.y * cosv
+                return V3(x, y, self.z)
 
     cpdef double length(V3 self):
         return sqrt(self.x * self.x + self.y * self.y + self.z * self.z)

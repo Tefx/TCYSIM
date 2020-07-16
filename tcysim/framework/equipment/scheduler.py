@@ -2,12 +2,12 @@ from pesim import Process
 from ..event_reason import EventReason
 
 
-class JobScheduler(Process):
+class JobSchedulerBase(Process):
     def __init__(self, equipment):
         self.equipment = equipment
         self.pending = False
         self.yard = equipment.yard
-        super(JobScheduler, self).__init__(equipment.yard.env)
+        super(JobSchedulerBase, self).__init__(equipment.yard.env)
 
     def rank_task(self, request):
         return request.ready_time

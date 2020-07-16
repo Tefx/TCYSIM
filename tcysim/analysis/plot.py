@@ -127,10 +127,11 @@ class PlotSet:
         return fig
 
 
-def plot_layout(yard, blocks=True, lanes=False):
+def plot_layout(yard, size=None, blocks=True, lanes=False):
     fig = go.Figure()
-    fig.update_xaxes(range=(0, 4000), showgrid=False)
-    fig.update_yaxes(range=(0, 1000), showgrid=False)
+    if size is not None:
+        fig.update_xaxes(range=(0, size[0]), showgrid=False)
+        fig.update_yaxes(range=(0, size[1]), showgrid=False)
 
     trace = []
 

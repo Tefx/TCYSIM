@@ -75,10 +75,9 @@ class ReqDispatcher:
         return self.pool.pop(request)
 
     def refresh_pool(self, time):
-        requests = list(self.pool.available_requests())
+        requests = tuple(self.pool.available_requests())
         for request in requests:
             if request.state & request.STATE.READY_FLAG:
-            # if request.state >= request.STATE.READY and request.equipment is None:
                 if not request.equipment:
                     request.equipment = self.choose_equipment(time, request)
                     if request.equipment:

@@ -13,6 +13,7 @@ cdef class V3:
     cpdef V3 iset1(V3 self, axis, double value)
 
     cpdef V3 rotate(V3 self, RotateOperator rtt_op, V3 ref=?)
+    cpdef V3 rotate_angle(V3 self, double angle, V3 ref=?)
     cpdef double length(V3 self)
     cpdef double dot_product(V3 self, V3 other)
 

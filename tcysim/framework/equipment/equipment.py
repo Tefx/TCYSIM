@@ -5,13 +5,16 @@ from typing import Type
 
 from pesim import Process, TIME_FOREVER
 from tcysim.utils import V3
-from .scheduler import JobScheduler
+from tcysim.utils.cache import TimeCache
+from .scheduler import JobSchedulerBase
 from ..event_reason import EventReason
 from ..exception.handling import ROREquipmentConflictError, ReqOpRejectionError
 from ..layout import EquipmentRangeLayout
 from ..motion import Component
 from ..operation import OpBuilderBase, OperationABC, BlockingOperationBase
 from ..request import ReqHandlerBase, RequestBase
+
+from uuid import uuid4
 
 
 class EquipmentState(Enum):
@@ -25,7 +28,8 @@ class Equipment(EquipmentRangeLayout, Process):
 
     ReqHandler: Type[ReqHandlerBase] = NotImplemented
     OpBuilder: Type[OpBuilderBase] = NotImplemented
-    JobScheduler: Type[JobScheduler] = JobScheduler
+    # JobScheduler: Type[JobScheduler] = JobScheduler
+    JobScheduler: Type[JobSchedulerBase] = NotImplemented
 
     BoxEquipmentDelta = V3.zero()
 
@@ -40,7 +44,7 @@ class Equipment(EquipmentRangeLayout, Process):
         self.state = self.STATE.IDLE
         self.next_task = None
         if name is None:
-            self.name = str(hash(self))[-4:]
+            self.name = str(uuid4())
         else:
             self.name = name
         self.attrs = copy(attrs)
@@ -50,6 +54,8 @@ class Equipment(EquipmentRangeLayout, Process):
         self.last_running_time = -1
         self.guess_components()
         self.set_coord(init_offset, glob=False)
+
+        self._cur_coord = TimeCache(self.cal_cur_coord)
 
     def guess_components(self):
         self.components = []
@@ -74,15 +80,23 @@ class Equipment(EquipmentRangeLayout, Process):
         for component in self.components:
             component.restore_state()
 
-    def current_coord(self, transform_to=None):
-        self.run_until(self.env.time)
+    def cal_cur_coord(self, time):
+        self.run_until(self.time)
         v = V3(0, 0, 0)
         for component in self.components:
             v[component.axis] = component.loc
+        return v
+
+    def current_coord(self, transform_to=None):
+        v = self._cur_coord.get(self.time)
+        # self.run_until(self.time)
+        # v = V3(0, 0, 0)
+        # for component in self.components:
+        #     v[component.axis] = component.loc
         return self.transform_to(v, transform_to)
 
     def brake_coord(self, modes, transform_to=None):
-        self.run_until(self.env.time)
+        self.run_until(self.time)
         v = V3(0, 0, 0)
         for component in self.components:
             v[component.axis] = component.brake_loc(modes[component.axis])
@@ -107,7 +121,8 @@ class Equipment(EquipmentRangeLayout, Process):
         return self.transform_to(box_coord - self.BoxEquipmentDelta, transform_to)
 
     def prepare_coord(self, op_coord, transform_to=None):
-        return self.transform_to(op_coord, transform_to)
+        raise NotImplementedError
+        # return self.transform_to(op_coord, transform_to)
 
     def coord_to_box(self, self_coord=None, transform_to=None):
         if self_coord is None:

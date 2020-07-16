@@ -192,7 +192,8 @@ cdef class CBox:
     def current_coord(self, transform_to=None):
         cdef V3 v
         if self.equipment:
-            v = self.equipment.attached_box_coord(transform_to=self.block)
+            # v = self.equipment.attached_box_coord(transform_to=self.block)
+            v = self.equipment.coord_to_box(transform_to=self.block)
         elif self.c.state == BOX_STATE_STORED:
             v = self.block.box_coord(self)
         else:

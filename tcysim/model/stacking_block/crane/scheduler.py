@@ -1,7 +1,7 @@
-from tcysim.framework import JobScheduler
+from tcysim.framework import JobSchedulerBase
 
 
-class CooperativeTwinCraneJobScheduler(JobScheduler):
+class CooperativeTwinCraneJobScheduler(JobSchedulerBase):
     def rank_task(self, request):
         if request.req_type == request.TYPE.ADJUST:
             return 0, request.ready_time

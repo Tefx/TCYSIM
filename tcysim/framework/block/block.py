@@ -10,7 +10,7 @@ from ..request import RequestBase, ReqDispatcher
 
 class Block(BlockLayout, CBlock):
     ReqCls: Type[RequestBase] = NotImplemented
-    ReqDispatcherCls: Type[ReqDispatcher] = ReqDispatcher
+    ReqDispatcherCls: Type[ReqDispatcher] = NotImplemented
 
     def __init__(self, yard, bid, offset, shape: V3, rotate, stacking_axis, sync_axes, lanes=()):
         self.id = bid
@@ -54,5 +54,8 @@ class Block(BlockLayout, CBlock):
                 yield task
 
     @classmethod
-    def new_request(cls, type, *args, **kwargs):
-        return cls.ReqCls(cls.ReqCls.TYPE[type], *args, **kwargs)
+    def new_request(cls, type, time, *args, ready=False, **kwargs):
+        req = cls.ReqCls(cls.ReqCls.TYPE[type], time, *args, **kwargs)
+        if ready:
+            req.ready(time)
+        return req

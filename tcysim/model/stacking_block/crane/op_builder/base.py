@@ -13,22 +13,26 @@ class OpBuilderForCrane(OpBuilderBase):
         box = op.box
         lane = request.lane
         dst_loc = getattr(request, "dst_loc", None)
-        op.access_loc = self.equipment.coord_from_box(box.access_coord(lane, transform_to=self.equipment))
-        op.container_loc = self.equipment.coord_from_box(box.store_coord(dst_loc, transform_to=self.equipment))
+        box_store_coord = box.store_coord(dst_loc, transform_to=self.equipment)
+        box_access_coord = box.access_coord(lane, transform_to=self.equipment)
+        op.access_loc = self.equipment.coord_from_box(box_access_coord)
+        op.container_loc = self.equipment.coord_from_box(box_store_coord)
         access_ready_loc = self.equipment.prepare_coord(op.access_loc)
         container_ready_loc = self.equipment.prepare_coord(op.container_loc)
 
         yield op.emit_signal("start_or_resume")
         yield from self.move_steps(op, self.equipment.current_coord(), access_ready_loc)
         yield from self.move_steps(op, access_ready_loc, op.access_loc)
-        yield op.wait(self.equipment.GRASP_TIME)
+        # yield op.wait(self.equipment.GRASP_TIME)
+        yield op.grasp(self.equipment.GRASP_TIME, box_access_coord, sync=True)
         yield op.emit_signal("off_agv")
-        yield op.sync()
+        # yield op.sync()
         yield from self.move_steps(op, op.access_loc, access_ready_loc, load=True)
         yield from self.move_steps(op, access_ready_loc, op.container_loc, load=True)
         yield op.emit_signal("in_block")
         yield op.fire_probe("box.after_in_block", box, op, probe_reason=EventReason.CALLBACK.after)
-        yield op.wait(self.equipment.RELEASE_TIME)
+        yield op.release(self.equipment.RELEASE_TIME, box_store_coord)
+        # yield op.wait(self.equipment.RELEASE_TIME)
         yield from self.move_steps(op, op.container_loc, container_ready_loc)
         yield op.emit_signal("finish_or_fail")
 
@@ -37,8 +41,10 @@ class OpBuilderForCrane(OpBuilderBase):
         request = op.request
         box = op.box
         lane = request.lane
-        op.access_loc = self.equipment.coord_from_box(box.access_coord(lane, transform_to=self.equipment))
-        op.container_loc = self.equipment.coord_from_box(box.store_coord(transform_to=self.equipment))
+        box_access_coord = box.access_coord(lane, transform_to=self.equipment)
+        box_container_loc = box.store_coord(transform_to=self.equipment)
+        op.access_loc = self.equipment.coord_from_box(box_access_coord)
+        op.container_loc = self.equipment.coord_from_box(box_container_loc)
         access_ready_loc = self.equipment.prepare_coord(op.access_loc)
         container_ready_loc = self.equipment.prepare_coord(op.container_loc)
 
@@ -47,33 +53,39 @@ class OpBuilderForCrane(OpBuilderBase):
         yield from self.move_steps(op, container_ready_loc, op.container_loc)
         yield op.fire_probe("box.before_off_block", box, op, probe_reason=EventReason.CALLBACK.before)
         yield op.emit_signal("off_block")
-        yield op.wait(self.equipment.GRASP_TIME)
+        yield op.grasp(self.equipment.GRASP_TIME, box_container_loc)
+        # yield op.wait(self.equipment.GRASP_TIME)
         yield from self.move_steps(op, op.container_loc, access_ready_loc, load=True)
         yield from self.move_steps(op, access_ready_loc, op.access_loc, load=True)
-        yield op.wait(self.equipment.RELEASE_TIME)
+        yield op.release(self.equipment.RELEASE_TIME, box_access_coord, sync=True)
+        # yield op.wait(self.equipment.RELEASE_TIME)
         yield op.emit_signal("on_agv")
-        yield op.sync()
+        # yield op.sync()
         yield from self.move_steps(op, op.access_loc, access_ready_loc)
         yield op.emit_signal("finish_or_fail")
 
     @Dispatcher.on("RELOCATE")
     def build_relocate(self, op: Operation):
         box = op.box
-        op.src_loc = self.equipment.coord_from_box(box.store_coord(transform_to=self.equipment))
-        op.dst_loc = self.equipment.coord_from_box(box.store_coord(op.new_loc, transform_to=self.equipment))
+        src_box_coord = box.store_coord(transform_to=self.equipment)
+        dst_box_coord = box.store_coord(op.new_loc, transform_to=self.equipment)
+        op.src_loc = self.equipment.coord_from_box(src_box_coord)
+        op.dst_loc = self.equipment.coord_from_box(dst_box_coord)
         src_ready_loc = self.equipment.prepare_coord(op.src_loc)
         dst_ready_loc = self.equipment.prepare_coord(op.dst_loc)
 
         yield op.emit_signal("rlct_start_or_resume")
         yield from self.move_steps(op, self.equipment.current_coord(), src_ready_loc)
         yield from self.move_steps(op, src_ready_loc, op.src_loc)
-        yield op.wait(self.equipment.GRASP_TIME)
+        # yield op.wait(self.equipment.GRASP_TIME)
+        yield op.grasp(self.equipment.GRASP_TIME, src_box_coord)
         yield op.fire_probe("box.before_off_block", box, op, probe_reason=EventReason.CALLBACK.before)
         yield op.emit_signal("rlct_pick_up")
         yield from self.move_steps(op, op.src_loc, op.dst_loc, load=True)
         yield op.emit_signal("rlct_put_down")
         yield op.fire_probe("box.after_in_block", box, op, probe_reason=EventReason.CALLBACK.after)
-        yield op.wait(self.equipment.RELEASE_TIME)
+        yield op.release(self.equipment.RELEASE_TIME, dst_box_coord)
+        # yield op.wait(self.equipment.RELEASE_TIME)
         yield from self.move_steps(op, op.dst_loc, dst_ready_loc)
         yield op.emit_signal("rlct_finish_or_fail")
 
@@ -83,6 +95,8 @@ class OpBuilderForCrane(OpBuilderBase):
         op.dst_loc = op.request.new_loc
         yield op.emit_signal("start_or_resume")
         if self.adjust_is_necessary(other, op.dst_loc):
+            # if self.equipment.blocks[0].id == 49:
+            #     print(self.equipment.time, self.equipment.idx, self.equipment.current_coord(), op.dst_loc, other.current_coord(self.equipment))
             yield from self.adjust_steps(op, self.equipment.current_coord(), op.dst_loc)
         yield op.emit_signal("finish_or_fail")
 

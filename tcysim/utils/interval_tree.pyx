@@ -44,7 +44,7 @@ cdef class Interval:
         self.tree.update(self, start, end)
 
 cdef void _processor(IntervalNode_TCY *node, void*processor):
-    (<object> processor)(node.start, node.end)
+    (<object> processor)(node.start, node.end, node.ref_count)
 
 cdef class IntervalTree:
     def __cinit__(self, double min_len=0):

@@ -31,6 +31,7 @@ class OperationABC(ABC):
         self.finish_Time = -1
         self.attach_time = -1
         self.detach_time = -1
+        self.attach_pos = None
         self.detach_pos = None
         self.interrupted = False
         self.equipment = equipment
@@ -143,14 +144,14 @@ class OperationBase(OperationABC):
     def fire_probe(self, probe_name, *args, probe_reason=EventReason.PROBE_ACTION, **kwargs):
         return ProbeStep(probe_name, args, kwargs, probe_reason)
 
-    def wait(self, time):
-        return EmptyStep(self.equipment.components[0], time)
+    # def wait(self, time):
+    #     return EmptyStep(self.equipment.components[0], time)
 
     # def sync(self):
     #     return SyncStep(self.request)
 
-    def grasp(self, time, sync=False):
-        return GraspStep(self.equipment.components[0], time, sync)
+    def grasp(self, time, pos, sync=False):
+        return GraspStep(self.equipment.components[0], time, pos, sync)
 
     def release(self, time, pos, sync=False):
         return ReleaseStep(self.equipment.components[0], time, pos, sync)

@@ -136,12 +136,16 @@ cdef class EmptyStep(PeriodStep):
 
 cdef class GraspStep(PeriodStep):
     cdef bint sync
-    def __init__(self, Mover mover, double time, bint sync):
+    cdef V3 pos
+
+    def __init__(self, Mover mover, double time, V3 pos, bint sync):
         super(GraspStep, self).__init__(mover, time)
         self.sync = sync
+        self.pos = pos
 
     cdef void on_start(self, double time, yard):
         self.op.attach_time = time
+        self.op.attach_pos = self.pos
         if self.op.box is None:
             self.op.box = self.op.request.box
         yard.cmgr.add_callback(time, self.op.equipment.callback_before_grasp, op=self.op)

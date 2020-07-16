@@ -1,4 +1,5 @@
 from ..interval_tree cimport IntervalTree, Interval
+from libc.stdint cimport uint64_t
 
 
 cdef class LoadPredicator:
@@ -57,7 +58,7 @@ cdef class LoadPredicator:
         self.itv_tree.process_overlapped(start - min_cycle_time, end + min_cycle_time, self._calculator)
         return 1 - self._cal_result
 
-    def _calculator(self, double a0, double a1):
+    def _calculator(self, double a0, double a1, uint64_t count):
         cdef double b0 = self._cal_start
         cdef double b1 = self._cal_end
         cdef double c = self._cal_cycle
@@ -78,4 +79,8 @@ cdef class LoadPredicator:
         if k > 0: area -= k * k
 
         prob = 2 * c / (b1 - b0) - area / (2 * (a1 - a0) * (b1 - b0))
-        self._cal_result *= (1 - prob)
+
+        cdef uint64_t i
+
+        for i in range(count):
+            self._cal_result *= (1 - prob)

@@ -18,12 +18,12 @@ class RORNoPositionForRelocateError(ReqOpRejectionError):
 class ReqHandlerForStackingBlock(ReqHandlerBase):
     def on_conflict(self, time, op):
         if not op.request.one_time_attempt:
-            req2 = self.yard.new_request("ADJUST", time,
+            req2 = op.request.block.new_request("ADJUST", time,
                                          equipment=op.itf_other,
                                          src_loc=op.itf_other.current_coord(),
                                          new_loc=op.itf_loc,
                                          blocking_request=op.request)
-            req2.submit(time, ready=True)
+            req2.submit(time)
             # self.yard.submit_request(time, req2, ready=True)
 
     @Dispatcher.on("STORE")
@@ -101,7 +101,7 @@ class ReqHandlerForStackingBlock(ReqHandlerBase):
         box = request.box
         box.equipment = request.equipment
         # box.start_store()
-        request.sync(time)
+        # request.sync(time)
 
     def on_store_in_block(self, time, request):
         box = request.box
@@ -126,7 +126,7 @@ class ReqHandlerForStackingBlock(ReqHandlerBase):
         box = request.box
         box.finish_retrieve()
         box.equipment = None
-        request.sync(time)
+        # request.sync(time)
 
     def on_adjust_start(self, time, request):
         blocking_req = request.blocking_request

@@ -32,13 +32,14 @@ class ReqState(Flag):
     STARTED = auto()
     REJECTED = auto()
     RESUME_READY = auto()
-    RESUMED = auto()
+    # RESUMED = auto()
     SYNCED = auto()
     FINISHED = auto()
 
     PENDING_FLAG = INIT | REJECTED
     SYNCED_FLAG = SYNCED | FINISHED
-    RUNNING_FLAG = SYNCED | RESUMED | STARTED
+    # RUNNING_FLAG = SYNCED | RESUMED | STARTED
+    RUNNING_FLAG = SYNCED | STARTED
     SCHEDULED_FLAG = SCHEDULED | RUNNING_FLAG | FINISHED
     READY_FLAG = READY | RESUME_READY | RUNNING_FLAG | FINISHED
 
@@ -117,10 +118,10 @@ class RequestBase(IndexObject, ABC):
         self.block.req_dispatcher.submit_request(time, self)
 
     def start_or_resume(self, time):
-        if self.state == self.STATE.REJECTED:
-            self.state = self.STATE.RESUMED
-        else:
-            self.state = self.STATE.STARTED
+        # if self.state == self.STATE.REJECTED:
+        #     self.state = self.STATE.RESUMED
+        # else:
+        self.state = self.STATE.STARTED
         self.start_time = time
 
     def gen_op(self, time):

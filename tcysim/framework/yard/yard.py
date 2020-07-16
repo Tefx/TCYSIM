@@ -77,26 +77,35 @@ class YardBase(ABC):
         box.alloc(time, block, loc)
         self.fire_probe("box.alloc", box)
 
-    def get_access_point(self, block: Block, lane: Lane) -> Optional[AccessPoint]:
+    def get_access_point(self, block: Block, lane: Lane, request) -> Optional[AccessPoint]:
         return None
+
+    def submit(self, time, block, lane, request):
+        ap = self.get_access_point(block, lane, request)
+        if ap is None:
+            request.submit(time)
+        else:
+            ap.submit(time, request)
 
     def store(self, time, box, lane):
         request = box.block.new_request("STORE", time, box, lane=lane)
-        ap = self.get_access_point(box.block, lane)
-        if ap is None:
-            request.submit(time)
-        else:
-            ap.submit(time, request)
-        return request
+        self.submit(time, box.block, lane, request)
+        # ap = self.get_access_point(box.block, lane)
+        # if ap is None:
+        #     request.submit(time)
+        # else:
+        #     ap.submit(time, request)
+        # return request
 
     def retrieve(self, time, box, lane):
         request = box.block.new_request("RETRIEVE", time, box, lane=lane)
-        ap = self.get_access_point(box.block, lane)
-        if ap is None:
-            request.submit(time)
-        else:
-            ap.submit(time, request)
-        return request
+        self.submit(time, box.block, lane, request)
+        # ap = self.get_access_point(box.block, lane)
+        # if ap is None:
+        #     request.submit(time)
+        # else:
+        #     ap.submit(time, request)
+        # return request
 
     def boxes(self):
         for block in self.blocks:
