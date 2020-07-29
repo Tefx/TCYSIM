@@ -242,6 +242,7 @@ class TraceReader(FileTree):
             equipment_script[equipment_name] = dict(
                 Offset=e_info["Offset"],
                 Rotate=e_info["Rotate"],
+                BoxRotate=e_info["BoxRotate"],
                 BEDelta=e_info["BEDelta"],
                 Trajectory=trajectory,
                 BoxIntervals=box_intervals,
@@ -305,6 +306,7 @@ class TraceReader(FileTree):
             equipment_script[equipment_name] = dict(
                 Offset=e_info["Offset"],
                 Rotate=e_info["Rotate"],
+                BoxRotate=e_info["BoxRotate"],
                 BEDelta=e_info["BEDelta"],
                 Trajectory=trajectory,
                 # BoxIntervals=box_intervals,

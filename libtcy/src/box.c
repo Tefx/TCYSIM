@@ -175,6 +175,7 @@ int box_alloc(Box_TCY *box, Time_TCY time) {
     return SUCCEED;
 }
 
+
 void box_store_position(Box_TCY *box, CellIdx_TCY *idx, bool new_loc) {
     Block_TCY *blk = box->block;
     if (!new_loc)
@@ -248,6 +249,24 @@ int box_remove_holder(Box_TCY *box) {
 
     box->_holder_or_origin = NULL;
     return SUCCEED;
+}
+
+int box_cancel_alloc(Box_TCY* box){
+    if (box->state != BOX_STATE_ALLOCATED)
+        return ERROR_BOX_ALREADY_STORED;
+    struct Block_TCY *blk = box->block;
+    _box_adjust_and_mark_usage(blk, box, -1, TRUE);
+    _blk_unlink_cell(blk, box);
+    return SUCCEED;
+}
+
+int box_cancel_and_realloc(Box_TCY* box, Block_TCY *blk, CellIdx_TCY* new_loc){
+    int res;
+    if ((res=box_cancel_alloc(box)) != SUCCEED)
+        return res;
+    box->block = blk;
+    memcpy(box->loc, new_loc, sizeof(CellIdx_TCY) * 3);
+    return box_alloc(box, -1);
 }
 
 int box_realloc(Box_TCY *box, Time_TCY time, CellIdx_TCY *new_loc) {

@@ -8,6 +8,7 @@ cdef class LoadPredicator:
     cdef IntervalTree itv_tree
 
     cdef double _cal_result
+    cdef double _cal_count
     cdef double _cal_start
     cdef double _cal_end
     cdef double _cal_cycle
@@ -18,6 +19,7 @@ cdef class LoadPredicator:
         self.itv_tree = IntervalTree(min_interval)
 
         self._cal_result = 1
+        self._cal_count = 0
         self._cal_start = -1
         self._cal_end = -1
         self._cal_cycle = 0
@@ -52,11 +54,26 @@ cdef class LoadPredicator:
 
     def probability_of_conflict(self, double start, double end, double min_cycle_time=180):
         self._cal_result = 1
+        # self._cal_count = 0
         self._cal_start = start
         self._cal_end = end
         self._cal_cycle = min_cycle_time
         self.itv_tree.process_overlapped(start - min_cycle_time, end + min_cycle_time, self._calculator)
         return 1 - self._cal_result
+
+    # def conflict_info(self, double start, double end, double min_cycle_time=180):
+    #     self._cal_result = 1
+    #     # self._cal_count = 0
+    #     self._cal_start = start
+    #     self._cal_end = end
+    #     self._cal_cycle = min_cycle_time
+    #     self.itv_tree.process_overlapped(start - min_cycle_time, end + min_cycle_time, self._calculator)
+    #     return 1 - self._cal_result, self._cal_count# / (end - start + 2 * min_cycle_time)
+
+    def count_potential_conflicts(self, double start, double end):
+        self._cal_count = 0
+        self.itv_tree.process_overlapped(start, end, self._count)
+        return self._cal_count
 
     def _calculator(self, double a0, double a1, uint64_t count):
         cdef double b0 = self._cal_start
@@ -84,3 +101,7 @@ cdef class LoadPredicator:
 
         for i in range(count):
             self._cal_result *= (1 - prob)
+        # self._cal_count += count
+
+    def _count(self, double a0, double a1, uint64_t count):
+        self._cal_count += count

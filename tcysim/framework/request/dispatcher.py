@@ -74,6 +74,9 @@ class ReqDispatcher:
     def pop_request(self, request):
         return self.pool.pop(request)
 
+    def push_request(self, request):
+        self.pool.push(request, request.equipment, request.access_point)
+
     def refresh_pool(self, time):
         requests = tuple(self.pool.available_requests())
         for request in requests:

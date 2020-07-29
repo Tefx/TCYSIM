@@ -51,6 +51,14 @@ cdef class CBox:
         else:
             raise NotImplementedError
 
+    def realloc(self, Time_TCY time, CBlock block, V3 loc):
+        cdef CellIdx_TCY new_loc[3];
+        if self.c.state != BOX_STATE_ALLOCATED:
+            raise Exception("Cannot re-alloc a box with state {}".format(self.state))
+        else:
+            loc.cpy2mem_i(new_loc)
+            box_cancel_and_realloc(&self.c, &block.c, new_loc)
+
     def store(self, Time_TCY time):
         if self.c.state == BOX_STATE_STORING:
             box_store(&self.c, time)
@@ -83,10 +91,10 @@ cdef class CBox:
             box_retrieve(&self.c, time)
             assert self.c.state == BOX_STATE_RETRIEVING
 
-    def start_store(self):
+    def start_store(self, Time_TCY time):
         self.c.state = BOX_STATE_STORING
 
-    def finish_retrieve(self):
+    def finish_retrieve(self, Time_TCY time):
         self.c.state = BOX_STATE_RETRIEVED
 
     @property

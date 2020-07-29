@@ -215,8 +215,10 @@ bool block_position_is_valid_for_size(Block_TCY *blk, CellIdx_TCY *loc, BoxSize_
     if (box_size == BOX_SIZE_FORTY && loc[blk->box_orientation] > blk->spec[blk->box_orientation] - 2)
         return FALSE;
     for (int i = 0; i < 3; ++i) {
-        if (loc[i] >= blk->spec[i])
+        if (loc[i] >= blk->spec[i]) {
+//            printf("%d %d %d\n", i, loc[i], blk->spec[i]);
             return FALSE;
+        }
         if (blk->column_use_type[i] && blk->column_sync[i]) {
             clmn_ut = blk->column_use_type[i][_blk_clmn_idx(blk, loc, i)];
             if (box_size == BOX_SIZE_FORTY) {
@@ -224,8 +226,10 @@ bool block_position_is_valid_for_size(Block_TCY *blk, CellIdx_TCY *loc, BoxSize_
                 clmn_ut2 = blk->column_use_type[i][_blk_clmn_idx(blk, loc, i)];
                 loc[blk->box_orientation]--;
             }
-            if (!_compare_usage(box_size, clmn_ut, clmn_ut2))
+            if (!_compare_usage(box_size, clmn_ut, clmn_ut2)) {
+//                printf("%p %d\n", blk->column_use_type[i], blk->column_sync[i]);
                 return FALSE;
+            }
         }
     }
     return TRUE;

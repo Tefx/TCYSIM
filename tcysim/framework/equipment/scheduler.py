@@ -54,6 +54,7 @@ class JobSchedulerBase(Process):
                     self.yard.fire_probe(self.time, 'scheduler.scheduled', request)
                     request.on_scheduled(time)
                 elif self.equipment.state == self.equipment.STATE.IDLE:
+                # else:
                     request = self.on_idle(time)
                     if request:
                         setattr(request, "time", time)

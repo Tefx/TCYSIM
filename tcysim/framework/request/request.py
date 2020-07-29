@@ -93,20 +93,24 @@ class RequestBase(IndexObject, ABC):
         self.signals[name] = CallBack(callback, *args, **kwargs)
 
     def ready(self, time):
-        if self.state == self.STATE.REJECTED:
-            self.state = self.STATE.RESUME_READY
-            self.resume_time = time
-        else:
-            self.state = self.STATE.READY
-            self.ready_time = time
+        if not self.state & self.STATE.READY_FLAG:
+            if self.state == self.STATE.REJECTED:
+                self.state = self.STATE.RESUME_READY
+                self.resume_time = time
+            else:
+                self.state = self.STATE.READY
+                self.ready_time = time
 
-    def ready_and_schedule(self, time):
-        self.ready(time)
+    def schedule(self, time):
         if self.equipment:
             self.equipment.job_scheduler.schedule(time)
         else:
             for equipment in self.block.equipments:
                 equipment.job_scheduler.schedule(time)
+
+    def ready_and_schedule(self, time):
+        self.ready(time)
+        self.schedule(time)
 
     def is_ready_for(self, equipment):
         return self.state & self.STATE.READY_FLAG
@@ -162,6 +166,7 @@ class RequestBase(IndexObject, ABC):
                 if fle(TIME_FOREVER, next_time):
                     next_time = min(e.next_event_time() for e in self.block.equipments)
                     if fle(TIME_FOREVER, next_time):
+                        # next_time = env.next_event_time()
                         for equipment in self.block.yard.equipments:
                             next_time = min(next_time, equipment.next_event_time())
         else:
@@ -170,11 +175,13 @@ class RequestBase(IndexObject, ABC):
                 if fle(TIME_FOREVER, next_time):
                     next_time = min(e.next_event_time() for e in self.block.equipments)
                     if fle(TIME_FOREVER, next_time):
+                        # next_time = env.next_event_time()
                         for equipment in self.block.yard.equipments:
                             next_time = min(next_time, equipment.next_event_time())
             elif self.block is not None:
                 next_time = min(eqp.next_event_time() for eqp in self.block.equipments)
                 if fle(TIME_FOREVER, next_time):
+                    # next_time = env.next_event_time()
                     for equipment in self.block.yard.equipments:
                         next_time = min(next_time, equipment.next_event_time())
             else:

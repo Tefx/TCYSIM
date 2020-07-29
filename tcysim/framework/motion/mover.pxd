@@ -1,9 +1,9 @@
 from .motion cimport Motion
 
 cdef class Spec:
-    cdef double v
-    cdef double a
-    cdef double d
+    cdef readonly double v
+    cdef readonly double a
+    cdef readonly double d
     cdef double _cache_w0
     cdef double _cache_w1
 

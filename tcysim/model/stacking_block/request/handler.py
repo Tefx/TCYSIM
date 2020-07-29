@@ -91,7 +91,7 @@ class ReqHandlerForStackingBlock(ReqHandlerBase):
     def on_store_start(self, time, request):
         # pass
         box = request.box
-        box.start_store()
+        box.start_store(time)
         # request.block.boxes.add(box)
 
     def on_store_finish_or_fail(self, time, request):
@@ -124,7 +124,7 @@ class ReqHandlerForStackingBlock(ReqHandlerBase):
 
     def on_retrieve_on_agv(self, time, request):
         box = request.box
-        box.finish_retrieve()
+        box.finish_retrieve(time)
         box.equipment = None
         # request.sync(time)
 

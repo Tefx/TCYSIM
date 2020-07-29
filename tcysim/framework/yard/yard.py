@@ -80,16 +80,17 @@ class YardBase(ABC):
     def get_access_point(self, block: Block, lane: Lane, request) -> Optional[AccessPoint]:
         return None
 
-    def submit(self, time, block, lane, request):
+    def submit(self, time, block, lane, request, skip_queue=False):
         ap = self.get_access_point(block, lane, request)
         if ap is None:
             request.submit(time)
         else:
-            ap.submit(time, request)
+            ap.submit(time, request, skip_queue)
 
-    def store(self, time, box, lane):
-        request = box.block.new_request("STORE", time, box, lane=lane)
-        self.submit(time, box.block, lane, request)
+    def store(self, time, box, lane, skip_queue=False, **kwargs):
+        request = box.block.new_request("STORE", time, box, lane=lane, **kwargs)
+        self.submit(time, box.block, lane, request, skip_queue)
+        return request
         # ap = self.get_access_point(box.block, lane)
         # if ap is None:
         #     request.submit(time)
@@ -97,9 +98,10 @@ class YardBase(ABC):
         #     ap.submit(time, request)
         # return request
 
-    def retrieve(self, time, box, lane):
-        request = box.block.new_request("RETRIEVE", time, box, lane=lane)
-        self.submit(time, box.block, lane, request)
+    def retrieve(self, time, box, lane, skip_queue=False, **kwargs):
+        request = box.block.new_request("RETRIEVE", time, box, lane=lane, **kwargs)
+        self.submit(time, box.block, lane, request, skip_queue)
+        return request
         # ap = self.get_access_point(box.block, lane)
         # if ap is None:
         #     request.submit(time)

@@ -144,8 +144,8 @@ class OperationBase(OperationABC):
     def fire_probe(self, probe_name, *args, probe_reason=EventReason.PROBE_ACTION, **kwargs):
         return ProbeStep(probe_name, args, kwargs, probe_reason)
 
-    # def wait(self, time):
-    #     return EmptyStep(self.equipment.components[0], time)
+    def wait(self, time):
+        return EmptyStep(self.equipment.components[0], time)
 
     # def sync(self):
     #     return SyncStep(self.request)

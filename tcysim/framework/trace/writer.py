@@ -37,6 +37,7 @@ class TraceWriter(FileTree):
                 Rotate=equipment.rotate,
                 BEDelta=equipment.BoxEquipmentDelta.to_tuple(),
                 PlotInfo=equipment.plot_info(),
+                BoxRotate=equipment.blocks[0].rotate - equipment.rotate
             )
 
         self.dump(self.get_file_w("info"), collection)
