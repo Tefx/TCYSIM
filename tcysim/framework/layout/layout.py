@@ -47,7 +47,7 @@ class LayoutItem:
             return self.coord_l2g(coord)
         else:
             if isclose(self.rotate, other.rotate, abs_tol=1e-3):
-                assert coord + other.coord_g2l(self.offset) == other.coord_g2l(self.coord_l2g(coord))
+                # assert coord + other.coord_g2l(self.offset) == other.coord_g2l(self.coord_l2g(coord))
                 return coord + other.coord_g2l(self.offset)
                 # return coord - self.coord_g2l(other.offset)
             else:

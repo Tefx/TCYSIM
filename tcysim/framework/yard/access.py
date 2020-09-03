@@ -14,6 +14,7 @@ class AccessPoint(Process):
         self.queue = deque()
         self.entry_time = entry_time
         self.state = APState.IDLE
+        self.req = None
         super(AccessPoint, self).__init__(env)
 
     def _wait(self):
@@ -27,11 +28,10 @@ class AccessPoint(Process):
         self.state = APState.ENTERING
         yield self.time + entry_time, EventReason.REQUEST
         self.state = APState.WORKING
-        req = self.queue[0][0]
-        # print(self.time, self, "START", self.queue[0], self.queue[0][0].box.id)
-        yield from self.handle(self.queue[0][0])
-        # print(self.time, self, "COMPLETE", self.queue[0], self.queue[0][0].box.id, req is self.queue[0])
-        self.queue.popleft()
+        self.req, t = self.queue.popleft()
+        # print(self.time, self, "START", self.req, entry_time, t)
+        yield from self.handle(self.req)
+        # print(self.time, self, "COMPLETE", self.req)
         self.state = APState.IDLE
 
     def handle(self, request):
@@ -48,16 +48,22 @@ class AccessPoint(Process):
 
     def submit(self, time, request, skip_queue):
         # print(self.time, self, "SUBMIT", request, skip_queue, request.box.id)
+        request.ap = self
         if not skip_queue:
-            if self.queue:
-                self.queue.append((request, self.entry_time))
-            else:
-                self.queue.append((request, 0))
+            # if self.queue:
+            self.queue.append((request, self.entry_time))
+            # else:
+            #     self.queue.append((request, 0.1))
             request.submit(self.time, ready=False)
             if self.state is APState.IDLE:
                 self.activate(-1, EventReason.REQUEST)
         else:
+            if self.queue and self.queue[0][1] < self.entry_time:
+                self.queue[0][1] = self.entry_time
             self.queue.appendleft((request, 0))
             request.submit(self.time, ready=True)
             if self.state is not APState.WORKING:
                 self.activate(-1, EventReason.REQUEST)
+            else:
+                import pdb
+                pdb.set_trace()

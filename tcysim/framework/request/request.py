@@ -69,6 +69,7 @@ class RequestBase(IndexObject, ABC):
         self.state = self.STATE.INIT
         self.box = box
         self.equipment = equipment
+        self.ap = None
         if block is not None:
             self.block = block
         elif box is not None:
@@ -148,6 +149,9 @@ class RequestBase(IndexObject, ABC):
     def sync(self, time):
         self.state = self.STATE.SYNCED
         # self.sync_time = time
+
+    def is_running_or_scheduled(self):
+        return self.state & self.STATE.SCHEDULED_FLAG
 
     def is_synced(self):
         return self.state & self.STATE.SYNCED_FLAG and self.sync_time >= 0

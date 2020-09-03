@@ -99,7 +99,7 @@ setup(name="tcysim",
       author_email="zhaomeng.zhu@gmail.com",
       ext_modules=cythonize(extensions,
                             compiler_directives={
-                                "profile":          False,
+                                "profile":          True,
                                 "linetrace":        False,
                                 "cdivision":        True,
                                 "boundscheck":      False,

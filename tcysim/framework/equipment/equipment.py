@@ -32,10 +32,15 @@ class Equipment(EquipmentRangeLayout, Process):
     JobScheduler: Type[JobSchedulerBase] = NotImplemented
 
     BoxEquipmentDelta = V3.zero()
+    _HASH = 0
 
     def __init__(self, yard, offset, rotate=0, init_offset=V3.zero(), name=None, **attrs):
         Process.__init__(self, yard.env)
         EquipmentRangeLayout.__init__(self, offset, rotate)
+
+        self._hash = self.__class__._HASH
+        self.__class__._HASH += 1
+
         self.yard = yard
         self.blocks = []
         self.num_blocks = 0
@@ -52,6 +57,7 @@ class Equipment(EquipmentRangeLayout, Process):
         self.op_builder = self.OpBuilder(self)
         self.job_scheduler = self.JobScheduler(self)
         self.last_running_time = -1
+        self.last_working_time = -1
         self.guess_components()
         self.set_coord(init_offset, glob=False)
 
@@ -209,6 +215,7 @@ class Equipment(EquipmentRangeLayout, Process):
             self.state = self.STATE.WORKING
             self.current_op = op
             yield from op.perform(self.yard)
+            self.last_working_time = self.time
             self.current_op = None
             self.state = self.STATE.IDLE
             self.yard.fire_probe('operation.finish', op)
@@ -257,6 +264,11 @@ class Equipment(EquipmentRangeLayout, Process):
     def is_at_idle_position(self):
         return True
 
+    def idle_time(self, time=-1):
+        if time < 0:
+            time = self.env.time
+        return time - self.last_working_time
+
     def callback_before_grasp(self, time, op):
         pass
 
@@ -277,3 +289,9 @@ class Equipment(EquipmentRangeLayout, Process):
 
     def plot_info(self):
         return None
+
+    def __hash__(self):
+        return self._hash
+
+    def __eq__(self, other):
+        return self is other

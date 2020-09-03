@@ -59,3 +59,6 @@ class Block(BlockLayout, CBlock):
         if ready:
             req.ready(time)
         return req
+
+    def __repr__(self):
+        return "<{}>#{}".format(self.__class__.__name__, self.id)

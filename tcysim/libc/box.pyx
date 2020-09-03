@@ -29,8 +29,14 @@ cdef class CBox:
     def __dealloc__(self):
         box_destroy(&self.c)
 
-    def alloc(self, Time_TCY time, block, V3 loc):
+    def alloc(self, Time_TCY time, CBlock block, V3 loc):
         cdef CellIdx_TCY new_loc[3];
+
+        if block is not None:
+            block.hook_before_alloc(self, loc)
+        else:
+            (<CBlock>self.c.block._self).hook_before_alloc(self, loc)
+
         if self.c.state == BOX_STATE_INITIAL:
             self.set_location(block, loc.x, loc.y, loc.z)
             box_alloc(&self.c, time)
@@ -53,6 +59,10 @@ cdef class CBox:
 
     def realloc(self, Time_TCY time, CBlock block, V3 loc):
         cdef CellIdx_TCY new_loc[3];
+
+        (<CBlock>self.c.block._self).hook_before_dealloc(self)
+        block.hook_before_alloc(self, loc)
+
         if self.c.state != BOX_STATE_ALLOCATED:
             raise Exception("Cannot re-alloc a box with state {}".format(self.state))
         else:
@@ -60,6 +70,8 @@ cdef class CBox:
             box_cancel_and_realloc(&self.c, &block.c, new_loc)
 
     def store(self, Time_TCY time):
+        (<CBlock>self.c.block._self).hook_before_store(self)
+
         if self.c.state == BOX_STATE_STORING:
             box_store(&self.c, time)
         elif self.c.state == BOX_STATE_RELOCATING:
@@ -75,6 +87,7 @@ cdef class CBox:
                 *args, BoxState_TCY level=BOX_STATE_STORED):
         if level == BOX_STATE_INITIAL:
             return
+
         self.set_location(block, x, y, z)
         box_alloc(&self.c, time)
         if level >= BOX_STATE_STORED:
@@ -84,6 +97,9 @@ cdef class CBox:
         return self.c._holder_or_origin is not NULL
 
     def retrieve(self, Time_TCY time):
+
+        (<CBlock>self.c.block._self).hook_before_retrieve(self)
+
         if self.c._holder_or_origin:
             box_relocate_retrieve(&self.c, time)
             assert self.c.state == BOX_STATE_RELOCATING

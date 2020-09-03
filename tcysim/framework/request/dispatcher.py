@@ -35,6 +35,9 @@ class ReqPool:
             request.queue = "free"
 
     def pop(self, request):
+        if not hasattr(request, "queue"):
+            import pdb
+            pdb.set_trace()
         if request.queue == "free":
             self.free_pool.remove(request)
         elif isinstance(request.queue, str) or isinstance(request.queue, int):

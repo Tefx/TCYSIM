@@ -14,3 +14,8 @@ cdef class CBlock:
     cpdef array.array all_slot_usage(self, int norm_axis, bint include_occupied=?, array.array avail=?, array.array res=?)
     cpdef array.array all_slot_states(self, int norm_axis, array.array res=?)
     cpdef array.array validate_all_slots(self, int norm_axis, int teu, array.array res=?)
+
+    cpdef hook_before_alloc(self, box, V3 loc)
+    cpdef hook_before_dealloc(self, box)
+    cpdef hook_before_store(self, box)
+    cpdef hook_before_retrieve(self, box)

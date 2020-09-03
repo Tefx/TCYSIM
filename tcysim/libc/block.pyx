@@ -174,3 +174,15 @@ cdef class CBlock:
         cdef CellIdx_TCY pos[3]
         loc.cpy2mem_i(pos)
         return block_is_locked(&self.c, pos)
+
+    cpdef hook_before_alloc(self, box, V3 loc):
+        pass
+
+    cpdef hook_before_dealloc(self, box):
+        pass
+
+    cpdef hook_before_store(self, box):
+        pass
+
+    cpdef hook_before_retrieve(self, box):
+        pass
