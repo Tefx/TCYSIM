@@ -6,6 +6,7 @@ cdef class LoadPredicator:
     cdef dict arr_pools
     cdef dict dep_pools
     cdef IntervalTree itv_tree
+    cdef double min_cycle
 
     cdef double _cal_result
     cdef double _cal_count
@@ -13,10 +14,11 @@ cdef class LoadPredicator:
     cdef double _cal_end
     cdef double _cal_cycle
 
-    def __init__(self, double min_interval=0):
+    def __init__(self, double min_interval=0, double min_cycle_time=180):
         self.arr_pools = {}
         self.dep_pools = {}
         self.itv_tree = IntervalTree(min_interval)
+        self.min_cycle = min_cycle_time
 
         self._cal_result = 1
         self._cal_count = 0
@@ -52,13 +54,19 @@ cdef class LoadPredicator:
     def departure_interval(self, box):
         return self.dep_pools[box.id]
 
-    def probability_of_conflict(self, double start, double end, double min_cycle_time=180):
+    def box_in_arr_record(self, box):
+        return box.id in self.arr_pools
+
+    def box_in_dep_record(self, box):
+        return box.id in self.dep_pools
+
+    def probability_of_conflict(self, double start, double end):
         self._cal_result = 1
         # self._cal_count = 0
         self._cal_start = start
         self._cal_end = end
-        self._cal_cycle = min_cycle_time
-        self.itv_tree.process_overlapped(start - min_cycle_time, end + min_cycle_time, self._calculator)
+        self._cal_cycle = self.min_cycle
+        self.itv_tree.process_overlapped(start - self.min_cycle, end + self.min_cycle, self._calculator)
         return 1 - self._cal_result
 
     # def conflict_info(self, double start, double end, double min_cycle_time=180):

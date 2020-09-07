@@ -42,6 +42,7 @@ cdef extern from "define.h":
         Block_TCY *block
         void*_self
         Box_TCY*_holder_or_origin
+        int64_t _hash
 
     ctypedef Box_TCY *Cell_TCY
 

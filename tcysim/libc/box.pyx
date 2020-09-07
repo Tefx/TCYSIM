@@ -226,3 +226,9 @@ cdef class CBox:
 
     def __repr__(self):
         return "Box[{}'|{}|{}]".format(self.size, self.c.id.decode("utf-8"), self.state)
+
+    def __hash__(self):
+        return self.c._hash
+
+    def __le__(self, CBox other):
+        return self.c._hash < other.c._hash

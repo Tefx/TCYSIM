@@ -10,6 +10,8 @@
 #include "../include/define.h"
 #include "../include/error.h"
 
+int global_count = 0;
+
 static inline void _box_mark_usage(Block_TCY *blk, Box_TCY *box, int delta) {
     for (int i = 0; i < 3; ++i) {
         if (blk->column_use_type[i]) {
@@ -145,6 +147,7 @@ void box_init(Box_TCY *box, char *box_id, BoxSize_TCY size) {
     box->state = BOX_STATE_INITIAL;
     box->alloc_time = box->store_time = box->retrieval_time = TIME_INF;
     box->_holder_or_origin = NULL;
+    box->_hash = global_count++;
 }
 
 void box_destroy(Box_TCY *box) {}

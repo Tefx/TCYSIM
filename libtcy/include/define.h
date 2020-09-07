@@ -70,6 +70,7 @@ typedef struct Box_TCY {
     Block_TCY *block;
     void *_self;
     struct Box_TCY *_holder_or_origin;
+    int64_t _hash;
 } Box_TCY;
 
 typedef Box_TCY *Cell_TCY;

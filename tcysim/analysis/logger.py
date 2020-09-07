@@ -55,13 +55,14 @@ class SingleProcessLogger(SingleLMP):
             dir_path = os.path.split(os.path.abspath(self.fp))[0]
             if not os.path.exists(dir_path):
                 os.makedirs(dir_path)
-            self.fp = open(self.fp, "wb")
+            self.fp = open(self.fp, "wb", buffering=0)
         self.packer = msgpack.Packer()
         if self.columns:
             self.fp.write(self.packer.pack(self.columns))
             # pack(self.columns, self.fp)
         super(SingleProcessLogger, self).run()
         if hasattr(self.fp, "close"):
+            os.fsync(self.fp.fileno())
             self.fp.close()
 
     def write(self, *data):
