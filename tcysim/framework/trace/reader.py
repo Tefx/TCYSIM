@@ -175,7 +175,8 @@ class TraceReader(FileTree):
                     dt = time - t
                     liner_flag = liner_flag and a == 0
                     pos.append(p + v * dt + a * dt * dt / 2)
-            yield time, *pos
+            # yield time, *pos
+            yield [time] + pos
             if time >= end_time:
                 break
             elif liner_flag:

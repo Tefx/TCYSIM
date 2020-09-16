@@ -16,6 +16,12 @@ class YardErrorBase:
         def __str__(self):
             return "{} = {}".format(self.name, self.value)
 
+        def __eq__(self, other):
+            if isinstance(other, self.__class__):
+                return self.value == other.value
+            else:
+                return self.value == other
+
     @classmethod
     def list_errors(cls):
         errors = []

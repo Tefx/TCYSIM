@@ -15,6 +15,9 @@ cdef class Spec:
         self._cache_w0 = v * v * (a + d) / (2 * a * d)
         self._cache_w1 = 2 * a * d / (a + d)
 
+    def __mul__(self, double other):
+        return self.__class__(self.v * other, self.a * other, self.d * other)
+
 cdef class Mover:
     def __init__(self, specs):
         self.curr_v = 0
