@@ -7,6 +7,12 @@ cdef class V3:
     cdef public double y
     cdef public double z
 
+    cpdef V3 clone(V3 self)
+    cpdef V3 add(V3 self, V3 other)
+    cpdef V3 sub(V3 self, V3 other)
+    cpdef V3 iadd(V3 self, V3 other)
+    cpdef V3 isub(V3 self, V3 other)
+
     cpdef V3 iadd1(V3 self, axis, double value)
     cpdef V3 isub1(V3 self, axis, double value)
     cpdef V3 imul1(V3 self, axis, double value)
@@ -34,3 +40,5 @@ cdef class RotateOperator:
     cdef readonly double sinv
     cdef readonly double cosv
 
+cdef class TEU(V3):
+    pass

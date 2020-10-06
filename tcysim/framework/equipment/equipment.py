@@ -13,6 +13,7 @@ from ..layout import EquipmentRangeLayout
 from ..motion import Component
 from ..operation import OpBuilderBase, OperationABC, BlockingOperationBase
 from ..request import ReqHandlerBase, RequestBase
+from ..hash_salt import HashSalt
 
 from uuid import uuid4
 
@@ -28,7 +29,6 @@ class Equipment(EquipmentRangeLayout, Process):
 
     ReqHandler: Type[ReqHandlerBase] = NotImplemented
     OpBuilder: Type[OpBuilderBase] = NotImplemented
-    # JobScheduler: Type[JobScheduler] = JobScheduler
     JobScheduler: Type[JobSchedulerBase] = NotImplemented
 
     BoxEquipmentDelta = V3.zero()
@@ -38,7 +38,8 @@ class Equipment(EquipmentRangeLayout, Process):
         Process.__init__(self, yard.env)
         EquipmentRangeLayout.__init__(self, offset, rotate)
 
-        self._hash = self.__class__._HASH
+        # self._hash = self.__class__._HASH
+        self._hash = hash(HashSalt.Equipment + self.__class__._HASH)
         self.__class__._HASH += 1
 
         self.yard = yard
@@ -87,22 +88,18 @@ class Equipment(EquipmentRangeLayout, Process):
             component.restore_state()
 
     def cal_cur_coord(self, time):
-        self.run_until(self.time)
+        if self.env.started:
+            self.run_until(self.env.time)
         v = V3(0, 0, 0)
         for component in self.components:
             v[component.axis] = component.loc
         return v
 
     def current_coord(self, transform_to=None):
-        v = self._cur_coord.get(self.time)
-        # self.run_until(self.time)
-        # v = V3(0, 0, 0)
-        # for component in self.components:
-        #     v[component.axis] = component.loc
-        return self.transform_to(v, transform_to)
+        return self.transform_to(self._cur_coord.get(self.env.time), transform_to)
 
     def brake_coord(self, modes, transform_to=None):
-        self.run_until(self.time)
+        self.run_until(self.env.time)
         v = V3(0, 0, 0)
         for component in self.components:
             v[component.axis] = component.brake_loc(modes[component.axis])
@@ -200,22 +197,22 @@ class Equipment(EquipmentRangeLayout, Process):
 
     def _wait(self):
         if not self.next_task:
-            op_or_req = self.job_scheduler.on_idle(self.time)
+            op_or_req = self.job_scheduler.on_idle(self.env.time)
             if op_or_req is not None:
                 self.submit_task(op_or_req, from_self=True)
-                return self.time, EventReason.TASK_ARRIVAL
+                return self.env.time, EventReason.TASK_ARRIVAL
             else:
                 return TIME_FOREVER, EventReason.LAST
         else:
             return self.next_task.time, EventReason.TASK_ARRIVAL
 
     def perform_op(self, op, request=None):
-        if op.build_and_check(self.time, self.op_builder):
+        if op.build_and_check(self.env.time, self.op_builder):
             self.yard.fire_probe('operation.start', op)
             self.state = self.STATE.WORKING
             self.current_op = op
             yield from op.perform(self.yard)
-            self.last_working_time = self.time
+            self.last_working_time = self.env.time
             self.current_op = None
             self.state = self.STATE.IDLE
             self.yard.fire_probe('operation.finish', op)
@@ -226,18 +223,18 @@ class Equipment(EquipmentRangeLayout, Process):
                 raise ROREquipmentConflictError(op)
 
     def handle_request(self, request):
-        request.start_or_resume(self.time)
+        request.start_or_resume(self.env.time)
         try:
             self.yard.fire_probe('request.start', request)
-            for op in request.gen_op(self.time):
+            for op in request.gen_op(self.env.time):
                 yield from self.perform_op(op, request)
                 if op.interrupted:
                     break
             self.yard.fire_probe('request.succeed', request)
         except ReqOpRejectionError as e:
-            self.req_handler.on_reject(self.time, e)
+            self.req_handler.on_reject(self.env.time, e)
             self.yard.fire_probe('request.rejected', request)
-        request.finish_or_fail(self.time)
+        request.finish_or_fail(self.env.time)
 
     def check_interference(self, op):
         return False, None, None
@@ -250,8 +247,8 @@ class Equipment(EquipmentRangeLayout, Process):
                 yield from self.handle_request(op_or_req)
             elif isinstance(op_or_req, OperationABC):
                 yield from self.perform_op(op_or_req)
-            self.query_new_task(self.time)
-        yield self.time, EventReason.SCHEDULE.after
+            self.query_new_task(self.env.time)
+        yield self.env.time, EventReason.SCHEDULE.after
 
     def current_tasks(self):
         if self.current_op:

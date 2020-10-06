@@ -6,6 +6,7 @@ from tcysim.utils import V3, V3i
 
 from ..layout import BlockLayout
 from ..request import RequestBase, ReqDispatcher
+from ..hash_salt import HashSalt
 
 
 class Block(BlockLayout, CBlock):
@@ -22,6 +23,8 @@ class Block(BlockLayout, CBlock):
         CBlock.__init__(self, shape, stacking_axis=stacking_axis, sync_axes=sync_axes)
         self.req_dispatcher = self.ReqDispatcherCls(self)
         self.num_equipments = 0
+        # self._hash = self.id
+        self._hash = hash(HashSalt.Block + self.id)
 
     def deploy(self, equipments):
         for equipment in equipments:
@@ -62,3 +65,7 @@ class Block(BlockLayout, CBlock):
 
     def __repr__(self):
         return "<{}>#{}".format(self.__class__.__name__, self.id)
+
+    def __hash__(self):
+        return self._hash
+

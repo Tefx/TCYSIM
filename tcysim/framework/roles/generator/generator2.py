@@ -1,4 +1,4 @@
-from pesim.math_aux import flt
+from pesim.math_aux import flt, feq
 from pesim import MinPairingHeap, MinPairingHeapNode, Process, TIME_FOREVER
 from tcysim.utils.dispatcher import Dispatcher
 from ...event_reason import EventReason
@@ -18,7 +18,8 @@ class GeneratorEvent(MinPairingHeapNode):
         self.args = args
 
     def key_lt(self, other):
-        if self.time == other.time:
+        if feq(self.time, other.time):
+        # if self.time == other.time:
             return self.type.value < other.type.value
         else:
             return flt(self.time, other.time)

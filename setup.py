@@ -50,6 +50,12 @@ extensions = [
         extra_link_args=extra_link_args,
         ),
     Extension(
+        name="tcysim.framework.layout.*",
+        sources=["tcysim/framework/layout/*.pyx"],
+        extra_compile_args=extra_compile_args,
+        extra_link_args=extra_link_args,
+    ),
+    Extension(
         name="tcysim.framework.operation.*",
         sources=["tcysim/framework/operation/*.pyx"],
         extra_compile_args=extra_compile_args,
@@ -71,6 +77,15 @@ extensions = [
         library_dirs=[os.path.abspath(library_dir)],
         include_dirs=[os.path.abspath("libtcy/include")]
         ),
+    Extension(
+        name="tcysim.utils.cache.*",
+        sources=["tcysim/utils/cache/*.pyx"],
+        extra_compile_args=extra_compile_args,
+        extra_link_args=extra_link_args,
+        libraries=["tcy"],
+        library_dirs=[os.path.abspath(library_dir)],
+        include_dirs=[os.path.abspath("libtcy/include")]
+    ),
     Extension(
         name="tcysim.utils.set.*",
         sources=["tcysim/utils/set/*.pyx"],
@@ -99,7 +114,7 @@ setup(name="tcysim",
       author_email="zhaomeng.zhu@gmail.com",
       ext_modules=cythonize(extensions,
                             compiler_directives={
-                                "profile":          True,
+                                "profile":          False,
                                 "linetrace":        False,
                                 "cdivision":        True,
                                 "boundscheck":      False,

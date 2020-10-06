@@ -72,7 +72,9 @@ class ReqDispatcher:
         #     return equipment
 
     def available_requests(self, equipment):
-        return self.pool.available_requests(equipment)
+        for req in self.pool.available_requests(equipment):
+            if req.is_ready_for(equipment):
+                yield req
 
     def pop_request(self, request):
         return self.pool.pop(request)

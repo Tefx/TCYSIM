@@ -127,6 +127,30 @@ cdef class V3:
     def __repr__(V3 self):
         return "V({})".format(", ".join(map("{:.2f}".format, self)))
 
+    def __hash__(self):
+        return hash((self.x, self.y, self.z))
+
+    cpdef V3 clone(V3 self):
+        return V3(self.x, self.y, self.z)
+
+    cpdef V3 add(V3 self, V3 other):
+        return V3(self.x + other.x, self.y + other.y, self.z + other.z)
+
+    cpdef V3 sub(V3 self, V3 other):
+        return V3(self.x - other.x, self.y - other.y, self.z - other.z)
+
+    cpdef V3 iadd(V3 self, V3 other):
+        self.x += other.x
+        self.y += other.y
+        self.z += other.z
+        return self
+
+    cpdef V3 isub(V3 self, V3 other):
+        self.x -= other.x
+        self.y -= other.y
+        self.z -= other.z
+        return self
+
     cpdef V3 iadd1(V3 self, axis, double value):
         cdef int axis_idx = _axis_idx(axis)
         if axis_idx == 0:
