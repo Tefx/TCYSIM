@@ -1,3 +1,5 @@
+from pesim.math_aux cimport _EPSILON
+
 cdef class TimeCache:
     cdef object func
     cdef object _obj
@@ -9,13 +11,13 @@ cdef class TimeCache:
         self.time = -1
 
     def __getitem__(self, double time):
-        if time > self.time + 1e-4:
+        if time > self.time + _EPSILON:
             self.time = time
             self._obj = self.func(time)
         return self._obj
 
     cpdef object get(self, double time):
-        if time > self.time + 1e-4:
+        if time > self.time + _EPSILON:
             self.time = time
             self._obj = self.func(time)
         return self._obj

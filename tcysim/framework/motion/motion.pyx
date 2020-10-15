@@ -1,6 +1,5 @@
 from cython cimport freelist
 
-
 @freelist(1024)
 cdef class Motion:
     def __cinit__(self, double start_time, double timespan, double v, double a, bint allow_interruption):
@@ -28,5 +27,6 @@ cdef class Motion:
     def __repr__(self):
         return "[MTN]({:.3f}/{:.3f}/{:.3f}/{:.3f}[{}])".format(
             self.start_time, self.timespan,
-            self.start_v, self.a, self.allow_interruption)
+            self.start_v, self.a, self.finish_velocity, self.finish_time, self.displacement,
+            self.allow_interruption)
 

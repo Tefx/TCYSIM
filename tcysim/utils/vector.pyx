@@ -1,7 +1,7 @@
 from copy import copy
 
 from libc.math cimport sin, cos, pi, sqrt
-from .math import feq
+from .math cimport feq
 from cython cimport freelist
 
 cdef int _axis_idx(name):

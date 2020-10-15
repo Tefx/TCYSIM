@@ -3,7 +3,8 @@ from math import isclose
 
 import numpy as np
 
-from ...utils.vector cimport V3, TEU, RotateOperator
+from tcysim.utils.math cimport feq
+from tcysim.utils.vector cimport V3, TEU, RotateOperator
 
 
 cdef class LayoutItem:
@@ -60,7 +61,8 @@ cdef class LayoutItem:
                 o = other
             else:
                 o = other.layout
-            if -1e-3 < self.rotate - o.rotate < 1e-3:
+            if feq(self.rotate, o.rotate):
+            # if -1e-3 < self.rotate - o.rotate < 1e-3:
                 return o.coord_g2l(self.offset).iadd(coord)
             else:
                 return o.coord_g2l(self.coord_l2g(coord))
@@ -76,7 +78,8 @@ cdef class LayoutItem:
                 o = other
             else:
                 o = other.layout
-            if -1e-3 < self.rotate - o.rotate < 1e-3:
+            if feq(self.rotate, o.rotate):
+            # if -1e-3 < self.rotate - o.rotate < 1e-3:
                 return o.coord_g2l(self.offset).iadd(coord)
             else:
                 return o.coord_g2l(self.coord_l2g(coord))

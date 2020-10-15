@@ -1,7 +1,7 @@
 from collections import deque
 from libc.math cimport sqrt, fabs
-from pesim.math_aux cimport feq
 
+from tcysim.utils.math cimport feq
 from .motion cimport Motion
 
 cdef class Spec:
@@ -80,11 +80,19 @@ cdef class Mover:
             else:
                 m = m.split(time)
             self.perform_motion(m)
+        self.time = time
         return len(self.pending_motions)
 
     def interrupt(self):
+        cdef Motion m
         if not self.idle() and self.allow_interruption():
-            self.pending_motions.clear()
+            if self.pending_motions:
+                m = self.pending_motions[0]
+                if feq(m.displacement, 0): #clear remaining small velocity
+                    self.loc += m.displacement
+                    self.curr_v = m.finish_velocity
+                    self.curr_a = m.a
+                self.pending_motions.clear()
 
     cdef bint idle(self):
         return not self.pending_motions
@@ -120,23 +128,7 @@ cdef class Mover:
 
         displacement -= self.curr_v * (start_time - self.time)
 
-        # if not feq(start_time, self.time) and not feq(self.curr_v, 0):
-        #     print("EEE", start_time, self.time, self.curr_v, self.curr_v * (start_time - self.time), self.time)
-
-        # cdef bint _do_cache = feq(v0,0)
-        # cdef dict _cache = self._cache[mode]
-        # cdef double cd, ct, cv, ca
-        # cdef int _cache_key = <int>(displacement * 100)
-
-        # if _do_cache:
-        #     print(_cache)
-
         motions = []
-        # if _do_cache and _cache_key in _cache:
-        #     _do_cache = False
-        #     for cd, ct, cv, ca in _cache[_cache_key]:
-        #         motions.append(Motion.__new__(Motion, start_time + cd, ct, cv, ca, allow_interruption))
-        # else:
         if v0 > 0 and displacement < v0 * v0 / (2 * d):
             t0 = v0 / d
             s0 = v0 * t0 - 0.5 * d * t0 * t0
@@ -197,12 +189,6 @@ cdef class Mover:
             self.curr_a = 0
             self.time = m.finish_time
             st = m.finish_time
-
-            # if _do_cache:
-            #     _cache[_cache_key] = [(m.start_time - start_time, m.timespan, m.start_v, m.a) for m in motions]
-
-        # if v0 > 1e-6:
-        #     print("V", start_time, motions)
 
         return st - start_time, motions
 
