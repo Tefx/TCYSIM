@@ -14,6 +14,7 @@ from ..allocator import SpaceAllocatorBase
 
 class YardBase(ABC):
     SpaceAllocatorCls: Type[SpaceAllocatorBase] = NotImplemented
+    CALLBACK_DEBUG = False
 
     def __init__(self):
         self.env = Environment()
@@ -21,7 +22,7 @@ class YardBase(ABC):
         self.equipments = []
 
         self.smgr = self.SpaceAllocatorCls(self)
-        self.cmgr = CallBackManager(self)
+        self.cmgr = CallBackManager(self, debug=self.CALLBACK_DEBUG)
         self.probe_mgr = ProbeManager(self)
 
         self.roles = Roles()
