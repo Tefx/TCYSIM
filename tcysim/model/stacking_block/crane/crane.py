@@ -21,8 +21,9 @@ class CraneBase(Equipment):
     trolley_spec: Spec= NotImplemented
     hoist_spec: Spec= NotImplemented
 
-    GRASP_TIME: float = 6
-    RELEASE_TIME: float = 6
+    GRASP_TIME: float = NotImplemented
+    RELEASE_TIME: float = NotImplemented
+    AIMING_TIME: float = NotImplemented
 
     BoxEquipmentDelta = V3(0, 0, -TEU.HEIGHT/2)
 
