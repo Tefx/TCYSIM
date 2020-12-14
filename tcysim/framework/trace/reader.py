@@ -218,6 +218,8 @@ class TraceReader(FileTree):
     def build_script(self, block_ids, start_time=0, end_time=TIME_FOREVER, speedup=10, fps=24, to_global=True):
         if block_ids is None:
             block_ids = list(self.basic_info["Block"].keys())
+        else:
+            block_ids = [b for b in block_ids if b in self.basic_info["Block"]]
         interval = speedup / fps
         equipment_names = set()
         block_info = {}
@@ -280,6 +282,8 @@ class TraceReader(FileTree):
     def build_script2(self, block_ids, start_time=0, end_time=TIME_FOREVER, speedup=10, fps=24, to_global=True):
         if block_ids is None:
             block_ids = list(self.basic_info["Block"].keys())
+        else:
+            block_ids = [b for b in block_ids if b in self.basic_info["Block"]]
         interval = speedup / fps
         equipment_names = set()
         block_info = {}

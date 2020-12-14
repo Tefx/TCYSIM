@@ -16,10 +16,12 @@ cdef class Mover:
     cdef readonly object pending_motions
     cdef public double loc
     cdef readonly double time
-    cdef dict specs
+    cdef readonly dict specs
+    cdef readonly int axis
 
     cdef void perform_motion(self, Motion m)
     cdef bint idle(self)
     cpdef bint allow_interruption(self)
-    cpdef void commit_motions(self, motions)
     cdef tuple create_motions(self, double start_time, double displacement, bint allow_interruption, mode=?)
+    cpdef void commit_motions(self, motions)
+    cpdef void commit_motion(self, Motion motion)

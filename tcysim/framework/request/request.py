@@ -48,6 +48,8 @@ class RequestBase(IndexObject, ABC):
     TYPE: Type[Enum] = NotImplemented
     STATE: Type[Flag] = ReqState
 
+    gid = 0
+
     def __init__(self, req_type, time,
                  box=None,
                  equipment=None,
@@ -57,7 +59,8 @@ class RequestBase(IndexObject, ABC):
                  **attrs):
         super(RequestBase, self).__init__()
         self.req_type = req_type
-        self.id = -1
+        self.id = RequestBase.gid
+        RequestBase.gid += 1
         self.create_time = time
         self.ready_time = -1
         self.start_time = -1

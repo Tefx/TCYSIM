@@ -71,6 +71,7 @@ class Equipment(EquipmentRangeLayout, Process):
             if isinstance(v, Component):
                 v = copy(v)
                 setattr(self, k, v)
+                v.name = k
                 self.components.append(v)
 
     def instance_name(self):

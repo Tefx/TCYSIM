@@ -19,7 +19,7 @@ cdef class Spec:
         return self.__class__(self.v * other, self.a * other, self.d * other)
 
 cdef class Mover:
-    def __init__(self, specs):
+    def __init__(self, specs, int axis):
         self.curr_v = 0
         self.curr_a = 0
         self._state_curr_v = 0
@@ -28,6 +28,7 @@ cdef class Mover:
         self.pending_motions = deque()
         self.loc = 0
         self.time = -1
+        self.axis = axis
 
         if isinstance(specs, dict):
             self.specs = specs
@@ -78,6 +79,9 @@ cdef class Mover:
             if m.finish_time <= time:
                 m = self.pending_motions.popleft()
             else:
+                if m.orig:
+                    m = m.copy()
+                    self.pending_motions[0] = m
                 m = m.split(time)
             self.perform_motion(m)
         self.time = time
@@ -132,7 +136,7 @@ cdef class Mover:
         if v0 > 0 and displacement < v0 * v0 / (2 * d):
             t0 = v0 / d
             s0 = v0 * t0 - 0.5 * d * t0 * t0
-            m = Motion.__new__(Motion, st, t0, v0, -d, allow_interruption)
+            m = Motion.__new__(Motion, st, t0, v0, -d, mode, allow_interruption)
             motions.append(m)
             displacement -= s0
             v0 = 0
@@ -140,7 +144,7 @@ cdef class Mover:
         elif v0 < 0 and displacement > -v0 * v0 / (2 * d):
             t0 = -v0 / d
             s0 = -v0 * t0 - 0.5 * d * t0 * t0
-            m = Motion.__new__(Motion, st, t0, v0, d, allow_interruption)
+            m = Motion.__new__(Motion, st, t0, v0, d, mode, allow_interruption)
             motions.append(m)
             displacement += s0
             v0 = 0
@@ -158,15 +162,15 @@ cdef class Mover:
             t1 = distance / vm - vm / w1 + v0 * v0 / (2 * a * vm)
             t2 = vm / d
             if t0 > 0:
-                m = Motion.__new__(Motion, st, t0, v0 * dflg, a * dflg, allow_interruption)
+                m = Motion.__new__(Motion, st, t0, v0 * dflg, a * dflg, mode, allow_interruption)
                 motions.append(m)
                 st += t0
             if t1 > 0:
-                m = Motion.__new__(Motion, st, t1, vm * dflg, 0, allow_interruption)
+                m = Motion.__new__(Motion, st, t1, vm * dflg, 0, mode, allow_interruption)
                 motions.append(m)
                 st += t1
             if t2 > 0:
-                m = Motion.__new__(Motion, st, t2, vm * dflg, -d * dflg, allow_interruption)
+                m = Motion.__new__(Motion, st, t2, vm * dflg, -d * dflg, mode, allow_interruption)
                 motions.append(m)
                 st += t2
         elif distance >= v0 * v0 / (2 * d):
@@ -174,11 +178,11 @@ cdef class Mover:
             t0 = (vx - v0) / a
             t1 = vx / d
             if t0 > 0:
-                m = Motion.__new__(Motion, st, t0, v0 * dflg, a * dflg, allow_interruption)
+                m = Motion.__new__(Motion, st, t0, v0 * dflg, a * dflg, mode, allow_interruption)
                 motions.append(m)
                 st += t0
             if t1 > 0:
-                m = Motion.__new__(Motion, st, t1, vx * dflg, -d * dflg, allow_interruption)
+                m = Motion.__new__(Motion, st, t1, vx * dflg, -d * dflg, mode, allow_interruption)
                 motions.append(m)
                 st += t1
 
@@ -194,3 +198,6 @@ cdef class Mover:
 
     cpdef void commit_motions(self, motions):
         self.pending_motions.extend(motions)
+
+    cpdef void commit_motion(self, Motion motion):
+        self.pending_motions.append(motion)

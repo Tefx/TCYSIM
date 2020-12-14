@@ -105,7 +105,7 @@ cdef class PeriodStep(StepBase):
             self.cal_start_time(op, est)
             self.finish_time = self.start_time + self.time
             self.next_time = self.finish_time
-            self.motion = Motion(self.start_time, self.time, 0, 0, allow_interruption=False)
+            self.motion = Motion(self.start_time, self.time, 0, 0, None, allow_interruption=False)
         self.executed = True
 
     cdef void commit(PeriodStep self, yard, object op):
@@ -270,6 +270,7 @@ cdef class MoverStep(StepBase):
         self.executed = True
 
     cdef void commit(self, yard, object op):
+        cdef Motion m
         if not self.committed and self.start_time != self.finish_time:
             self.mover.commit_motions(self.motions)
         self.committed = True
@@ -425,3 +426,21 @@ cdef class StepWorkflow:
             return start_time, self.start_position.to_tuple(), motions
         else:
             return None
+
+    def iter_component_moves(self, double end_time):
+        cdef int axis
+        cdef StepBase step
+        cdef MoverStep tmp
+        cdef float dis
+        cdef Motion m
+        # print(">>", end_time)
+        for step in self.steps:
+            if isinstance(step, MoverStep):
+                tmp = (<MoverStep> step)
+                for m in tmp.motions:
+                    if m.start_time >= end_time:
+                        continue
+                    else:
+                        if m.finish_time > end_time:
+                            m = m.split(end_time)
+                        yield tmp.mover, tmp.mode, m.distance(), m.timespan

@@ -22,8 +22,10 @@ class OpState(IntEnum):
     CANCELLED = auto()
 
 
+
 class OperationABC(ABC):
     STATE: Type[IntEnum] = OpState
+    gid = 0
 
     def __init__(self, equipment, **attrs):
         self.state = self.STATE.INIT
@@ -35,6 +37,8 @@ class OperationABC(ABC):
         self.detach_pos = None
         self.interrupted = False
         self.equipment = equipment
+        self.id = OperationABC.gid
+        OperationABC.gid += 1
         self.__dict__.update(attrs)
 
     def build_and_check(self, time, builder):
@@ -188,6 +192,29 @@ class OperationBase(OperationABC):
 
     def dump(self):
         return self.workflow.dump(self.start_time)
+
+    # @property
+    # def distance(self):
+    #     return self.workflow.distance()
+    #
+    # @property
+    # def moving_time(self):
+    #     return self.workflow.moving_time()
+
+    def iter_component_moves(self):
+        res_d = {}
+        res_t = {}
+        for mover, mode, dis, time in self.workflow.iter_component_moves(self.equipment.time):
+            key = mover, mode
+            if key not in res_d:
+                res_d[key] = dis
+                res_t[key]= time
+            else:
+                res_d[key] += dis
+                res_t[key] += time
+        for key in res_d.keys():
+            mover, mode = key
+            yield mover, mode, res_d[key], res_t[key]
 
 
 class BlockingOperationBase(OperationABC):
