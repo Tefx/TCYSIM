@@ -43,13 +43,15 @@ class PlotItem:
 
 
 class PlotSet:
-    def __init__(self, yard_size_x, yard_size_y):
+    def __init__(self, yard_size_x, yard_size_y, reverse_x=False, reverse_y=False):
         self.max_x = yard_size_x
         self.max_y = yard_size_y
         self.items = {}
         self.xs = None
         self.ys = None
         self.built = False
+        self.reverse_x = reverse_x
+        self.reverse_y = reverse_y
 
     def add_item(self, idx, layout_item: LayoutItem, frame=False, precision_digital=2):
         self.items[idx] = PlotItem(layout_item, frame, precision_digital)
@@ -83,6 +85,10 @@ class PlotSet:
         fig = go.Figure()
         fig.update_xaxes(range=(0, self.max_x), showgrid=False)
         fig.update_yaxes(range=(0, self.max_y), showgrid=False)
+        if self.reverse_x:
+            fig.update_xaxes(autorange="reversed")
+        if self.reverse_y:
+            fig.update_yaxes(autorange="reversed")
 
         all_frame = False
         if data is not None:
