@@ -124,6 +124,9 @@ cdef class V3:
     def __copy__(V3 self):
         return V3(self.x, self.y, self.z)
 
+    def __deepcopy__(self, memodict={}):
+        return V3(self.x, self.y, self.z)
+
     def __repr__(V3 self):
         return "V({})".format(", ".join(map("{:.2f}".format, self)))
 
@@ -279,6 +282,12 @@ cdef class V3:
 
     def as_ints(self):
         return <int32_t>self.x, <int32_t>self.y, <int32_t>self.z
+
+    def l2g(self, g_offset, g_rotate):
+        return self.rotate(RotateOperator(g_rotate)).iadd(g_offset)
+
+    def g2l(self, g_offset, g_rotate):
+        return self.sub(g_offset).rotate(RotateOperator(-g_rotate)).iadd(g_offset)
 
 cdef class V3i(V3):
     def __getitem__(self, int item):

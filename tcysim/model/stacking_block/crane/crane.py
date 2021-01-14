@@ -28,6 +28,7 @@ class CraneBase(Equipment):
     BoxEquipmentDelta = V3(0, 0, -TEU.HEIGHT/2)
 
     def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
         cls.gantry = Component(axis="x", specs=cls.gantry_spec, may_interfere=True, name="gantry")
         cls.trolley = Component(axis="y", specs=cls.trolley_spec, name="gantry")
         cls.hoist = Component(axis="z", specs=cls.hoist_spec, max_height=cls.hoist_max_height, name="gantry")

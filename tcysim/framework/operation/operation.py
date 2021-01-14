@@ -160,6 +160,16 @@ class OperationBase(OperationABC):
     def release(self, time, pos, sync=False):
         return ReleaseStep(self.equipment.components[0], time, pos, sync)
 
+    def grasp2(self, time, sync=False):
+        equipment = self.equipment
+        pos = equipment.current_coord() + equipment.BoxEquipmentDelta
+        return GraspStep(equipment.components[0], time, pos, sync)
+
+    def release2(self, time, sync=False):
+        equipment = self.equipment
+        pos = equipment.current_coord() + equipment.BoxEquipmentDelta
+        return ReleaseStep(equipment.components[0], time, pos, sync)
+
     def move(self, component, src_loc, dst_loc, mode="default"):
         if isinstance(src_loc, V3):
             src_loc = src_loc[component.axis]
@@ -219,4 +229,5 @@ class OperationBase(OperationABC):
 
 class BlockingOperationBase(OperationABC):
     def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
         cls.op_type = cls.__name__

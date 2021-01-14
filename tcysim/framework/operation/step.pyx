@@ -433,7 +433,6 @@ cdef class StepWorkflow:
         cdef MoverStep tmp
         cdef float dis
         cdef Motion m
-        # print(">>", end_time)
         for step in self.steps:
             if isinstance(step, MoverStep):
                 tmp = (<MoverStep> step)

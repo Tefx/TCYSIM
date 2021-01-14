@@ -108,7 +108,7 @@ extensions = [
 
 setup(name="tcysim",
       packages=find_packages() + ["tcysim.include"],
-      version=0.5,
+      version=0.6,
       setup_requires=["Cython"],
       author="Tefx",
       author_email="zhaomeng.zhu@gmail.com",
