@@ -17,6 +17,12 @@ class AccessPoint(Process):
         self.req = None
         super(AccessPoint, self).__init__(env)
 
+    def __len__(self):
+        if self.state == APState.WORKING:
+            return len(self.queue) + 1
+        else:
+            return len(self.queue)
+
     def _wait(self):
         if self.queue:
             return -1, EventReason.REQUEST

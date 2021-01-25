@@ -59,7 +59,10 @@ cdef class CBlock:
         cdef CellIdx_TCY pos[3]
         loc.cpy2mem_i(pos)
         cdef Box_TCY*box = block_box_at(&self.c, pos)
-        return <object> box._self
+        if box == NULL:
+            return None
+        else:
+            return <object> box._self
 
     cpdef object top_box(self, V3 loc, int along):
         cdef CellIdx_TCY pos[3]

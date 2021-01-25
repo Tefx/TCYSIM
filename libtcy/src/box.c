@@ -220,13 +220,16 @@ int box_retrieve(Box_TCY *box, Time_TCY time) {
     return SUCCEED;
 }
 
-int box_place_holder(Box_TCY *box, CellIdx_TCY *new_loc) {
+int box_place_holder(Box_TCY *box, Block_TCY *block, CellIdx_TCY *new_loc) {
     Box_TCY *holder = (Box_TCY *) malloc(sizeof(Box_TCY));
     memcpy(holder, box, sizeof(Box_TCY));
     holder->state = BOX_STATE_PLACEHOLDER;
     holder->_holder_or_origin = box;
 
     int res;
+    if (block) {
+        holder->block = block;
+    }
     if (new_loc) {
         memcpy(holder->loc, new_loc, sizeof(CellIdx_TCY) * 3);
         if ((res = box_alloc(holder, -1)) != SUCCEED)
@@ -273,7 +276,7 @@ int box_cancel_and_realloc(Box_TCY* box, Block_TCY *blk, CellIdx_TCY* new_loc){
 }
 
 int box_realloc(Box_TCY *box, Time_TCY time, CellIdx_TCY *new_loc) {
-    box_place_holder(box, NULL);
+    box_place_holder(box, NULL, NULL);
 
     memcpy(box->loc, new_loc, sizeof(CellIdx_TCY) * 3);
     int res = box_alloc(box, -1);
@@ -284,8 +287,8 @@ void box_relocate_position(Box_TCY *box, CellIdx_TCY *loc) {
     box_store_position(box->_holder_or_origin, loc, 0);
 }
 
-int box_relocate_alloc(Box_TCY *box, Time_TCY time, CellIdx_TCY *new_loc) {
-    return box_place_holder(box, new_loc);
+int box_relocate_alloc(Box_TCY *box, Time_TCY time, Block_TCY * block, CellIdx_TCY *new_loc) {
+    return box_place_holder(box, block, new_loc);
 }
 
 int box_relocate_retrieve(Box_TCY *box, Time_TCY time) {
@@ -302,6 +305,7 @@ int box_relocate_retrieve(Box_TCY *box, Time_TCY time) {
 int box_relocate_store(Box_TCY *box, Time_TCY time) {
     assert(box->_holder_or_origin);
     memcpy(box->loc, box->_holder_or_origin->loc, sizeof(CellIdx_TCY) * 3);
+    box->block = box->_holder_or_origin->block;
     box_remove_holder(box);
     box_alloc(box, -1);
     return box_store(box, -1);

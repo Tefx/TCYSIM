@@ -49,12 +49,16 @@ cdef class CBox:
         elif self.c.state == BOX_STATE_STORED:
             if not self.c._holder_or_origin:
                 loc.cpy2mem_i(new_loc)
-                box_relocate_alloc(&self.c, time, new_loc)
+                if block is not None:
+                    box_relocate_alloc(&self.c, time, &block.c, new_loc)
+                else:
+                    box_relocate_alloc(&self.c, time, self.c.block, new_loc)
         elif self.c.state == BOX_STATE_RETRIEVING:
             self.set_location(block, loc.x, loc.y, loc.z)
             box_alloc(&self.c, time)
             self.c.state = BOX_STATE_RETRIEVING
         else:
+            print(self, self.c.state, block, loc)
             raise NotImplementedError
 
     def realloc(self, Time_TCY time, CBlock block, V3 loc):
@@ -206,9 +210,12 @@ cdef class CBox:
     def position_is_valid(self, CBlock block, V3 loc):
         return block.position_is_valid_for_size(loc[0], loc[1], loc[2], self.teu)
 
-    def store_coord(self, V3 loc=None, transform_to=None):
+    def store_coord(self, V3 loc=None, CBlock block=None, transform_to=None):
         cdef V3i idx = self.store_position(loc)
-        return self.block.coord_from_cell_idx(idx, self.teu, transform_to)
+        if block is not None:
+            return block.coord_from_cell_idx(idx, self.teu, transform_to)
+        else:
+            return self.block.coord_from_cell_idx(idx, self.teu, transform_to)
 
     def access_coord(self, lane, transform_to=None):
         return self.block.access_coord(lane, self, transform_to)

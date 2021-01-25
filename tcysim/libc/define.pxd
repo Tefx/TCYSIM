@@ -72,7 +72,7 @@ cdef extern from "box.h":
     int box_cancel_and_realloc(Box_TCY* box, Block_TCY *blk, CellIdx_TCY* new_loc)
     int box_realloc(Box_TCY *box, Time_TCY time, CellIdx_TCY *new_loc)
     void box_relocate_position(Box_TCY *box, CellIdx_TCY *loc)
-    int box_relocate_alloc(Box_TCY *box, Time_TCY time, CellIdx_TCY *new_loc)
+    int box_relocate_alloc(Box_TCY *box, Time_TCY time, Block_TCY* blk, CellIdx_TCY *new_loc)
     int box_relocate_retrieve(Box_TCY *box, Time_TCY time)
     int box_relocate_store(Box_TCY *box, Time_TCY time)
 
