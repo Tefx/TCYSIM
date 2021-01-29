@@ -21,7 +21,8 @@ class DispatchFunc:
 
 
 class Dispatcher:
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
+        super(Dispatcher, self).__init__(*args, **kwargs)
         self._methods = {}
         for item_name in dir(self):
             item = getattr(self, item_name)
@@ -33,19 +34,19 @@ class Dispatcher:
                 setattr(self, item_name, item)
                 self._methods[item.method][item.category] = item
 
-    def dispatch(self, category, method="_", *args, **kwargs):
-        if self is not self._methods[method][category].obj:
-            print(self, self._methods[method][category].obj)
-            if hasattr(self, "equipment"):
-                print(self.equipment.blocks[0].id, self.equipment.idx)
-                obj = self._methods[method][category].obj
-                print(obj.equipment.blocks[0].id, obj.equipment.idx)
+    def dispatch(self, category, method, *args, **kwargs):
         assert self is self._methods[method][category].obj
         return self._methods[method][category](*args, **kwargs)
+
+    def dispatch_if_registered(self, category, method, default_func, *args, **kwargs):
+        if method in self._methods:
+            if category in self._methods[method]:
+                return self._methods[method][category](*args, **kwargs)
+        if default_func is not None:
+            return default_func(*args, **kwargs)
 
     @staticmethod
     def on(category, method="_"):
         def wrapper(func):
             return DispatchFunc(func, category, method)
-
         return wrapper

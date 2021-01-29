@@ -27,16 +27,21 @@ class OperationABC(ABC):
     STATE: Type[IntEnum] = OpState
     gid = 0
 
-    def __init__(self, equipment, **attrs):
+    def __init__(self, request_or_equipment, **attrs):
+        if isinstance(request_or_equipment, RequestBase):
+            self.request = request_or_equipment
+            self.equipment = request_or_equipment.equipment
+        else:
+            self.request = None
+            self.equipment = request_or_equipment
         self.state = self.STATE.INIT
         self.start_time = -1
-        self.finish_Time = -1
+        self.finish_time = -1
         self.attach_time = -1
         self.detach_time = -1
         self.attach_pos = None
         self.detach_pos = None
         self.interrupted = False
-        self.equipment = equipment
         self.id = OperationABC.gid
         OperationABC.gid += 1
         self.__dict__.update(attrs)
@@ -68,12 +73,7 @@ class OperationBase(OperationABC):
     TYPE: Type[Enum] = NotImplementedError
 
     def __init__(self, type, request_or_equipment, box=None, **attrs):
-        if isinstance(request_or_equipment, RequestBase):
-            self.request = request_or_equipment
-            equipment = request_or_equipment.equipment
-        else:
-            self.request = None
-            equipment = request_or_equipment
+        super(OperationBase, self).__init__(request_or_equipment, **attrs)
         self.box = box
         self.op_type = type
         self.workflow = StepWorkflow()
@@ -81,7 +81,6 @@ class OperationBase(OperationABC):
         self._pps = {}
         self.paths = {}
         self.start_coord = None
-        super(OperationBase, self).__init__(equipment, **attrs)
 
     def check_interference(self):
         itf, other, new_loc = self.equipment.check_interference(self)

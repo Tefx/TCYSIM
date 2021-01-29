@@ -125,6 +125,8 @@ int block_usage(Block_TCY *blk, const CellIdx_TCY *loc, bool include_occupied) {
         for (int i = 0; i < 3; ++i)
             if (loc[i] < 0) {
                 count = usages[i][_blk_clmn_idx(blk, loc, i)];
+                if (count < 0)
+                    printf("(%d, %d, %d) %d %d\n", loc[0], loc[1], loc[2], i, include_occupied);
                 assert(count >= 0);
                 break;
             }

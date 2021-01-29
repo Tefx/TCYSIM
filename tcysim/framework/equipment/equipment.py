@@ -7,6 +7,7 @@ from pesim import Process, TIME_FOREVER
 from tcysim.utils import V3
 from tcysim.utils.cache import TimeCache
 from .scheduler import JobSchedulerBase
+from ..operation import OperationBase
 from ..event_reason import EventReason
 from ..exception.handling import ROREquipmentConflictError, ReqOpRejectionError
 from ..layout import EquipmentRangeLayout
@@ -196,6 +197,9 @@ class Equipment(EquipmentRangeLayout, Process):
         if self.next_task is None:
             self.job_scheduler.schedule(time)
 
+    def schedule(self, time):
+        self.job_scheduler.schedule(time)
+
     def _wait(self):
         if not self.next_task:
             op_or_req = self.job_scheduler.on_idle(self.env.time)
@@ -228,6 +232,8 @@ class Equipment(EquipmentRangeLayout, Process):
         try:
             self.yard.fire_probe('request.start', request)
             for op in request.gen_op(self.env.time):
+                if op.request is None:
+                    op.request = request
                 yield from self.perform_op(op, request)
                 if op.interrupted:
                     break

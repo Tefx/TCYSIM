@@ -257,8 +257,9 @@ int box_remove_holder(Box_TCY *box) {
     return SUCCEED;
 }
 
-int box_cancel_alloc(Box_TCY* box){
-    if (box->state != BOX_STATE_ALLOCATED)
+int box_cancel_alloc(Box_TCY *box) {
+    if (box->state != BOX_STATE_ALLOCATED &&
+        box->state != BOX_STATE_STORING)
         return ERROR_BOX_ALREADY_STORED;
     struct Block_TCY *blk = box->block;
     _box_adjust_and_mark_usage(blk, box, -1, TRUE);
@@ -266,28 +267,31 @@ int box_cancel_alloc(Box_TCY* box){
     return SUCCEED;
 }
 
-int box_cancel_and_realloc(Box_TCY* box, Block_TCY *blk, CellIdx_TCY* new_loc){
+int box_cancel_and_realloc(Box_TCY *box, Block_TCY *blk, CellIdx_TCY *new_loc) {
     int res;
-    if ((res=box_cancel_alloc(box)) != SUCCEED)
+    if ((res = box_cancel_alloc(box)) != SUCCEED)
         return res;
     box->block = blk;
     memcpy(box->loc, new_loc, sizeof(CellIdx_TCY) * 3);
     return box_alloc(box, -1);
 }
 
-int box_realloc(Box_TCY *box, Time_TCY time, CellIdx_TCY *new_loc) {
+int box_realloc(Box_TCY *box, Time_TCY time, Block_TCY *blk, CellIdx_TCY *new_loc) {
     box_place_holder(box, NULL, NULL);
 
+    if (blk)
+        box->block = blk;
     memcpy(box->loc, new_loc, sizeof(CellIdx_TCY) * 3);
     int res = box_alloc(box, -1);
     return res;
 }
 
-void box_relocate_position(Box_TCY *box, CellIdx_TCY *loc) {
+void box_relocate_position(Box_TCY *box, Block_TCY **block, CellIdx_TCY *loc) {
     box_store_position(box->_holder_or_origin, loc, 0);
+    *block = box->_holder_or_origin->block;
 }
 
-int box_relocate_alloc(Box_TCY *box, Time_TCY time, Block_TCY * block, CellIdx_TCY *new_loc) {
+int box_relocate_alloc(Box_TCY *box, Time_TCY time, Block_TCY *block, CellIdx_TCY *new_loc) {
     return box_place_holder(box, block, new_loc);
 }
 

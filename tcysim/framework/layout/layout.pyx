@@ -100,7 +100,7 @@ class ItemWithAnchors:
         if self.__anchors is None:
             self.__anchors = {}
         self.__anchors[name] = anchor
-        
+
     def get_anchor(self, name, transform_to=None):
         cdef V3 anchor
         if self.__anchors is not None and name in self.__anchors:
@@ -109,10 +109,10 @@ class ItemWithAnchors:
             if self.ANCHORS is not None and name in self.ANCHORS:
                 anchor = self.ANCHORS[name]
             else:
-                 for base_class in inspect.getmro(self.__class__):
-                     anchors = base_class.__dict__.get("ANCHORS", None)
-                     if anchors is not None:
-                         anchor = anchors[name]
+                for base_class in inspect.getmro(self.__class__):
+                    anchors = base_class.__dict__.get("ANCHORS", None)
+                    if anchors is not None:
+                        anchor = anchors[name]
         return self.transform_to(anchor, transform_to)
 
 
@@ -241,10 +241,13 @@ class BlockLayout(LayoutHolder, ItemWithAnchors, ConfigurableABC):
 
     def coord_from_cell_idx(self, cell_idx, box_teu=1, transform_to=None):
         i, j, k = cell_idx
+        cell = self._cells[i, j, k]
+        if cell is None:
+            raise ValueError("not cell at {}".format(cell_idx))
         if box_teu == 1:
-            coord = self._cells[i, j, k].center_coord(transform_to=self)
+            coord = cell.center_coord(transform_to=self)
         elif box_teu == 2:
-            coord = (self._cells[i, j, k].center_coord(transform_to=self) + self.next_cell(cell_idx).center_coord(
+            coord = (cell.center_coord(transform_to=self) + self.next_cell(cell_idx).center_coord(
                 transform_to=self)) / 2
         else:
             raise NotImplementedError

@@ -26,9 +26,9 @@ DLLEXPORT int box_remove_holder(Box_TCY *box);
 
 DLLEXPORT int box_cancel_and_realloc(Box_TCY* box, Block_TCY *blk, CellIdx_TCY* new_loc);
 
-DLLEXPORT int box_realloc(Box_TCY *box, Time_TCY time, CellIdx_TCY *new_loc);
+DLLEXPORT int box_realloc(Box_TCY *box, Time_TCY time, Block_TCY *blk, CellIdx_TCY *new_loc);
 
-DLLEXPORT void box_relocate_position(Box_TCY *box, CellIdx_TCY *loc);
+DLLEXPORT void box_relocate_position(Box_TCY *box, Block_TCY ** blk, CellIdx_TCY *loc);
 
 DLLEXPORT int box_relocate_alloc(Box_TCY *box, Time_TCY time, Block_TCY* blk, CellIdx_TCY *new_loc);
 

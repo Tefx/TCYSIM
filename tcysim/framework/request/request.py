@@ -44,7 +44,7 @@ class ReqState(Flag):
     READY_FLAG = READY | RESUME_READY | RUNNING_FLAG | FINISHED
 
 
-class RequestBase(IndexObject, ABC):
+class RequestBase(IndexObject):
     TYPE: Type[Enum] = NotImplemented
     STATE: Type[Flag] = ReqState
 
@@ -193,8 +193,8 @@ class RequestBase(IndexObject, ABC):
                         next_time = min(next_time, equipment.next_event_time())
             else:
                 next_time = env.next_event_time()
-        if fle(TIME_FOREVER, next_time):
-            print("Warning: next time is forever!")
+        # if fle(TIME_FOREVER, next_time):
+        #     print("Warning: next time is forever!")
         return next_time
 
 

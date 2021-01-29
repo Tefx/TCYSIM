@@ -35,15 +35,21 @@ cdef class CBox:
         if block is not None:
             block.hook_before_alloc(self, loc)
         else:
+            if self.c.block is NULL:
+                raise ValueError("Block is not assigned: {}".format(self))
             (<CBlock>self.c.block._self).hook_before_alloc(self, loc)
 
         if self.c.state == BOX_STATE_INITIAL:
             self.set_location(block, loc.x, loc.y, loc.z)
             box_alloc(&self.c, time)
-        elif self.c.state == BOX_STATE_ALLOCATED:
+        elif self.c.state == BOX_STATE_ALLOCATED or \
+                self.c.state == BOX_STATE_STORING:
             if not self.c._holder_or_origin:
                 loc.cpy2mem_i(new_loc)
-                box_realloc(&self.c, time, new_loc)
+                if block is not None:
+                    box_realloc(&self.c, time, &block.c, new_loc)
+                else:
+                    box_realloc(&self.c, time, NULL, new_loc)
             else:
                 raise Exception("triple alloc")
         elif self.c.state == BOX_STATE_STORED:
@@ -64,16 +70,23 @@ cdef class CBox:
     def realloc(self, Time_TCY time, CBlock block, V3 loc):
         cdef CellIdx_TCY new_loc[3];
 
+        if self.c.block is NULL:
+            raise ValueError("Block is not assigned: {}".format(self))
+
         (<CBlock>self.c.block._self).hook_before_dealloc(self)
         block.hook_before_alloc(self, loc)
 
-        if self.c.state != BOX_STATE_ALLOCATED:
+        if self.c.state != BOX_STATE_ALLOCATED and \
+                self.c.state != BOX_STATE_STORING:
             raise Exception("Cannot re-alloc a box with state {}".format(self.state))
         else:
             loc.cpy2mem_i(new_loc)
             box_cancel_and_realloc(&self.c, &block.c, new_loc)
 
     def store(self, Time_TCY time):
+        if self.c.block is NULL:
+            raise ValueError("Block is not assigned: {}".format(self))
+
         (<CBlock>self.c.block._self).hook_before_store(self)
 
         if self.c.state == BOX_STATE_STORING:
@@ -101,6 +114,8 @@ cdef class CBox:
         return self.c._holder_or_origin is not NULL
 
     def retrieve(self, Time_TCY time):
+        if self.c.block is NULL:
+            raise ValueError("Block is not assigned: {}".format(self))
 
         (<CBlock>self.c.block._self).hook_before_retrieve(self)
 
@@ -157,7 +172,10 @@ cdef class CBox:
 
     @property
     def block(self):
-        return <object> self.c.block._self
+        if self.c.block is NULL:
+            return None
+        else:
+            return <object> self.c.block._self
 
     @block.setter
     def block(self, CBlock block):
@@ -180,11 +198,11 @@ cdef class CBox:
             box_store_position(&self.c, loc, False)
         return V3i(loc[0], loc[1], loc[2])
 
-    def relocate_position(self, V3 new_loc):
+    def relocate_position(self):
         cdef CellIdx_TCY loc[3]
-        new_loc.cpy2mem_i(loc)
-        box_relocate_position(&self.c, loc)
-        return V3(loc[0], loc[1], loc[2])
+        cdef Block_TCY* block
+        box_relocate_position(&self.c, &block, loc)
+        return <object>(block._self), V3i(loc[0], loc[1], loc[2])
 
     def box_above(self):
         cdef CBlock block = self.block
