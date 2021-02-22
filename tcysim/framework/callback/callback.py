@@ -1,4 +1,5 @@
 from pesim import TIME_FOREVER, MinPairingHeapNode
+from pesim.math_aux import time_lt, time_eq
 
 
 class CallBack(MinPairingHeapNode):
@@ -15,9 +16,9 @@ class CallBack(MinPairingHeapNode):
         self.__class__.__id += 1
 
     def key_lt(self, other):
-        if self.time < other.time:
+        if time_lt(self.time, other.time):
             return True
-        elif self.time == other.time:
+        elif time_eq(self.time, other.time):
             return self.id < other.id
         else:
             return False

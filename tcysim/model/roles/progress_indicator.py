@@ -1,4 +1,5 @@
 from pesim import TIME_FOREVER
+from pesim.math_aux import time_eq
 from tcysim.framework.roles import ObserverBase
 
 try:
@@ -16,7 +17,7 @@ class ProgressIndicator(ObserverBase):
         super(ProgressIndicator, self).__init__(yard=yard, start=start, end=end, interval=interval, env=env)
 
     def on_observe(self):
-        if self.end_time == TIME_FOREVER:
+        if time_eq(self.end_time, TIME_FOREVER):
             print(pd.Timedelta(self.time, unit="s") + self._time_zero, end="\r")
         else:
             print("[{:.2%}]".format((self.time - self.sim_start) / self.total), pd.Timedelta(self.time, unit="s") + self._time_zero, end="\r")

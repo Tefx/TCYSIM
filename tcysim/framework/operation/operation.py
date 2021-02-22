@@ -176,14 +176,14 @@ class OperationBase(OperationABC):
             dst_loc = dst_loc[component.axis]
         return MoverStep(component, src_loc, dst_loc, self.interruption_flag, mode=mode)
 
-    @contextmanager
-    def allow_interruption(self, equipment, query_task_before_perform=True):
-        self.interruption_flag = True
-        if query_task_before_perform:
-            cbs = CallBackStep(CallBack(equipment.query_new_task))
-            self.workflow.add(cbs)
-        yield
-        self.interruption_flag = False
+    # @contextmanager
+    # def allow_interruption(self, equipment, query_task_before_perform=True):
+    #     self.interruption_flag = True
+    #     if query_task_before_perform:
+    #         cbs = CallBackStep(CallBack(equipment.query_new_task))
+    #         self.workflow.add(cbs)
+    #     yield
+    #     self.interruption_flag = False
 
     @contextmanager
     def handle_interruption(self, allow, query_task_before_perform=True):

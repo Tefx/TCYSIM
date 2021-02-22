@@ -2,6 +2,7 @@ from collections import deque
 from enum import IntEnum, auto
 
 from pesim import Process, TIME_FOREVER, TIME_REACHED, TIME_PASSED
+from pesim.math_aux import time_lt
 from ..event_reason import EventReason
 
 class APState(IntEnum):
@@ -45,10 +46,10 @@ class AccessPoint(Process):
         yield self.time, EventReason.QUERY_STATE
         while not request.is_synced():
             time = request.estimate_sync_time(self.time, self.env)
-            if time - self.time > 3600:
-                print(time, request.req_type, request.succ, request.equipment.idx, request)
-            assert time - self.time < 3600
-            assert time != self.time
+            # if time - self.time > 3600:
+            #     print(time, request.req_type, request.succ, request.equipment.idx, request)
+            assert self.time < time < self.time + 3600
+            # assert time != self.time
             yield time, EventReason.QUERY_STATE
             # assert self.time - request.ready_time < 19000
 
@@ -64,7 +65,7 @@ class AccessPoint(Process):
             if self.state is APState.IDLE:
                 self.activate(-1, EventReason.REQUEST)
         else:
-            if self.queue and self.queue[0][1] < self.entry_time:
+            if self.queue and time_lt(self.queue[0][1], self.entry_time):
                 self.queue[0][1] = self.entry_time
             self.queue.appendleft((request, 0))
             request.submit(self.time, ready=True)

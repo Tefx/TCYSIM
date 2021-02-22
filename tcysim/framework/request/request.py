@@ -2,7 +2,7 @@ from abc import ABC
 from enum import Enum, IntEnum, auto, Flag
 from typing import Type
 
-from pesim.math_aux import fle
+from pesim.math_aux import time_eq, time_lt
 
 from pesim import TIME_FOREVER
 from ..callback import CallBack
@@ -164,39 +164,56 @@ class RequestBase(IndexObject):
             self.state = self.STATE.FINISHED
             self.finish_time = time
 
-    def estimate_sync_time(self, time, env):
-        if self.state & self.STATE.RUNNING_FLAG:
-            if self.sync_time > 0:
-                return self.sync_time
-            else:
-                next_time = self.equipment.next_event_time()
-                if fle(TIME_FOREVER, next_time):
-                    next_time = min(e.next_event_time() for e in self.block.equipments)
-                    if fle(TIME_FOREVER, next_time):
-                        # next_time = env.next_event_time()
-                        for equipment in self.block.yard.equipments:
-                            next_time = min(next_time, equipment.next_event_time())
-        else:
-            if self.equipment is not None:
-                next_time = self.equipment.next_event_time()
-                if fle(TIME_FOREVER, next_time):
-                    next_time = min(e.next_event_time() for e in self.block.equipments)
-                    if fle(TIME_FOREVER, next_time):
-                        # next_time = env.next_event_time()
-                        for equipment in self.block.yard.equipments:
-                            next_time = min(next_time, equipment.next_event_time())
-            elif self.block is not None:
-                next_time = min(eqp.next_event_time() for eqp in self.block.equipments)
-                if fle(TIME_FOREVER, next_time):
-                    # next_time = env.next_event_time()
-                    for equipment in self.block.yard.equipments:
-                        next_time = min(next_time, equipment.next_event_time())
-            else:
-                next_time = env.next_event_time()
-        # if fle(TIME_FOREVER, next_time):
-        #     print("Warning: next time is forever!")
-        return next_time
+    # def estimate_sync_time(self, time, env):
+    #     if self.state & self.STATE.RUNNING_FLAG:
+    #         if self.sync_time > 0:
+    #             return self.sync_time
+    #         else:
+    #             next_time = self.equipment.next_event_time()
+    #             if time_eq(TIME_FOREVER, next_time):
+    #                 next_time = min(e.next_event_time() for e in self.block.equipments)
+    #                 if time_eq(TIME_FOREVER, next_time):
+    #                     for equipment in self.block.yard.equipments:
+    #                         next_time = min(next_time, equipment.next_event_time())
+    #     else:
+    #         if self.equipment is not None:
+    #             next_time = self.equipment.next_event_time()
+    #             if time_eq(TIME_FOREVER, next_time):
+    #                 next_time = min(e.next_event_time() for e in self.block.equipments)
+    #                 if time_eq(TIME_FOREVER, next_time):
+    #                     for equipment in self.block.yard.equipments:
+    #                         next_time = min(next_time, equipment.next_event_time())
+    #         elif self.block is not None:
+    #             next_time = min(eqp.next_event_time() for eqp in self.block.equipments)
+    #             if time_eq(TIME_FOREVER, next_time):
+    #                 for equipment in self.block.yard.equipments:
+    #                     next_time = min(next_time, equipment.next_event_time())
+    #         else:
+    #             next_time = env.next_event_time()
+    #     return next_time
 
+    def estimate_sync_time(self, time, env):
+        if self.state & self.STATE.RUNNING_FLAG and self.sync_time > 0:
+            return self.sync_time
+
+        search_list = []
+        if self.equipment:
+            search_list.append((self.equipment,))
+        if self.block:
+            search_list.append(self.block.equipments)
+            search_list.append(self.block.yard.equipments)
+        search_list.append((env,))
+
+        for processes in search_list:
+            next_time = TIME_FOREVER
+            for proc in processes:
+                cur_nt = proc.next_event_time()
+                if time_lt(cur_nt, next_time):
+                    next_time = cur_nt
+            if time_lt(next_time, TIME_FOREVER):
+                return next_time
+
+        return TIME_FOREVER
 
     def __repr__(self):
         return "[{}/{}]({}/AT:{:.2f})".format(self.req_type, self.state.name, self.equipment, self.create_time)

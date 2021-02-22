@@ -4,6 +4,8 @@ from libc.float cimport DBL_MAX
 
 from tcysim.utils.vector cimport V3
 from tcysim.utils.math cimport feq
+
+from pesim.math_aux cimport time_lt, time_le
 from ..motion.motion cimport Motion
 from ..motion.mover cimport Mover
 from cython cimport freelist
@@ -35,7 +37,7 @@ cdef class StepBase:
     cdef double cal_start_time(StepBase self, op, double est):
         if not self.executed:
             self.start_time = est
-            if self.pred is not None and self.pred.next_time > est:
+            if self.pred is not None and time_lt(est, self.pred.next_time):
                 self.start_time = self.pred.next_time
         return self.start_time
 
@@ -83,7 +85,7 @@ cdef class StepBase:
         return self
 
     def __lt__(StepBase self, StepBase other):
-        return self.start_time < other.start_time
+        return time_lt(self.start_time, other.start_time)
 
     def __repr__(StepBase self):
         return "<{}|{}>".format(self.__class__.__name__, str(id(self)))
@@ -306,9 +308,9 @@ cdef class AndStep(CompoundStep):
             self.next_time = 0
             for step in self.steps:
                 step.execute(op, est)
-                if step.finish_time > self.finish_time:
+                if time_lt(self.finish_time, step.finish_time):
                     self.finish_time = step.finish_time
-                if step.next_time > self.next_time:
+                if time_lt(self.next_time, step.next_time):
                     self.next_time = step.next_time
         self.executed = True
 
@@ -336,9 +338,9 @@ cdef class OrStep(CompoundStep):
             self.next_time = DBL_MAX
             for step in self.steps:
                 step.execute(op, est)
-                if step.finish_time > self.finish_time:
+                if time_lt(self.finish_time, step.finish_time):
                     self.finish_time = step.finish_time
-                if step.next_time < self.next_time:
+                if time_lt(step.next_time, self.next_time):
                     self.next_time = step.next_time
         self.executed = True
 
@@ -395,7 +397,7 @@ cdef class StepWorkflow:
         for step in self.steps:
             step.execute(op, st)
             heapq.heappush(self.sorted_steps, step)
-            if finish_time < step.finish_time:
+            if time_lt(finish_time, step.finish_time):
                 finish_time = step.finish_time
             # if self.end_time < step.end_time:
             #     self.end_time = step.end_time
@@ -437,9 +439,9 @@ cdef class StepWorkflow:
             if isinstance(step, MoverStep):
                 tmp = (<MoverStep> step)
                 for m in tmp.motions:
-                    if m.start_time >= end_time:
+                    if time_le(end_time, m.start_time):
                         continue
                     else:
-                        if m.finish_time > end_time:
+                        if time_lt(end_time, m.finish_time):
                             m = m.split(end_time)
                         yield tmp.mover, tmp.mode, m.distance(), m.timespan

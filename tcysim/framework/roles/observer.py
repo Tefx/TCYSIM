@@ -2,6 +2,7 @@ from collections import deque
 from abc import ABC, abstractmethod
 
 from pesim import Process, TIME_FOREVER, TIME_PASSED
+from pesim.math_aux import time_le, time_lt
 from ..event_reason import EventReason
 
 
@@ -18,13 +19,13 @@ class ObserverBase(Process, ABC):
         pass
 
     def _process(self):
-        if self.start_time <= self.time < self.end_time:
+        if time_le(self.start_time, self.time) and time_lt(self.time, self.end_time):
             self.on_observe()
 
     def _wait(self):
-        if self.time < self.start_time:
+        if time_lt(self.time, self.start_time):
             return self.start_time, EventReason.OBSERVE
-        elif self.time >= self.end_time:
+        elif time_le(self.end_time, self.time):
             return TIME_FOREVER, TIME_PASSED
         else:
             return self.time + self.interval, EventReason.OBSERVE

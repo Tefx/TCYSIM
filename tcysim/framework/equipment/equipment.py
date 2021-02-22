@@ -4,6 +4,7 @@ from enum import Enum, auto
 from typing import Type
 
 from pesim import Process, TIME_FOREVER
+from pesim.math_aux import time_lt
 from tcysim.utils import V3
 from tcysim.utils.cache import TimeCache
 from .scheduler import JobSchedulerBase
@@ -113,21 +114,11 @@ class Equipment(EquipmentRangeLayout, Process):
         for component in self.components:
             component.loc = v[component.axis]
 
-    # def attached_box_coord(self, transform_to="g"):
-    #     return self.current_coord(transform_to=transform_to)
-    #
-    # def op_coord_from_box_coord(self, local_coord, transform_to=None):
-    #     return self.transform_to(local_coord, transform_to)
-    #
-    # def prepare_coord_for_op_coord(self, local_coord, transform_to=None):
-    #     return self.transform_to(local_coord, transform_to)
-
     def coord_from_box(self, box_coord, transform_to=None):
         return self.transform_to(box_coord - self.BoxEquipmentDelta, transform_to)
 
     def prepare_coord(self, op_coord, transform_to=None):
         raise NotImplementedError
-        # return self.transform_to(op_coord, transform_to)
 
     def coord_to_box(self, self_coord=None, transform_to=None):
         if self_coord is None:
@@ -139,7 +130,7 @@ class Equipment(EquipmentRangeLayout, Process):
         self.num_blocks += 1
 
     def run_until(self, time):
-        if time > self.last_running_time:
+        if time_lt(self.last_running_time, time):
             for component in self.components:
                 component.run_until(time)
             self.last_running_time = time
@@ -149,7 +140,6 @@ class Equipment(EquipmentRangeLayout, Process):
             component.interrupt()
         self.current_op.interrupted = True
         self.activate(-1, EventReason.INTERRUPTED)
-        # print(self.time, self, "interrupt", [(c.axis, c.time, c.curr_v) for c in self.components])
 
     def allow_interruption(self):
         if self.current_op and isinstance(self.current_op, BlockingOperationBase):
@@ -264,6 +254,13 @@ class Equipment(EquipmentRangeLayout, Process):
             else:
                 return self.current_op
         return None
+
+    def current_op_finish_time(self):
+        if self.current_op and self.current_op.finish_time > 0:
+            return self.current_op.finish_time
+        else:
+            # return self.next_event_time()
+            return TIME_FOREVER
 
     def is_at_idle_position(self):
         return True

@@ -1,7 +1,7 @@
 from collections import deque
 from libc.math cimport sqrt, fabs
-
 from tcysim.utils.math cimport feq
+from pesim.math_aux cimport time_le
 from .motion cimport Motion
 
 cdef class Spec:
@@ -74,9 +74,9 @@ cdef class Mover:
         cdef Motion m
         while self.pending_motions:
             m = self.pending_motions[0]
-            if m.start_time >= time:
+            if time_le(time, m.start_time):
                 break
-            if m.finish_time <= time:
+            if time_le(m.finish_time, time):
                 m = self.pending_motions.popleft()
             else:
                 if m.orig:

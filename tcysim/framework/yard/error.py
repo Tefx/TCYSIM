@@ -9,7 +9,7 @@ class YardErrorBase:
             self.warning = warning
 
         def inform(self, msg=None):
-            if self.warning and msg:
+            if self.warning:
                 print("Error {}: {}".format(self.name, msg))
             return self.value
 

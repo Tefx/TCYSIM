@@ -1,5 +1,7 @@
 from pesim.pairing_heap cimport MinPairingHeapNode
+from pesim.math_aux cimport time_eq, time_lt
 from libc.stdint cimport uint64_t
+
 
 cdef class ProbeActionTemplate:
     cdef readonly str probe_name
@@ -47,10 +49,10 @@ cdef class ProbeAction(MinPairingHeapNode):
         self.template.call(self.args, self.kwargs)
 
     cpdef bint key_lt(self, MinPairingHeapNode other):
-        if self.time == (<ProbeAction>other).time:
+        if time_eq(self.time, (<ProbeAction>other).time):
             if self.reason == (<ProbeAction>other).reason:
                 return self.idx < (<ProbeAction>other).idx
             else:
                 return self.reason < (<ProbeAction>other).reason
         else:
-            return self.time < (<ProbeAction>other).time
+            return time_lt(self.time, (<ProbeAction>other).time)

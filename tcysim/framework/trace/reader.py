@@ -1,4 +1,5 @@
 from pesim import TIME_FOREVER
+from pesim.math_aux import time_lt, time_le
 from tcysim.utils import V3, RotateOperator
 from tcysim.framework.layout import LayoutItem
 import pickle
@@ -52,8 +53,7 @@ class TraceReader(FileTree):
         return {box_id: [size, rotate, 1, -1, -1, -1, -1, arrival_time, departure_time]
                 for box_id, (arrival_time, departure_time, size, rotate)
                 in box_set.items()
-                if arrival_time < end_time and
-                departure_time > start_time}
+                if time_lt(arrival_time, end_time) and time_lt(start_time, departure_time)}
 
     def find_box_intervals_by_equipment(self, equipment_name, start_time, end_time, box_set=None):
         file = self.get_file_r("equipment", equipment_name, "box_moves")
@@ -68,19 +68,19 @@ class TraceReader(FileTree):
             if box_set and box_id not in box_set:
                 continue
             if flag:
-                if time < end_time:
+                if time_lt(time, end_time):
                     start_pos = fake_layout_item.transform_to(V3(*other), "g").to_tuple()
                     boxes[box_id] = [min(time, end_time), end_time, start_pos, None]
             else:
-                if latest_time_before < time < start_time:
+                if time_lt(latest_time_before, time) and time_lt(time, start_time):
                     latest_time_before = time
                     latest_pos_before[box_id] = latest_time_before, fake_layout_item.transform_to(V3(*other), "g").to_tuple()
                     del boxes[box_id]
                 elif box_id in boxes:
-                    if boxes[box_id][0] >= end_time:
+                    if time_le(end_time, boxes[box_id][0]):
                         del boxes[box_id]
                     else:
-                        if time < end_time:
+                        if time_lt(time, end_time):
                             boxes[box_id][1] = time
                             boxes[box_id][3] = fake_layout_item.transform_to(V3(*other), "g").to_tuple()
                         else:
@@ -93,15 +93,16 @@ class TraceReader(FileTree):
 
     def load_motions(self, equipment_name, start_time=0, end_time=TIME_FOREVER):
         file = self.get_file_r("equipment", equipment_name, "motions")
-        return tuple(record for record in self.load(file) if record[0] < end_time and record[0] > start_time - 1200)
+        return tuple(record for record in self.load(file)
+                     if time_lt(record[0], end_time) and start_time - 1200 < record[0])
 
     def build_moves(self, ts, base_time, pos, moves, last_v, last_t):
-        if base_time > last_t:
+        if time_lt(last_t, base_time):
             ts.append([base_time, last_v, 0, pos])
             last_t = base_time
-        elif base_time < last_t:
+        elif time_lt(base_time, last_t):
             i = -1
-            while ts[i][0] > base_time:
+            while time_lt(base_time, ts[i][0]):
                 i -= 1
             del ts[i+1:]
             dt = base_time - ts[-1][0]
@@ -167,7 +168,7 @@ class TraceReader(FileTree):
             liner_flag = True
             pos = []
             for i in range(3):
-                if time < first_times[i]:
+                if time_lt(time, first_times[i]):
                     pos.append(ts[i][0][3])
                 else:
                     while ts[i][cp[i] + 1][0] <= time: cp[i] += 1
@@ -177,7 +178,7 @@ class TraceReader(FileTree):
                     pos.append(p + v * dt + a * dt * dt / 2)
             # yield time, *pos
             yield [time] + pos
-            if time >= end_time:
+            if time_le(end_time, time):
                 break
             elif liner_flag:
                 next_time = min(ts[i][cp[i] + 1][0] for i in range(3))
@@ -211,7 +212,7 @@ class TraceReader(FileTree):
             return arr.tolist()
         else:
             for i in range(3):
-                if ts[i][0][0] > start_time:
+                if time_lt(start_time, ts[i][0][0]):
                     ts[i] = [[start_time, 0, 0, ts[i][0][3]]] + ts[i]
             return ts
 
@@ -253,7 +254,7 @@ class TraceReader(FileTree):
             )
 
             for box_id, (time, pos) in box_pos.items():
-                if box_id not in box_initial_pos or box_initial_pos[box_id][0] < time:
+                if box_id not in box_initial_pos or time_lt(box_initial_pos[box_id][0], time):
                     box_initial_pos[box_id] = (time, *pos)
                     box_set[box_id][3:7] = time, *pos
 
@@ -321,7 +322,7 @@ class TraceReader(FileTree):
             for box_id, (time, pos) in box_pos.items():
                 # if box_id not in box_initial_pos or box_initial_pos[box_id][0] < time:
                 #     box_initial_pos[box_id] = (time, *pos)
-                if box_set[box_id][3] < time:
+                if time_lt(box_set[box_id][3], time):
                     box_set[box_id][3:7] = time, *pos
 
         for box_name in moved_boxes:
